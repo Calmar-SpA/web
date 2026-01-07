@@ -8,6 +8,14 @@
       "outputs": [
         ".next/**",
         "!.next/cache/**"
+      ],
+      "env": [
+        "FLOW_API_KEY",
+        "FLOW_SECRET_KEY",
+        "FLOW_BASE_URL",
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "NEXT_PUBLIC_APP_URL"
       ]
     },
     "dev": {
