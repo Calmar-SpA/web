@@ -1,0 +1,26 @@
+{
+    "name": "calmar-ecommerce",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Calmar SpA E-commerce Platform",
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "turbo dev",
+        "build": "turbo build",
+        "lint": "turbo lint",
+        "type-check": "turbo type-check",
+        "dev:web": "npm run dev --workspace=apps/web",
+        "dev:admin": "npm run dev --workspace=apps/admin",
+        "supabase:start": "supabase start",
+        "supabase:migrate": "supabase db reset"
+    },
+    "devDependencies": {
+        "turbo": "^2.3.0",
+        "typescript": "^5.7.2",
+        "eslint": "^9.16.0",
+        "prettier": "^3.4.2"
+    }
+}

@@ -1,0 +1,267 @@
+{
+  "Index": {
+    "hero": {
+      "title": "THE FUTURE IS CALMAR",
+      "subtitle": "ADVANCED HYDRATION AND HIGH-LEVEL SUPPLEMENTATION FOR THE MODERN ATHLETE.",
+      "cta": "EXPLORE SHOP"
+    },
+    "featured": {
+      "title": "FEATURED PRODUCTS",
+      "subtitle": "The best of our selection for your recovery"
+    },
+    "benefits": {
+      "marine": {
+        "title": "PREMIUM SEA WATER",
+        "description": "Deep-filtered to preserve all its unique minerals and electrolytes."
+      },
+      "recovery": {
+        "title": "ADVANCED RECOVERY",
+        "description": "Designed to optimize your physical and mental performance in every drop."
+      },
+      "purity": {
+        "title": "EXTREME PURITY",
+        "description": "From natural springs to your table, with no additives or preservatives."
+      }
+    },
+    "cta_footer": {
+      "title": "JOIN THE REVOLUTION",
+      "subtitle": "Start your journey to superior hydration today.",
+      "button": "GET STARTED NOW"
+    }
+  },
+  "Navigation": {
+    "shop": "Shop",
+    "about": "About Us",
+    "contact": "Contact",
+    "account": "My Account",
+    "b2b": "B2B Program",
+    "search": "Search products..."
+  },
+  "Cart": {
+    "title": "Your Cart",
+    "empty": "Your cart is empty",
+    "checkout": "Checkout",
+    "total": "Total"
+  },
+  "Checkout": {
+    "title": "Checkout",
+    "backToShop": "Back to shop",
+    "shipping": {
+      "title": "Shipping Details",
+      "fullName": "Full Name",
+      "email": "Email",
+      "address": "Address",
+      "addressPlaceholder": "Street, number, apartment...",
+      "comuna": "City/District",
+      "region": "State/Region"
+    },
+    "payment": {
+      "title": "Payment Method",
+      "flow": "National Payment (Flow)",
+      "flowDesc": "Webpay, OnePay, Transfer",
+      "credit": "B2B Credit",
+      "creditAvailable": "Available: ${amount}"
+    },
+    "summary": {
+      "title": "Order Summary",
+      "quantity": "Quantity: {qty}",
+      "subtotal": "Subtotal",
+      "b2bDiscount": "B2B Discount ({percent}%)",
+      "calmarPoints": "Calmar Points",
+      "shipping": "Shipping",
+      "free": "FREE",
+      "total": "Total"
+    },
+    "buttons": {
+      "processing": "PROCESSING...",
+      "payWithCredit": "PAY WITH CREDIT",
+      "payWithFlow": "PAY WITH FLOW"
+    },
+    "messages": {
+      "creditApproval": "Order subject to credit approval",
+      "secureTransaction": "Secure transaction protected by Flow",
+      "error": "There was an error processing your order."
+    },
+    "emptyCart": {
+      "title": "YOUR CART IS EMPTY",
+      "description": "Add products before checkout.",
+      "button": "GO TO SHOP"
+    },
+    "points": {
+      "title": "Redeem your Calmar Points",
+      "available": "You have {points} points available (${value} CLP)",
+      "placeholder": "e.g. 500",
+      "apply": "APPLY",
+      "applied": "{points} points applied (-${value})",
+      "errorInvalid": "Enter a valid amount",
+      "errorInsufficient": "You only have {max} points available",
+      "errorExceeds": "You cannot redeem more points than the cart total"
+    }
+  },
+  "Account": {
+    "title": "My Account",
+    "greeting": "Hello, {name}",
+    "points": "Calmar Points",
+    "orders": "My Orders",
+
+    "logout": "Log Out",
+    "b2bBadge": "B2B Client",
+    "b2bProfile": "Business Profile",
+    "companyName": "Company Name",
+    "taxId": "Tax ID",
+    "discount": "Discount",
+    "availableCredit": "Available Credit",
+    "pendingReview": "Your application is being reviewed by our team.",
+    "isBusiness": "Are you a business?",
+    "b2bBenefit": "Apply for our B2B program to access wholesale pricing and direct credit.",
+    "applyNow": "APPLY NOW",
+    "rewardsTitle": "Rewards Center",
+    "soon": "Coming Soon: Product Redemption",
+    "soonDesc": "Use your points to get Calmar products for free.",
+    "ordersList": {
+      "title": "MY ORDERS",
+      "subtitle": "Manage and track your purchases at Calmar.",
+      "goToShop": "GO TO SHOP",
+      "empty": {
+        "title": "You don't have any orders yet",
+        "description": "How about trying our filtered sea water?",
+        "button": "VIEW PRODUCTS"
+      },
+      "status": {
+        "pending_payment": "Pending Payment",
+        "paid": "Paid",
+        "processing": "Processing",
+        "shipped": "Shipped",
+        "delivered": "Delivered",
+        "cancelled": "Cancelled"
+      },
+      "orderNumber": "ORDER #{number}",
+      "date": "{date} • {count} products",
+      "total": "Total"
+    },
+    "loyalty": {
+      "title": "Calmar Points",
+      "equivalent": "Equivalent to ${value} discount",
+      "memberSince": "Member since today",
+      "history": "History"
+    },
+    "apiKeys": {
+      "title": "API KEYS",
+      "placeholder": "Key Name (e.g. ERP Integration)",
+      "newKey": "NEW KEY",
+      "generating": "GENERATING...",
+      "success": "API Key generated successfully",
+      "error": "Error generating API Key",
+      "copy": "Copied to clipboard",
+      "warningTitle": "Save this key now",
+      "warningDesc": "For security, we will not show this full key again.",
+      "understood": "UNDERSTOOD, I SAVED IT",
+      "lastUsed": "LAST USED",
+      "never": "Never",
+      "empty": "You have no API keys generated"
+    },
+    "settings": {
+      "navTitle": "Settings",
+      "title": "SETTINGS",
+      "subtitle": "Manage your preferences and security.",
+      "profile": "Profile",
+      "fullName": "Full Name",
+      "email": "Email",
+      "update": "UPDATE PROFILE",
+      "security": "Security",
+      "changePassword": "CHANGE PASSWORD",
+      "logout": "LOG OUT FROM ALL DEVICES",
+      "notifications": "Notifications",
+      "marketing": "Receive marketing emails and offers",
+      "transactional": "Receive transactional emails (Required)",
+      "save": "SAVE CHANGES"
+    }
+  },
+  "Shop": {
+    "title": "CALMAR SHOP",
+    "subtitle": "Premium hydration for your daily life",
+    "allProducts": "ALL PRODUCTS",
+    "noProducts": "No products available at this moment.",
+    "categories": {
+      "all": "All",
+      "drinks": "Drinks",
+      "supplements": "Supplements",
+      "accessories": "Accessories"
+    }
+  },
+  "Login": {
+    "title": "WELCOME",
+    "description": "Log in to your Calmar account",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "terms": "By continuing, you agree to our terms and conditions."
+  },
+  "About": {
+    "hero": {
+      "title": "CALMAR WORLD",
+      "subtitle": "Where the sea and the spring meet"
+    },
+    "story": {
+      "title": "OUR STORY",
+      "p1": "Calmar was born from the fascination with the natural power of seawater. For centuries, civilizations have recognized the unique benefits of marine minerals for human health and performance.",
+      "p2": "We combine the purity of spring water with the mineral richness of the deep ocean, creating a unique formula that enhances your hydration like never before."
+    },
+    "mission": {
+      "title": "OUR MISSION",
+      "text": "To revolutionize the way the world hydrates, offering products of maximum purity and performance for athletes and active people who demand the best."
+    },
+    "values": {
+      "title": "OUR VALUES",
+      "purity": {
+        "title": "PURITY",
+        "description": "No additives, no preservatives. Just water in its purest form."
+      },
+      "performance": {
+        "title": "PERFORMANCE",
+        "description": "Formulated to optimize your body and mind."
+      },
+      "sustainability": {
+        "title": "SUSTAINABILITY",
+        "description": "Committed to the planet and future generations."
+      }
+    }
+  },
+  "Contact": {
+    "hero": {
+      "title": "CONTACT US",
+      "subtitle": "We're here to help you"
+    },
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "subject": "Subject",
+      "message": "Message",
+      "send": "SEND MESSAGE",
+      "sending": "SENDING...",
+      "success": "Message sent! We'll get back to you soon.",
+      "error": "Error sending. Please try again."
+    },
+    "info": {
+      "title": "INFORMATION",
+      "email": "contact@calmar.cl",
+      "phone": "+56 9 1234 5678",
+      "hours": "Mon - Fri: 9:00 AM - 6:00 PM"
+    }
+  },
+  "Footer": {
+    "description": "We treat hydration with the power of the sea and the purity of the spring.",
+    "links": "Links",
+    "newsletter": {
+      "title": "NEWSLETTER",
+      "placeholder": "you@email.com",
+      "button": "JOIN",
+      "success": "Successfully subscribed!",
+      "alreadySubscribed": "You are already subscribed.",
+      "error": "An error occurred. Please try again.",
+      "invalidEmail": "Invalid email."
+    },
+    "rights": "© 2026 CALMAR SPA • ALL RIGHTS RESERVED"
+  }
+}

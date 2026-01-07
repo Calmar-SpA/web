@@ -1,0 +1,267 @@
+{
+  "Index": {
+    "hero": {
+      "title": "EL FUTURO ES CALMAR",
+      "subtitle": "HIDRATACIÓN AVANZADA Y SUPLEMENTACIÓN DE ALTO NIVEL PARA EL ATLETA MODERNO.",
+      "cta": "EXPLORAR TIENDA"
+    },
+    "featured": {
+      "title": "PRODUCTOS DESTACADOS",
+      "subtitle": "Lo mejor de nuestra selección para tu recuperación"
+    },
+    "benefits": {
+      "marine": {
+        "title": "AGUA DE MAR PREMIUM",
+        "description": "Filtrada a profundidad para conservar todos sus minerales y electrolitos únicos."
+      },
+      "recovery": {
+        "title": "RECUPERACIÓN AVANZADA",
+        "description": "Diseñado para optimizar tu rendimiento físico y mental en cada gota."
+      },
+      "purity": {
+        "title": "PUREZA EXTREMA",
+        "description": "Desde vertientes naturales hasta tu mesa, sin aditivos ni preservantes."
+      }
+    },
+    "cta_footer": {
+      "title": "ÚNETE A LA REVOLUCIÓN",
+      "subtitle": "Empieza hoy tu camino hacia una hidratación superior.",
+      "button": "COMENZAR AHORA"
+    }
+  },
+  "Navigation": {
+    "shop": "Tienda",
+    "about": "Nosotros",
+    "contact": "Contacto",
+    "account": "Mi Cuenta",
+    "b2b": "Programa B2B",
+    "search": "Buscar productos..."
+  },
+  "Cart": {
+    "title": "Tu Carrito",
+    "empty": "Tu carro está vacío",
+    "checkout": "Finalizar Compra",
+    "total": "Total"
+  },
+  "Checkout": {
+    "title": "Finalizar Compra",
+    "backToShop": "Volver a la tienda",
+    "shipping": {
+      "title": "Datos de Despacho",
+      "fullName": "Nombre Completo",
+      "email": "Email",
+      "address": "Dirección",
+      "addressPlaceholder": "Calle, número, departamento...",
+      "comuna": "Comuna",
+      "region": "Región"
+    },
+    "payment": {
+      "title": "Medio de Pago",
+      "flow": "Pago Nacional (Flow)",
+      "flowDesc": "Webpay, OnePay, Transferencia",
+      "credit": "Crédito B2B",
+      "creditAvailable": "Disponible: ${amount}"
+    },
+    "summary": {
+      "title": "Resumen del Pedido",
+      "quantity": "Cantidad: {qty}",
+      "subtotal": "Subtotal",
+      "b2bDiscount": "Descuento B2B ({percent}%)",
+      "calmarPoints": "Puntos Calmar",
+      "shipping": "Envío",
+      "free": "GRATIS",
+      "total": "Total"
+    },
+    "buttons": {
+      "processing": "PROCESANDO...",
+      "payWithCredit": "PAGAR CON CRÉDITO",
+      "payWithFlow": "PAGAR CON FLOW"
+    },
+    "messages": {
+      "creditApproval": "Orden sujeta a aprobación de crédito",
+      "secureTransaction": "Transacción segura protegida por Flow",
+      "error": "Hubo un error al procesar tu pedido."
+    },
+    "emptyCart": {
+      "title": "TU CARRO ESTÁ VACÍO",
+      "description": "Agrega productos antes de realizar el checkout.",
+      "button": "IR A LA TIENDA"
+    },
+    "points": {
+      "title": "Canjea tus Puntos Calmar",
+      "available": "Tienes {points} puntos disponibles (${value} CLP)",
+      "placeholder": "Ej: 500",
+      "apply": "APLICAR",
+      "applied": "{points} puntos aplicados (-${value})",
+      "errorInvalid": "Ingresa una cantidad válida",
+      "errorInsufficient": "Solo tienes {max} puntos disponibles",
+      "errorExceeds": "No puedes canjear más puntos que el total de la compra"
+    }
+  },
+  "Account": {
+    "title": "Mi Cuenta",
+    "greeting": "Hola, {name}",
+    "points": "Puntos Calmar",
+    "orders": "Mis Pedidos",
+
+    "logout": "Cerrar Sesión",
+    "b2bBadge": "Cliente B2B",
+    "b2bProfile": "Perfil de Empresa",
+    "companyName": "Razón Social",
+    "taxId": "RUT",
+    "discount": "Descuento",
+    "availableCredit": "Crédito Disponible",
+    "pendingReview": "Tu postulación está siendo revisada por nuestro equipo.",
+    "isBusiness": "¿Eres una empresa?",
+    "b2bBenefit": "Postula a nuestro programa B2B para acceder a precios mayoristas y crédito directo.",
+    "applyNow": "POSTULAR AHORA",
+    "rewardsTitle": "Centro de Recompensas",
+    "soon": "Pronto: Canje por productos",
+    "soonDesc": "Usa tus puntos para llevarte productos Calmar gratis.",
+    "ordersList": {
+      "title": "MIS PEDIDOS",
+      "subtitle": "Gestiona y rastrea tus compras en Calmar.",
+      "goToShop": "IR A LA TIENDA",
+      "empty": {
+        "title": "Aún no tienes pedidos",
+        "description": "¿Qué tal si pruebas nuestra agua de mar filtrada?",
+        "button": "VER PRODUCTOS"
+      },
+      "status": {
+        "pending_payment": "Pendiente de Pago",
+        "paid": "Pagado",
+        "processing": "En Preparación",
+        "shipped": "Enviado",
+        "delivered": "Entregado",
+        "cancelled": "Cancelado"
+      },
+      "orderNumber": "PEDIDO #{number}",
+      "date": "{date} • {count} productos",
+      "total": "Total"
+    },
+    "loyalty": {
+      "title": "Puntos Calmar",
+      "equivalent": "Equivalente a ${value} de descuento",
+      "memberSince": "Miembro desde hoy",
+      "history": "Historial"
+    },
+    "apiKeys": {
+      "title": "CLAVES DE API",
+      "placeholder": "Nombre de la clave (Ej: Integración ERP)",
+      "newKey": "NUEVA CLAVE",
+      "generating": "GENERANDO...",
+      "success": "API Key generada con éxito",
+      "error": "Error al generar la API Key",
+      "copy": "Copiado al portapapeles",
+      "warningTitle": "Guarda esta clave ahora",
+      "warningDesc": "Por seguridad, no volveremos a mostrar esta clave completa.",
+      "understood": "ENTENDIDO, LA HE GUARDADO",
+      "lastUsed": "ÚLTIMO USO",
+      "never": "Nunca",
+      "empty": "No tienes claves de API generadas"
+    },
+    "settings": {
+      "navTitle": "Ajustes",
+      "title": "AJUSTES",
+      "subtitle": "Administra tus preferencias y seguridad.",
+      "profile": "Perfil",
+      "fullName": "Nombre Completo",
+      "email": "Email",
+      "update": "ACTUALIZAR PERFIL",
+      "security": "Seguridad",
+      "changePassword": "CAMBIAR CONTRASEÑA",
+      "logout": "CERRAR SESIÓN DE TODOS LOS DISPOSITIVOS",
+      "notifications": "Notificaciones",
+      "marketing": "Recibir correos de marketing y ofertas",
+      "transactional": "Recibir correos sobre mis pedidos (Requerido)",
+      "save": "GUARDAR CAMBIOS"
+    }
+  },
+  "Shop": {
+    "title": "TIENDA CALMAR",
+    "subtitle": "Hidratación premium para tu vida diaria",
+    "allProducts": "TODOS LOS PRODUCTOS",
+    "noProducts": "No hay productos disponibles en este momento.",
+    "categories": {
+      "all": "Todos",
+      "drinks": "Bebestibles",
+      "supplements": "Suplementos",
+      "accessories": "Accesorios"
+    }
+  },
+  "Login": {
+    "title": "BIENVENIDO",
+    "description": "Ingresa a tu cuenta Calmar",
+    "email": "Email",
+    "password": "Contraseña",
+    "signIn": "Ingresar",
+    "signUp": "Registrarse",
+    "terms": "Al continuar, aceptas nuestros términos y condiciones."
+  },
+  "About": {
+    "hero": {
+      "title": "MUNDO CALMAR",
+      "subtitle": "Donde el mar y la vertiente se encuentran"
+    },
+    "story": {
+      "title": "NUESTRA HISTORIA",
+      "p1": "Calmar nació de la fascinación por el poder natural del agua de mar. Durante siglos, las civilizaciones han reconocido los beneficios únicos de los minerales marinos para la salud y el rendimiento humano.",
+      "p2": "Combinamos la pureza del agua de vertiente con la riqueza mineral del océano profundo, creando una fórmula única que potencia tu hidratación como nunca antes."
+    },
+    "mission": {
+      "title": "NUESTRA MISIÓN",
+      "text": "Revolucionar la manera en que el mundo se hidrata, ofreciendo productos de máxima pureza y rendimiento para atletas y personas activas que exigen lo mejor."
+    },
+    "values": {
+      "title": "NUESTROS VALORES",
+      "purity": {
+        "title": "PUREZA",
+        "description": "Sin aditivos, sin preservantes. Solo agua en su forma más pura."
+      },
+      "performance": {
+        "title": "RENDIMIENTO",
+        "description": "Formulado para optimizar tu cuerpo y mente."
+      },
+      "sustainability": {
+        "title": "SUSTENTABILIDAD",
+        "description": "Comprometidos con el planeta y las generaciones futuras."
+      }
+    }
+  },
+  "Contact": {
+    "hero": {
+      "title": "CONTÁCTANOS",
+      "subtitle": "Estamos aquí para ayudarte"
+    },
+    "form": {
+      "name": "Nombre",
+      "email": "Email",
+      "subject": "Asunto",
+      "message": "Mensaje",
+      "send": "ENVIAR MENSAJE",
+      "sending": "ENVIANDO...",
+      "success": "¡Mensaje enviado! Te responderemos pronto.",
+      "error": "Error al enviar. Intenta nuevamente."
+    },
+    "info": {
+      "title": "INFORMACIÓN",
+      "email": "contacto@calmar.cl",
+      "phone": "+56 9 1234 5678",
+      "hours": "Lun - Vie: 9:00 - 18:00"
+    }
+  },
+  "Footer": {
+    "description": "Buscamos revolucionar la hidratación con el poder del mar y la pureza de la vertiente.",
+    "links": "Enlaces",
+    "newsletter": {
+      "title": "BOLETÍN",
+      "placeholder": "tu@email.com",
+      "button": "UNIRSE",
+      "success": "¡Te has suscrito correctamente!",
+      "alreadySubscribed": "Ya estás suscrito a nuestro boletín.",
+      "error": "Ocurrió un error. Intenta nuevamente.",
+      "invalidEmail": "Email inválido."
+    },
+    "rights": "© 2026 CALMAR SPA • TODOS LOS DERECHOS RESERVADOS"
+  }
+}
