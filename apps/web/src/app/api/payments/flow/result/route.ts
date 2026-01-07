@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { flow } from '@/lib/flow'
 import { createClient } from '@/lib/supabase/server'
 
+// Default locale
+const DEFAULT_LOCALE = 'es'
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const token = formData.get('token') as string
+  
+  // Get base URL for production redirects (ensure HTTPS)
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
 
   if (!token) {
-    return NextResponse.redirect(new URL('/checkout?error=no_token', request.url))
+    return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout?error=no_token`)
   }
 
   try {
@@ -30,13 +36,35 @@ export async function POST(request: NextRequest) {
         .update({ status: 'paid' })
         .eq('id', status.commerceOrder)
       
-      return NextResponse.redirect(new URL(`/checkout/success?orderId=${status.commerceOrder}`, request.url))
+      return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout/success?orderId=${status.commerceOrder}`)
     } else {
-      return NextResponse.redirect(new URL(`/checkout/error?orderId=${status.commerceOrder}`, request.url))
+      return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout/error?orderId=${status.commerceOrder}`)
     }
 
   } catch (error) {
     console.error('Flow Result Error:', error)
-    return NextResponse.redirect(new URL('/checkout/error', request.url))
+    return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout/error`)
   }
+}
+
+// Also handle GET requests in case the browser follows the redirect
+export async function GET(request: NextRequest) {
+  const token = request.nextUrl.searchParams.get('token')
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
+  
+  if (!token) {
+    return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout?error=no_token`)
+  }
+  
+  // Create form data and call POST handler
+  const formData = new FormData()
+  formData.append('token', token)
+  
+  // Create a new request with the token
+  const newRequest = new NextRequest(request.url, {
+    method: 'POST',
+    body: formData,
+  })
+  
+  return POST(newRequest)
 }

@@ -169,9 +169,10 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
   }
 
   // 7. Initiate Flow Payment (for non-credit orders)
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
+  let redirectUrl: string | null = null
+  
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
-    
     const flowPayment = await flow.createPayment({
       commerceOrder: order.id,
       subject: `Pedido #${order.id.slice(0, 8)} - Calmar`,
@@ -193,12 +194,16 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
         provider_transaction_id: flowPayment.token,
       })
 
-    // 9. Redirect to Flow
-    redirect(`${flowPayment.url}?token=${flowPayment.token}`)
+    // Store redirect URL to use outside try-catch
+    redirectUrl = `${flowPayment.url}?token=${flowPayment.token}`
 
   } catch (error: any) {
     console.error('Flow Error:', error)
-    if (error.message === 'NEXT_REDIRECT') throw error
     throw new Error('Error al iniciar el pago con Flow')
+  }
+
+  // 9. Redirect to Flow (outside try-catch to avoid NEXT_REDIRECT error)
+  if (redirectUrl) {
+    redirect(redirectUrl)
   }
 }
