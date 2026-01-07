@@ -1,11 +1,12 @@
 "use client"
 
+import { Suspense } from "react"
 import { Button } from "@calmar/ui"
-import { AlertCircle, ArrowLeft } from "lucide-react"
+import { AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 
-export default function CheckoutErrorPage() {
+function CheckoutErrorContent() {
   const searchParams = useSearchParams()
   const orderId = searchParams.get('orderId')
 
@@ -38,5 +39,17 @@ export default function CheckoutErrorPage() {
         </Link>
       </div>
     </div>
+  )
+}
+
+export default function CheckoutErrorPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
+      </div>
+    }>
+      <CheckoutErrorContent />
+    </Suspense>
   )
 }

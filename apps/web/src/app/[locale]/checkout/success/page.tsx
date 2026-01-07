@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, Suspense } from "react"
 import { useCart } from "@/hooks/use-cart"
 import { Button } from "@calmar/ui"
-import { CheckCircle2, ShoppingBag } from "lucide-react"
+import { CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const { clearCart } = useCart()
   const searchParams = useSearchParams()
   const orderId = searchParams.get('orderId')
@@ -53,5 +53,17 @@ export default function CheckoutSuccessPage() {
         ¿Tienes dudas? Contáctanos a <span className="text-calmar-ocean">contacto@calmar.cl</span>
       </p>
     </div>
+  )
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
+      </div>
+    }>
+      <CheckoutSuccessContent />
+    </Suspense>
   )
 }
