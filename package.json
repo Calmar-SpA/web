@@ -2,6 +2,7 @@
     "name": "calmar-ecommerce",
     "version": "1.0.0",
     "private": true,
+    "packageManager": "npm@10.8.2",
     "description": "Calmar SpA E-commerce Platform",
     "workspaces": [
         "apps/*",
