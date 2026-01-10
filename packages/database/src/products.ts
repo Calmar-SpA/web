@@ -54,8 +54,29 @@ export class ProductService {
 
     const translation = product.translations?.[locale]
     
+    // Transform image_url: convert relative paths to full Supabase URLs
+    let imageUrl = product.image_url;
+    if (imageUrl && !imageUrl.startsWith('http')) {
+      // It's a relative path, convert to full Supabase Storage URL
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://zyqkuhzsnomufwmfoily.supabase.co';
+      // Remove leading slash if present
+      const cleanPath = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl;
+      
+      // Check if path already starts with 'storage/v1/object/public/'
+      if (cleanPath.startsWith('storage/v1/object/public/')) {
+        imageUrl = `${supabaseUrl}/${cleanPath}`;
+      } else if (cleanPath.startsWith('images/')) {
+        // Convert old format: images/products/... -> storage/v1/object/public/products/...
+        imageUrl = `${supabaseUrl}/storage/v1/object/public/${cleanPath.replace('images/', '')}`;
+      } else {
+        // Assume it's already a bucket path like 'products/...'
+        imageUrl = `${supabaseUrl}/storage/v1/object/public/${cleanPath}`;
+      }
+    }
+    
     return {
       ...product,
+      image_url: imageUrl,
       categories,
       inventory,
       variants: product.product_variants || [],
