@@ -18,16 +18,43 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
     redirect(`/${locale}/login`)
   }
 
-  // Fetch points from our users table
-  const { data: profile } = await supabase
-    .from('users')
-    .select('points_balance, full_name, role')
-    .eq('id', user.id)
-    .single()
+  let profile = null
+  let b2bClient = null
+  let apiKeys: any[] = []
 
-  const { B2BService } = await import('@calmar/database')
-  const b2bService = new B2BService(supabase)
-  const b2bClient = await b2bService.getClientByUserId(user.id)
+  try {
+    // Fetch points from our users table
+    const { data: profileData, error: profileError } = await supabase
+      .from('users')
+      .select('points_balance, full_name, role')
+      .eq('id', user.id)
+      .single()
+    
+    if (!profileError) {
+      profile = profileData
+    } else {
+      console.error('Error fetching user profile:', profileError)
+    }
+
+    try {
+      const { B2BService } = await import('@calmar/database')
+      const b2bService = new B2BService(supabase)
+      b2bClient = await b2bService.getClientByUserId(user.id)
+      
+      if (b2bClient?.is_active) {
+        try {
+          apiKeys = await b2bService.getApiKeys(b2bClient.id)
+        } catch (apiKeyError) {
+          console.error('Error fetching API keys:', apiKeyError)
+          apiKeys = [] // Ensure apiKeys is an empty array on error
+        }
+      }
+    } catch (b2bError) {
+      console.error('Error fetching B2B data:', b2bError)
+    }
+  } catch (error) {
+    console.error('Error fetching account data:', error)
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
@@ -37,7 +64,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
           <p className="text-slate-500 mt-2">{t("greeting", { name: profile?.full_name || user.email })}</p>
         </div>
         {profile?.role === 'b2b' && (
-          <div className="bg-calmar-ocean text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest italic shadow-lg shadow-calmar-ocean/20">
+          <div className="bg-calmar-ocean text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-calmar-ocean/20">
             {t("b2bBadge")}
           </div>
         )}
@@ -72,7 +99,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
                 <Building2 className="h-24 w-24" />
               </div>
               <div className="relative z-10">
-                <h2 className="text-xl font-black italic uppercase tracking-tight mb-4">{t("b2bProfile")}</h2>
+                <h2 className="text-xl font-black uppercase tracking-tight mb-4">{t("b2bProfile")}</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">{t("companyName")}</label>
@@ -117,13 +144,13 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
               <ApiKeyManager 
                 clientId={b2bClient.id} 
-                existingKeys={await b2bService.getApiKeys(b2bClient.id)} 
+                existingKeys={apiKeys} 
               />
             </div>
           )}
 
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h2 className="text-lg font-bold mb-4 italic uppercase tracking-tight">{t("rewardsTitle")}</h2>
+            <h2 className="text-lg font-bold mb-4 uppercase tracking-tight">{t("rewardsTitle")}</h2>
             <div className="bg-indigo-50 rounded-xl p-4 flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-indigo-900">{t("soon")}</p>

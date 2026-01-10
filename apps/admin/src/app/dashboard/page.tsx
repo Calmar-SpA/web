@@ -40,19 +40,19 @@ export default async function AdminDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border shadow-sm">
             <h3 className="text-slate-500 text-sm">Ventas Hoy</h3>
-            <p className="text-2xl font-bold italic">$0</p>
+            <p className="text-2xl font-bold">$0</p>
           </div>
           <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border shadow-sm">
             <h3 className="text-slate-500 text-sm">Pedidos Pendientes</h3>
-            <p className="text-2xl font-bold italic">0</p>
+            <p className="text-2xl font-bold">0</p>
           </div>
           <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border shadow-sm">
             <h3 className="text-slate-500 text-sm">Stock Bajo</h3>
-            <p className="text-2xl font-bold italic">0</p>
+            <p className="text-2xl font-bold">0</p>
           </div>
           <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border shadow-sm border-indigo-100 dark:border-indigo-900/30">
             <h3 className="text-slate-500 text-sm">Puntos en Circulación</h3>
-            <p className="text-2xl font-bold italic text-indigo-600">
+            <p className="text-2xl font-bold text-indigo-600">
               {totalPoints.toLocaleString('es-CL')}
             </p>
             <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">Reserva de Lealtad</p>

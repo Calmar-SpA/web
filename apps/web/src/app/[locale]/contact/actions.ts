@@ -26,5 +26,9 @@ export async function submitContactForm(formData: FormData) {
     throw new Error("Failed to submit form");
   }
 
+  // Send confirmation email to the user
+  const { sendContactConfirmation } = await import("@/lib/mail");
+  await sendContactConfirmation(name, email, subject, message);
+
   return { success: true };
 }

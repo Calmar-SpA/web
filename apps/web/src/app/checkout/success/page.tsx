@@ -24,7 +24,7 @@ function CheckoutSuccessContent() {
       </div>
 
       <div className="space-y-4">
-        <h1 className="text-4xl font-black italic tracking-tighter uppercase">¡Gracias por tu compra!</h1>
+        <h1 className="text-4xl font-black tracking-tighter uppercase">¡Gracias por tu compra!</h1>
         <p className="text-slate-500 text-lg">
           Hemos recibido tu pedido correctamente. Te enviaremos un correo con los detalles del despacho a la brevedad.
         </p>
@@ -38,7 +38,7 @@ function CheckoutSuccessContent() {
 
       <div className="flex flex-col sm:flex-row gap-4 w-full">
         <Link href="/shop" className="flex-1">
-          <Button className="w-full h-14 bg-slate-900 hover:bg-calmar-ocean text-white font-black italic shadow-lg shadow-slate-900/10">
+          <Button className="w-full h-14 bg-slate-900 hover:bg-calmar-ocean text-white font-black shadow-lg shadow-slate-900/10">
             SEGUIR COMPRANDO
           </Button>
         </Link>

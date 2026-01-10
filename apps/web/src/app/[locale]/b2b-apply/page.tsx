@@ -46,7 +46,7 @@ export default function B2BApplyPage() {
         <div className="bg-emerald-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle2 className="h-10 w-10 text-emerald-600" />
         </div>
-        <h1 className="text-3xl font-black italic uppercase tracking-tight mb-4">Postulación Recibida</h1>
+        <h1 className="text-3xl font-black uppercase tracking-tight mb-4">Postulación Recibida</h1>
         <p className="text-slate-600 text-lg mb-8">
           Hemos recibido los datos de **{formData.company_name}**. Nuestro equipo revisará la información y te contactaremos en un plazo de 24-48 horas hábiles.
         </p>
@@ -61,7 +61,7 @@ export default function B2BApplyPage() {
     <div className="max-w-7xl mx-auto py-12 px-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div>
-          <h1 className="text-5xl font-black italic italic-bold tracking-tighter uppercase mb-6 leading-tight">
+          <h1 className="text-5xl font-black tracking-tighter uppercase mb-6 leading-tight">
             POTENCIA TU NEGOCIO CON <span className="text-calmar-ocean">CALMAR B2B</span>
           </h1>
           <p className="text-xl text-slate-600 mb-8 leading-relaxed">
@@ -87,7 +87,7 @@ export default function B2BApplyPage() {
 
         <Card className="border-none shadow-2xl bg-white">
           <CardHeader className="bg-slate-900 text-white rounded-t-xl py-8">
-            <CardTitle className="text-2xl italic uppercase text-center tracking-tight">Formulario de Postulación</CardTitle>
+            <CardTitle className="text-2xl uppercase text-center tracking-tight">Formulario de Postulación</CardTitle>
           </CardHeader>
           <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -166,7 +166,7 @@ export default function B2BApplyPage() {
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="w-full bg-slate-900 hover:bg-calmar-ocean text-white h-14 text-lg font-black italic uppercase mt-6 shadow-xl"
+                className="w-full bg-slate-900 hover:bg-calmar-ocean text-white h-14 text-lg font-black uppercase mt-6 shadow-xl"
               >
                 {isSubmitting ? 'ENVIANDO...' : 'POSTULAR AHORA'}
               </Button>

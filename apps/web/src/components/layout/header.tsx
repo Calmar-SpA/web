@@ -11,6 +11,8 @@ const CartDrawer = dynamic(() => import("../checkout/cart-drawer").then(mod => m
   loading: () => <div className="w-10 h-10 border border-slate-100 rounded-lg animate-pulse" />
 })
 
+import Image from "next/image"
+
 export function Header() {
   const pathname = usePathname()
   const t = useTranslations("Navigation")
@@ -22,13 +24,18 @@ export function Header() {
   ]
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-calmar-ocean/10 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full border-b border-primary/10 bg-background/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl font-black italic tracking-tighter bg-calmar-gradient bg-clip-text text-transparent">
-            CALMAR
-          </span>
+        <Link href="/" className="flex items-center">
+          <Image 
+            src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.png" 
+            alt="CALMAR" 
+            width={120} 
+            height={40} 
+            className="h-10 w-auto object-contain"
+            priority
+          />
         </Link>
 
         {/* Desktop Navigation */}
@@ -37,8 +44,8 @@ export function Header() {
             <Link 
               key={link.href} 
               href={link.href}
-              className={`text-xs font-bold tracking-widest transition-colors hover:text-calmar-ocean ${
-                pathname === link.href ? "text-calmar-ocean" : "text-slate-600"
+              className={`text-xs font-bold tracking-widest transition-colors hover:text-primary ${
+                pathname === link.href ? "text-primary" : "text-foreground/80"
               }`}
             >
               {link.name}
@@ -51,7 +58,7 @@ export function Header() {
           <LanguageSwitcher />
           
           <Link href="/account" className="hidden sm:block">
-            <Button variant="ghost" className="text-xs font-bold tracking-widest hover:text-calmar-ocean">
+            <Button variant="ghost" className="text-xs font-bold tracking-widest hover:text-primary">
               {t("account").toUpperCase()}
             </Button>
           </Link>

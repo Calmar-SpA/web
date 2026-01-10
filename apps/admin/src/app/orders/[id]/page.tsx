@@ -80,14 +80,14 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black italic tracking-tighter uppercase">Pedido #{order.id.slice(0, 8)}</h1>
+          <h1 className="text-4xl font-black tracking-tighter uppercase">Pedido #{order.id.slice(0, 8)}</h1>
           <p className="text-slate-500 text-sm mt-1">
             Cliente: <span className="font-bold text-slate-900">{order.customer_name}</span> • {new Date(order.created_at).toLocaleString('es-CL')}
           </p>
         </div>
         <div className="text-right">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">Total Pedido</p>
-          <p className="text-3xl font-black italic text-calmar-ocean">
+          <p className="text-3xl font-black text-calmar-ocean">
             ${order.total_amount.toLocaleString('es-CL')}
           </p>
         </div>
@@ -97,7 +97,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         <div className="lg:col-span-8 space-y-6">
           <Card>
             <CardHeader className="border-b">
-              <CardTitle className="text-lg italic uppercase tracking-tight flex items-center gap-2">
+              <CardTitle className="text-lg uppercase tracking-tight flex items-center gap-2">
                 <Package className="w-5 h-5 text-calmar-ocean" />
                 Lineas de Pedido
               </CardTitle>
@@ -118,7 +118,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                         <h4 className="font-bold">{item.products.name}</h4>
                         <p className="text-xs text-slate-500">Cantidad: {item.quantity} • Unitario: ${item.unit_price.toLocaleString('es-CL')}</p>
                       </div>
-                      <p className="font-black italic text-slate-900">
+                      <p className="font-black text-slate-900">
                         ${(item.unit_price * item.quantity).toLocaleString('es-CL')}
                       </p>
                     </div>
@@ -132,7 +132,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         <div className="lg:col-span-4 space-y-6">
           <Card>
             <CardHeader className="border-b bg-slate-50/50">
-              <CardTitle className="text-sm italic uppercase tracking-tight flex items-center gap-2">
+              <CardTitle className="text-sm uppercase tracking-tight flex items-center gap-2">
                 <Truck className="w-4 h-4 text-calmar-ocean" />
                 Información de Entrega
               </CardTitle>
@@ -151,7 +151,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
           <Card>
             <CardHeader className="border-b bg-slate-50/50">
-              <CardTitle className="text-sm italic uppercase tracking-tight flex items-center gap-2">
+              <CardTitle className="text-sm uppercase tracking-tight flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-calmar-ocean" />
                 Pago & Transacción
               </CardTitle>

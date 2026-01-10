@@ -3,6 +3,7 @@ import { Button } from '@calmar/ui'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@calmar/ui'
 import { Input } from '@calmar/ui'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import Image from 'next/image'
 
 export default async function LoginPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
@@ -16,10 +17,14 @@ export default async function LoginPage({ params }: { params: Promise<{ locale: 
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-calmar-mint/20 blur-[120px] rounded-full -ml-48 -mb-48" />
 
       <Card className="w-full max-w-md backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-calmar-ocean/20 shadow-2xl relative z-10">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold bg-calmar-gradient bg-clip-text text-transparent italic">
-            CALMAR
-          </CardTitle>
+        <CardHeader className="space-y-1 text-center flex flex-col items-center">
+          <Image 
+            src="/logo.png" 
+            alt="CALMAR" 
+            width={180} 
+            height={60} 
+            className="h-16 w-auto object-contain mb-2 dark:invert"
+          />
           <CardDescription className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">
             {t('description')}
           </CardDescription>

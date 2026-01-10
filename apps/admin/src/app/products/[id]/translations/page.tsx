@@ -51,7 +51,7 @@ export default async function ProductTranslationsPage({ params }: { params: { id
 
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-black italic uppercase tracking-tighter">Traducciones</h1>
+          <h1 className="text-3xl font-black uppercase tracking-tighter">Traducciones</h1>
           <p className="text-slate-500 mt-2">Gestionando contenido para: <span className="text-slate-900 font-bold">{product.name}</span></p>
         </div>
       </div>

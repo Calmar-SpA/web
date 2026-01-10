@@ -38,7 +38,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
           <ChevronLeft className="w-4 h-4" /> Volver a mis pedidos
         </Link>
         <div className="flex flex-col md:flex-row md:items-center justify-between mt-4 gap-4">
-          <h1 className="text-4xl font-black italic tracking-tighter uppercase">Pedido #{order.id.slice(0, 8)}</h1>
+          <h1 className="text-4xl font-black tracking-tighter uppercase">Pedido #{order.id.slice(0, 8)}</h1>
           <div className="bg-calmar-ocean text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
             {order.status}
           </div>
@@ -83,7 +83,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
           {/* Items */}
           <Card>
             <CardHeader className="border-b">
-              <CardTitle className="text-lg italic uppercase tracking-tight flex items-center gap-2">
+              <CardTitle className="text-lg uppercase tracking-tight flex items-center gap-2">
                 <Package className="w-5 h-5 text-calmar-ocean" />
                 Productos
               </CardTitle>
@@ -104,7 +104,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
                         <h4 className="font-bold">{item.products.name}</h4>
                         <p className="text-xs text-slate-500">Cantidad: {item.quantity}</p>
                       </div>
-                      <p className="font-black italic text-calmar-ocean">
+                      <p className="font-black text-calmar-ocean">
                         ${(item.unit_price * item.quantity).toLocaleString('es-CL')}
                       </p>
                     </div>
@@ -120,7 +120,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center gap-2 text-calmar-ocean">
                   <MapPin className="w-5 h-5" />
-                  <h3 className="font-bold italic uppercase">Despacho</h3>
+                  <h3 className="font-bold uppercase">Despacho</h3>
                 </div>
                 <div className="text-sm space-y-1">
                   <p className="font-bold">{order.customer_name}</p>
@@ -134,7 +134,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center gap-2 text-calmar-ocean">
                   <CreditCard className="w-5 h-5" />
-                  <h3 className="font-bold italic uppercase">Pago</h3>
+                  <h3 className="font-bold uppercase">Pago</h3>
                 </div>
                 <div className="text-sm space-y-1">
                   <p className="text-slate-500">Método: Flow (Chile)</p>
@@ -152,7 +152,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
         <div className="lg:col-span-4">
           <Card className="bg-slate-900 text-white sticky top-32">
             <CardHeader className="border-b border-white/10">
-              <CardTitle className="text-lg italic uppercase tracking-tight flex items-center gap-2">
+              <CardTitle className="text-lg uppercase tracking-tight flex items-center gap-2">
                 <Receipt className="w-5 h-5 text-calmar-mint" />
                 Resumen
               </CardTitle>
@@ -168,13 +168,13 @@ export default async function OrderDetailPage({ params }: { params: { id: string
                   <span className="font-bold text-calmar-mint">Gratis</span>
                 </div>
               </div>
-              <div className="flex justify-between text-xl uppercase italic">
+              <div className="flex justify-between text-xl uppercase">
                 <span className="font-black">Total</span>
                 <span className="font-black text-calmar-mint">${order.total_amount.toLocaleString('es-CL')}</span>
               </div>
               
               {order.status === 'pending_payment' && (
-                <Button className="w-full bg-calmar-ocean hover:bg-calmar-ocean-dark text-white font-black italic mt-4 h-12">
+                <Button className="w-full bg-calmar-ocean hover:bg-calmar-ocean-dark text-white font-black mt-4 h-12">
                   COMPLETAR PAGO
                 </Button>
               )}

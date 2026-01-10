@@ -36,7 +36,7 @@ export default function ContactPage() {
 
         <div className="max-w-4xl mx-auto px-4 relative z-10 text-center space-y-4">
           <Reveal>
-            <h1 className="text-5xl md:text-7xl font-black italic tracking-tighter text-white leading-[0.8] uppercase">
+            <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white leading-[0.8] uppercase">
               {t("hero.title")}
             </h1>
           </Reveal>
@@ -109,7 +109,7 @@ export default function ContactPage() {
                       <Button 
                         type="submit" 
                         disabled={isSubmitting}
-                        className="w-full h-14 bg-slate-900 hover:bg-calmar-ocean text-white font-black italic text-lg transition-colors"
+                        className="w-full h-14 bg-slate-900 hover:bg-calmar-ocean text-white font-black text-lg transition-colors"
                       >
                         {isSubmitting ? t("form.sending") : t("form.send")}
                         <Send className="ml-2 h-5 w-5" />
@@ -123,7 +123,7 @@ export default function ContactPage() {
             {/* Contact Info */}
             <div className="space-y-8">
               <Reveal>
-                <h2 className="text-2xl font-black italic uppercase tracking-tight">
+                <h2 className="text-2xl font-black uppercase tracking-tight">
                   {t("info.title")}
                 </h2>
               </Reveal>

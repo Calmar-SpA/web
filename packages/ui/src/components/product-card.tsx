@@ -13,6 +13,7 @@ interface ProductCardProps {
     sku: string;
     image_url?: string;
     categories?: Array<{ name: string }>;
+    updated_at?: string;
   };
   // Legacy individual props for backward compatibility
   id?: string;
@@ -30,18 +31,42 @@ export function ProductCard({ product, id, name, price, image, category, classNa
   const productId = product?.id || id || '';
   const productName = product?.name || name || '';
   const productPrice = product?.base_price || price || 0;
-  const productImage = product?.image_url || image;
+  
+  // Handle image URL and cache busting
+  let finalProductImage = product?.image_url || image;
+
+  // Handle relative Supabase paths
+  if (finalProductImage && !finalProductImage.startsWith('http') && !finalProductImage.startsWith('/')) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (supabaseUrl) {
+      finalProductImage = `${supabaseUrl}/storage/v1/object/public/${finalProductImage}`;
+    }
+  }
+
+  // Cache bust Supabase images using updated_at if available
+  if (finalProductImage?.includes('supabase.co')) {
+    const timestamp = product?.updated_at ? new Date(product.updated_at).getTime() : 0;
+    if (timestamp > 0) {
+      finalProductImage = `${finalProductImage}${finalProductImage.includes('?') ? '&' : '?'}v=${timestamp}`;
+    }
+  }
+
   const productCategory = product?.categories?.[0]?.name || category;
 
+
   return (
-    <Card className={cn("group overflow-hidden border-calmar-ocean/10 transition-all hover:shadow-xl hover:-translate-y-1 duration-300", className)}>
+    <Card className={cn("group overflow-hidden border-primary/10 bg-background/50 transition-all hover:shadow-xl hover:-translate-y-1 duration-300", className)}>
       <Link href={`/shop/${product?.sku || productId}`} className="block">
-        <div className="aspect-[4/5] relative overflow-hidden bg-slate-50">
-          {productImage ? (
+        <div 
+          className="relative w-full overflow-hidden bg-secondary/10"
+          style={{ aspectRatio: '4/5' }}
+        >
+          {finalProductImage ? (
             <Image 
-              src={productImage} 
+              src={finalProductImage} 
               alt={productName} 
               fill
+
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
               priority={priority}
               className="object-contain p-4 transition-transform duration-500 group-hover:scale-110"
@@ -53,17 +78,17 @@ export function ProductCard({ product, id, name, price, image, category, classNa
           )}
           {productCategory && (
             <div className="absolute top-4 left-4">
-              <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-widest bg-white/90 backdrop-blur-sm text-calmar-ocean rounded-sm border border-calmar-ocean/20">
+              <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-widest bg-background/90 backdrop-blur-sm text-primary rounded-sm border border-primary/20">
                 {productCategory}
               </span>
             </div>
           )}
         </div>
         <CardContent className="p-4 space-y-1">
-          <h3 className="font-bold text-slate-900 group-hover:text-calmar-ocean transition-colors">
+          <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">
             {productName}
           </h3>
-          <p className="text-xl font-black italic bg-calmar-gradient bg-clip-text text-transparent">
+          <p className="text-xl font-black bg-calmar-gradient bg-clip-text text-transparent">
             ${productPrice.toLocaleString('es-CL')}
           </p>
         </CardContent>
@@ -71,7 +96,7 @@ export function ProductCard({ product, id, name, price, image, category, classNa
       <CardFooter className="p-4 pt-0">
         <Button 
           onClick={onAdd}
-          className="w-full bg-slate-900 hover:bg-calmar-ocean text-white font-bold transition-colors"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-colors"
         >
           AGREGAR AL CARRO
         </Button>

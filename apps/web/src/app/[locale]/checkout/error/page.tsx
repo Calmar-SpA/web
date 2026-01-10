@@ -17,7 +17,7 @@ function CheckoutErrorContent() {
       </div>
 
       <div className="space-y-4">
-        <h1 className="text-4xl font-black italic tracking-tighter uppercase text-slate-900">Algo salió mal</h1>
+        <h1 className="text-4xl font-black tracking-tighter uppercase text-slate-900">Algo salió mal</h1>
         <p className="text-slate-500 text-lg">
           No pudimos procesar tu pago o la transacción fue cancelada. No te hemos realizado ningún cobro.
         </p>
@@ -28,7 +28,7 @@ function CheckoutErrorContent() {
 
       <div className="flex flex-col sm:flex-row gap-4 w-full">
         <Link href="/checkout" className="flex-1">
-          <Button className="w-full h-14 bg-slate-900 hover:bg-calmar-ocean text-white font-black italic shadow-lg shadow-slate-900/10">
+          <Button className="w-full h-14 bg-slate-900 hover:bg-calmar-ocean text-white font-black shadow-lg shadow-slate-900/10">
             REINTENTAR PAGO
           </Button>
         </Link>

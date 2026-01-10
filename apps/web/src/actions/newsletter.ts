@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendNewsletterConfirmation } from '@/lib/mail'
 
 export async function subscribeToNewsletter(prevState: any, formData: FormData) {
   const email = formData.get('email') as string
@@ -31,6 +32,10 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
     }
 
     revalidatePath('/')
+    
+    // Send confirmation email
+    await sendNewsletterConfirmation(email)
+    
     return { success: true, message: 'subscribed' }
   } catch (error: any) {
     console.error('Newsletter Exception:', error)

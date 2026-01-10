@@ -16,7 +16,7 @@ export default async function AdminB2BPage() {
     <div className="p-8 space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-black italic uppercase tracking-tight">Gestión B2B</h1>
+          <h1 className="text-3xl font-black uppercase tracking-tight">Gestión B2B</h1>
           <p className="text-slate-500">Administra solicitudes de empresas y límites de crédito.</p>
         </div>
       </div>
@@ -52,12 +52,12 @@ export default async function AdminB2BPage() {
 
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Descuento</p>
-                  <p className="text-2xl font-black italic text-calmar-ocean">{client.discount_percentage}%</p>
+                  <p className="text-2xl font-black text-calmar-ocean">{client.discount_percentage}%</p>
                 </div>
 
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Línea de Crédito</p>
-                  <p className="text-2xl font-black italic text-slate-900">${Number(client.credit_limit).toLocaleString('es-CL')}</p>
+                  <p className="text-2xl font-black text-slate-900">${Number(client.credit_limit).toLocaleString('es-CL')}</p>
                 </div>
               </div>
 
@@ -81,7 +81,7 @@ export default async function AdminB2BPage() {
         {(!clients || clients.length === 0) && (
           <div className="py-20 text-center border-2 border-dashed border-slate-200 rounded-2xl">
             <Building2 className="h-12 w-12 text-slate-200 mx-auto mb-4" />
-            <p className="text-slate-500 font-bold italic uppercase tracking-tighter">No hay solicitudes B2B</p>
+            <p className="text-slate-500 font-bold uppercase tracking-tighter">No hay solicitudes B2B</p>
           </div>
         )}
       </div>

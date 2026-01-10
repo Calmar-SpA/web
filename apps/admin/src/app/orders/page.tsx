@@ -20,7 +20,7 @@ export default async function AdminOrdersPage() {
     <div className="p-8 space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black italic tracking-tighter uppercase">Gestión de Pedidos</h1>
+          <h1 className="text-3xl font-black tracking-tighter uppercase">Gestión de Pedidos</h1>
           <p className="text-slate-500 text-sm">Administra y procesa las ventas de Calmar.</p>
         </div>
         <div className="flex gap-2">
@@ -60,7 +60,7 @@ export default async function AdminOrdersPage() {
                       <p className="font-bold">{order.customer_name}</p>
                       <p className="text-[10px] text-slate-400">{order.customer_email}</p>
                     </td>
-                    <td className="px-6 py-4 font-black italic">
+                    <td className="px-6 py-4 font-black">
                       ${order.total_amount.toLocaleString('es-CL')}
                     </td>
                     <td className="px-6 py-4">

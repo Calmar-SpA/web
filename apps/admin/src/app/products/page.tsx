@@ -26,7 +26,7 @@ export default async function ProductsPage() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold italic tracking-tight">PRODUCTOS</h1>
+          <h1 className="text-3xl font-bold tracking-tight">PRODUCTOS</h1>
           <p className="text-slate-500">Gestiona tu catálogo e inventario</p>
         </div>
         <Link href="/products/new">
@@ -57,7 +57,7 @@ export default async function ProductsPage() {
               <tbody className="divide-y">
                 {products.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400 italic">
+                    <td colSpan={6} className="py-8 text-center text-slate-400">
                       No hay productos registrados
                     </td>
                   </tr>

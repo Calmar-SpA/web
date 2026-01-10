@@ -36,7 +36,7 @@ export default async function OrdersPage({ params }: { params: Promise<{ locale:
     <div className="max-w-4xl mx-auto py-12 px-4">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-black italic tracking-tighter uppercase">{t("title")}</h1>
+          <h1 className="text-3xl font-black tracking-tighter uppercase">{t("title")}</h1>
           <p className="text-slate-500 text-sm">{t("subtitle")}</p>
         </div>
         <Link href="/shop">
@@ -58,7 +58,7 @@ export default async function OrdersPage({ params }: { params: Promise<{ locale:
                 <p className="text-sm text-slate-500">{t("empty.description")}</p>
               </div>
               <Link href="/shop">
-                <Button className="bg-slate-900 hover:bg-calmar-ocean text-white font-black italic">
+                <Button className="bg-slate-900 hover:bg-calmar-ocean text-white font-black">
                   {t("empty.button")}
                 </Button>
               </Link>
@@ -80,7 +80,7 @@ export default async function OrdersPage({ params }: { params: Promise<{ locale:
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-black italic text-lg uppercase">{t("orderNumber", { number: order.id.slice(0, 8) })}</p>
+                          <p className="font-black text-lg uppercase">{t("orderNumber", { number: order.id.slice(0, 8) })}</p>
                           <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${statusConfig.color}`}>
                             {statusLabel}
                           </span>
@@ -101,7 +101,7 @@ export default async function OrdersPage({ params }: { params: Promise<{ locale:
                     <div className="flex items-center justify-between md:justify-end gap-8">
                       <div className="text-right">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t("total")}</p>
-                        <p className="font-black italic text-xl text-calmar-ocean">
+                        <p className="font-black text-xl text-calmar-ocean">
                           ${order.total_amount.toLocaleString('es-CL')}
                         </p>
                       </div>

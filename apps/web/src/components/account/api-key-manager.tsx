@@ -48,7 +48,7 @@ export function ApiKeyManager({ clientId, existingKeys }: ApiKeyManagerProps) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-bold italic uppercase tracking-tight">{t("title")}</h2>
+        <h2 className="text-lg font-bold uppercase tracking-tight">{t("title")}</h2>
         {!revealedKey && (
           <div className="flex gap-2">
             <Input 

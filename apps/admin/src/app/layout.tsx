@@ -4,6 +4,7 @@ import "./globals.css";
 import Link from "next/link";
 import { Package, ShoppingCart, LayoutDashboard, LogOut } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
+import Image from "next/image";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +32,13 @@ export default function RootLayout({
         {/* Sidebar */}
         <aside className="w-64 bg-slate-900 text-white flex flex-col sticky top-0 h-screen hidden md:flex">
           <div className="p-8">
-            <span className="text-2xl font-black italic tracking-tighter text-calmar-ocean">CALMAR</span>
+            <Image 
+              src="/logo.png" 
+              alt="CALMAR" 
+              width={140} 
+              height={40} 
+              className="h-10 w-auto object-contain invert"
+            />
             <p className="text-[10px] font-bold text-slate-500 tracking-[0.2em] uppercase mt-1">Admin Panel</p>
           </div>
           

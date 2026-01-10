@@ -7,7 +7,7 @@ import { Metadata } from 'next'
 import { locales } from '@/i18n/config'
 import Image from 'next/image'
 
-export const revalidate = 3600 // Revalidate potentially once per hour
+export const revalidate = 60 // Revalidate once per minute
 
 type Props = {
   params: Promise<{ slug: string; locale: string }>
@@ -76,13 +76,18 @@ export default async function ProductDetailPage({ params }: Props) {
 
   if (!product) return notFound()
 
+  const productImage = product.image_url?.includes('supabase.co') 
+    ? `${product.image_url}${product.image_url.includes('?') ? '&' : '?'}v=${Date.now()}` 
+    : (product.image_url || "/placeholder.png");
+
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto py-12 px-4 grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Product Image */}
         <div className="bg-slate-50 rounded-3xl p-12 flex items-center justify-center">
           <Image 
-            src={product.image_url || "/placeholder.png"}
+            src={productImage}
+
             alt={product.name}
             width={600}
             height={600}
@@ -95,8 +100,8 @@ export default async function ProductDetailPage({ params }: Props) {
         <div className="space-y-8 flex flex-col justify-center">
           <div className="space-y-2">
             <span className="text-calmar-ocean font-bold tracking-widest uppercase text-xs">Agua de Mar + Vertiente</span>
-            <h1 className="text-5xl font-black italic tracking-tighter text-slate-900">{product.name}</h1>
-            <p className="text-3xl font-black bg-calmar-gradient bg-clip-text text-transparent italic">
+            <h1 className="text-5xl font-black tracking-tighter text-slate-900">{product.name}</h1>
+            <p className="text-3xl font-black bg-calmar-gradient bg-clip-text text-transparent">
               ${product.base_price.toLocaleString('es-CL')}
             </p>
           </div>

@@ -15,6 +15,21 @@ export async function GET(request: Request) {
     }
   }
 
+  // Handle email verification (token_hash and type)
+  const token_hash = searchParams.get('token_hash')
+  const type = searchParams.get('type') as any
+  
+  if (token_hash && type) {
+    const supabase = await createClient()
+    const { error } = await supabase.auth.verifyOtp({
+      type,
+      token_hash,
+    })
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`)
+    }
+  }
+
   // return the user to an error page with instructions
   return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
 }

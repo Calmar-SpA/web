@@ -32,7 +32,7 @@ export function AddToCart({ product }: AddToCartProps) {
         >
           <Minus className="w-4 h-4" />
         </button>
-        <div className="px-6 font-black italic text-lg border-x border-slate-100 min-w-[60px] text-center">
+        <div className="px-6 font-black text-lg border-x border-slate-100 min-w-[60px] text-center">
           {quantity}
         </div>
         <button 
@@ -46,7 +46,7 @@ export function AddToCart({ product }: AddToCartProps) {
       
       <Button 
         onClick={handleAddToCart}
-        className="flex-1 h-14 bg-slate-900 hover:bg-calmar-ocean text-white text-lg font-black italic transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98]"
+        className="flex-1 h-14 bg-slate-900 hover:bg-calmar-ocean text-white text-lg font-black transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98]"
       >
         AÑADIR AL CARRO
       </Button>

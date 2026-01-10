@@ -7,7 +7,7 @@ export class ProductService {
   async getProducts(options: { activeOnly?: boolean; featuredOnly?: boolean; locale?: string } = {}) {
     let query = this.supabase
       .from('products')
-      .select('*, product_variants(*), inventory(*), categories:product_categories(category:categories(*))')
+      .select('*, product_variants(*), inventory(*), product_categories(categories(*))')
 
     if (options.activeOnly) {
       query = query.eq('is_active', true)
@@ -18,7 +18,17 @@ export class ProductService {
     }
 
     const { data, error } = await query
-    if (error) throw error
+    if (error) {
+      console.error('Error in getProducts query:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
+      throw error
+    }
+    
+    if (!data) return []
     
     const products = data as any[]
     return products.map(p => this.mapProduct(p, options.locale || 'es'))
@@ -27,7 +37,7 @@ export class ProductService {
   async getProductBySku(sku: string, locale?: string) {
     const { data, error } = await this.supabase
       .from('products')
-      .select('*, product_variants(*), inventory(*), categories:product_categories(category:categories(*))')
+      .select('*, product_variants(*), inventory(*), product_categories(categories(*))')
       .eq('sku', sku)
       .single()
 
@@ -37,9 +47,9 @@ export class ProductService {
 
   private mapProduct(product: any, locale: string): ProductWithDetails {
     // Flatten categories from junction table
-    const categories = product.categories?.map((pc: any) => pc.category).filter(Boolean) || [];
+    const categories = product.product_categories?.map((pc: any) => pc.categories).filter(Boolean) || [];
     
-    // Flatten inventory if it was fetched as an array (sometimes Supabase returns it as a single object if there's a unique constraint, but select(*) often returns array)
+    // Flatten inventory if it was fetched as an array
     const inventory = Array.isArray(product.inventory) ? product.inventory : (product.inventory ? [product.inventory] : []);
 
     const translation = product.translations?.[locale]
@@ -48,6 +58,7 @@ export class ProductService {
       ...product,
       categories,
       inventory,
+      variants: product.product_variants || [],
       name: translation?.name || product.name,
       description: translation?.description || product.description,
       short_description: translation?.short_description || product.short_description,
