@@ -1,11 +1,12 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/navigation";
-import { Button, ProductCard } from "@calmar/ui";
+import { Button } from "@calmar/ui";
 import { Waves, Zap, ArrowRight, Heart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ProductService } from "@calmar/database";
 import { Reveal } from "@/components/ui/reveal";
 import Image from "next/image";
+import { ProductCardWithCart } from "@/components/product/product-card-with-cart";
 
 export const revalidate = 60;
 
@@ -155,7 +156,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               {featuredProducts.map((product, index) => (
                 <Reveal key={product.id} delay={index * 0.1}>
                   <div className="hover:-translate-y-2 transition-transform duration-500">
-                    <ProductCard product={product} />
+                    <ProductCardWithCart product={product} priority={index === 0} />
                   </div>
                 </Reveal>
               ))}

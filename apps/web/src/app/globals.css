@@ -21,6 +21,9 @@
 
   --font-sans: var(--font-montserrat);
   --font-decorative: var(--font-montserrat);
+
+  /* Gradients */
+  --background-image-calmar-gradient: linear-gradient(135deg, #1d504b 0%, #62a49e 100%);
 }
 
 :root {
