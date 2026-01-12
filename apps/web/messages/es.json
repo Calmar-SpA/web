@@ -63,6 +63,7 @@
       "creditAvailable": "Disponible: ${amount}"
     },
     "summary": {
+      "title": "Resumen de Compra",
       "subtotal": "Subtotal",
       "shipping": "Envío",
       "free": "Gratis",

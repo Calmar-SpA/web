@@ -10,7 +10,17 @@ import Image from "next/image"
 import { createOrderAndInitiatePayment } from "./actions"
 import { toast } from "sonner"
 import { PointsRedemption } from "@/components/checkout/points-redemption"
+import { ShippingOptions } from "@/components/checkout/shipping-options"
+import { AddressSelector } from "@/components/checkout/address-selector"
 import { useTranslations } from "next-intl"
+
+interface ShippingOption {
+  code: string
+  name: string
+  price: number
+  finalWeight: string
+  estimatedDays?: string
+}
 
 interface CheckoutFormProps {
   user: any
@@ -35,6 +45,15 @@ export function CheckoutForm({ user, b2bClient, initialNewsletterDiscount }: Che
 
   const [pointsToRedeem, setPointsToRedeem] = useState(0)
   const [newsletterDiscountPercent, setNewsletterDiscountPercent] = useState<number | null>(initialNewsletterDiscount || null)
+  const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null)
+  const [comunaCode, setComunaCode] = useState("") // Starken comuna code
+  const [cityCode, setCityCode] = useState("") // Starken city code for quotes
+
+  // Calculate total cart weight in kg (from weight_grams)
+  const cartWeightKg = items.reduce((sum, item) => {
+    const weightGrams = item.product.weight_grams || 500 // Default 500g if not set
+    return sum + (weightGrams * item.quantity) / 1000
+  }, 0)
 
   const checkDiscountForEmail = async (email: string) => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -83,6 +102,9 @@ export function CheckoutForm({ user, b2bClient, initialNewsletterDiscount }: Che
         customerInfo: formData,
         pointsToRedeem,
         paymentMethod,
+        shippingCost: selectedShipping?.price || 0,
+        shippingServiceCode: selectedShipping?.code?.toString(),
+        shippingServiceName: selectedShipping?.name,
       })
     } catch (error: any) {
       console.error(error)
@@ -100,8 +122,9 @@ export function CheckoutForm({ user, b2bClient, initialNewsletterDiscount }: Che
     ? Math.floor((total - b2bDiscount) * (newsletterDiscountPercent / 100))
     : 0
 
+  const shippingCost = selectedShipping?.price || 0
   const subtotalAfterDiscounts = total - b2bDiscount - appliedNewsletterDiscount
-  const finalTotal = subtotalAfterDiscounts - pointsToRedeem
+  const finalTotal = subtotalAfterDiscounts - pointsToRedeem + shippingCost
 
   if (items.length === 0) {
     return (
@@ -154,14 +177,38 @@ export function CheckoutForm({ user, b2bClient, initialNewsletterDiscount }: Che
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{t("shipping.address")}</label>
                 <Input name="address" value={formData.address} onChange={handleInputChange} placeholder={t("shipping.addressPlaceholder")} required />
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{t("shipping.comuna")}</label>
-                <Input name="comuna" value={formData.comuna} onChange={handleInputChange} required />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{t("shipping.region")}</label>
-                <Input name="region" value={formData.region} onChange={handleInputChange} required />
-              </div>
+              
+              {/* Region and Comuna Selectors */}
+              <AddressSelector
+                selectedRegion={formData.region}
+                selectedComuna={formData.comuna}
+                selectedComunaCode={comunaCode}
+                onRegionChange={(regionId, regionName) => {
+                  setFormData(prev => ({ ...prev, region: regionName }))
+                  setComunaCode("") // Reset comuna when region changes
+                  setCityCode("") // Reset city code
+                  setSelectedShipping(null) // Reset shipping
+                }}
+                onComunaChange={(comunaName, code, starkenCityCode) => {
+                  setFormData(prev => ({ ...prev, comuna: comunaName }))
+                  setComunaCode(code)
+                  setCityCode(starkenCityCode) // Store city code for Starken quote API
+                  setSelectedShipping(null) // Reset shipping when comuna changes
+                }}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            {/* Shipping Options - shows when comuna is selected */}
+            <div className="mt-6">
+              <ShippingOptions
+                cityCode={cityCode}
+                weightKg={cartWeightKg}
+                declaredValue={total}
+                selectedOption={selectedShipping}
+                onSelectOption={setSelectedShipping}
+                disabled={isSubmitting}
+              />
             </div>
           </section>
 
@@ -276,7 +323,12 @@ export function CheckoutForm({ user, b2bClient, initialNewsletterDiscount }: Che
 
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500 font-medium">{t("summary.shipping")}</span>
-                  <span className="font-bold text-slate-900">{t("summary.free")}</span>
+                  <span className="font-bold text-slate-900">
+                    {shippingCost > 0 
+                      ? `$${shippingCost.toLocaleString('es-CL')}` 
+                      : formData.comuna ? 'Calculando...' : 'Ingresa tu comuna'
+                    }
+                  </span>
                 </div>
 
                 <div className="flex justify-between text-2xl pt-4 border-t border-slate-900 uppercase">

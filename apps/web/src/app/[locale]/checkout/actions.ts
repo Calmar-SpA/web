@@ -17,6 +17,9 @@ interface CheckoutData {
   total: number;
   pointsToRedeem?: number;
   paymentMethod?: 'flow' | 'credit';
+  shippingCost?: number;
+  shippingServiceCode?: string;
+  shippingServiceName?: string;
 }
 
 export async function checkNewsletterDiscount(email: string) {
@@ -113,8 +116,8 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
   // For now, set tax to 0 (you can calculate IVA if needed: subtotal * 0.19)
   const taxAmount = 0
   
-  // Set shipping cost (you may want to make this configurable)
-  const shippingCost = 0
+  // Use shipping cost from Chilexpress quote
+  const shippingCost = data.shippingCost || 0
   
   const { data: order, error: orderError } = await supabase
     .from('orders')
@@ -126,7 +129,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
       tax_amount: taxAmount,
       shipping_cost: shippingCost,
       discount_amount: b2bDiscount + newsletterDiscountAmount,
-      total_amount: finalAmount,
+      total_amount: finalAmount + shippingCost,
       status: data.paymentMethod === 'credit' ? 'paid' : 'pending_payment',
       shipping_address: {
         name: data.customerInfo.name,
