@@ -14,11 +14,13 @@ interface ProductCardProps {
     image_url?: string;
     categories?: Array<{ name: string }>;
     updated_at?: string;
+    discount_percentage?: number;
   };
   // Legacy individual props for backward compatibility
   id?: string;
   name?: string;
   price?: number;
+  discount_percentage?: number;
   image?: string;
   category?: string;
   className?: string;
@@ -26,12 +28,17 @@ interface ProductCardProps {
   priority?: boolean;
 }
 
-export function ProductCard({ product, id, name, price, image, category, className, onAdd, priority }: ProductCardProps) {
+export function ProductCard({ product, id, name, price, discount_percentage, image, category, className, onAdd, priority }: ProductCardProps) {
   // Use product object if provided, otherwise fall back to individual props
   const productId = product?.id || id || '';
   const productName = product?.name || name || '';
   const productPrice = product?.base_price || price || 0;
+  const productDiscount = product?.discount_percentage || discount_percentage || 0;
   
+  const discountedPrice = productDiscount > 0 
+    ? Math.floor(productPrice * (1 - productDiscount / 100))
+    : productPrice;
+
   // Handle image URL and cache busting
   let finalProductImage = product?.image_url || image;
 
@@ -88,9 +95,16 @@ export function ProductCard({ product, id, name, price, image, category, classNa
           <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">
             {productName}
           </h3>
-          <p className="text-xl font-black bg-calmar-gradient bg-clip-text text-transparent">
-            ${productPrice.toLocaleString('es-CL')}
-          </p>
+          <div className="flex flex-col">
+            {productDiscount > 0 && (
+              <span className="text-xs text-slate-400 line-through decoration-red-400 font-bold">
+                ${productPrice.toLocaleString('es-CL')}
+              </span>
+            )}
+            <p className="text-xl font-black bg-calmar-gradient bg-clip-text text-transparent">
+              ${discountedPrice.toLocaleString('es-CL')}
+            </p>
+          </div>
         </CardContent>
       </Link>
       <CardFooter className="p-4 pt-0">

@@ -7,15 +7,18 @@ import { Loader2, CheckCircle, AlertCircle, Mail } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
+import { useCart } from '@/hooks/use-cart'
 
 export function NewsletterForm() {
   const t = useTranslations('Footer.newsletter')
+  const { setNewsletterDiscount } = useCart()
   const [state, formAction, isPending] = useActionState(subscribeToNewsletter, { success: false, message: '' })
   const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
     if (state.message === 'subscribed') {
       toast.success(t('success'))
+      setNewsletterDiscount(10) // Set 10% discount immediately on success
       formRef.current?.reset()
     } else if (state.message === 'already_subscribed') {
       toast.info(t('alreadySubscribed'))

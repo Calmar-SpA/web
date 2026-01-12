@@ -7,6 +7,7 @@ import { ProductService } from "@calmar/database";
 import { Reveal } from "@/components/ui/reveal";
 import Image from "next/image";
 import { ProductCardWithCart } from "@/components/product/product-card-with-cart";
+import { DiscountInitializer } from "@/components/product/discount-initializer";
 
 export const revalidate = 60;
 
@@ -19,6 +20,13 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const supabase = await createClient();
   const productService = new ProductService(supabase);
   
+  const { data: { user } } = await supabase.auth.getUser();
+  console.log('[Home] User from auth:', user?.email || 'NOT LOGGED IN')
+  
+  const { checkNewsletterDiscount } = await import("./checkout/actions");
+  const newsletterDiscount = user ? await checkNewsletterDiscount(user.email!) : null;
+  console.log('[Home] Newsletter discount result:', newsletterDiscount)
+
   let featuredProducts: any[] = [];
   try {
     featuredProducts = await productService.getProducts({ featuredOnly: true, locale, activeOnly: true });
@@ -34,6 +42,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
   return (
     <main className="flex-1 overflow-x-hidden">
+      <DiscountInitializer discount={newsletterDiscount} />
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-background">
         {/* Animated Background Elements */}
@@ -156,7 +165,11 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               {featuredProducts.map((product, index) => (
                 <Reveal key={product.id} delay={index * 0.1}>
                   <div className="hover:-translate-y-2 transition-transform duration-500">
-                    <ProductCardWithCart product={product} priority={index === 0} />
+                    <ProductCardWithCart 
+                      product={product} 
+                      priority={index === 0} 
+                      discountPercentage={newsletterDiscount}
+                    />
                   </div>
                 </Reveal>
               ))}

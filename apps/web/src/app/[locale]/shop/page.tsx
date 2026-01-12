@@ -11,9 +11,17 @@ export default async function ShopPage({ params }: { params: Promise<{ locale: s
   setRequestLocale(locale)
   
   const t = await getTranslations('Shop')
-  const supabase = await createClient(true)
+  const supabase = await createClient(true)  // Static client for products (cacheable)
+  const authSupabase = await createClient()  // Auth client for user detection
   const productService = new ProductService(supabase)
   
+  const { data: { user } } = await authSupabase.auth.getUser()
+  console.log('[Shop] User from auth:', user?.email || 'NOT LOGGED IN')
+  
+  const { checkNewsletterDiscount } = await import("../checkout/actions")
+  const newsletterDiscount = user ? await checkNewsletterDiscount(user.email!) : null
+  console.log('[Shop] Newsletter discount result:', newsletterDiscount)
+
   let products: ProductWithDetails[] = []
   let categories: any[] = []
   try {
@@ -64,11 +72,13 @@ export default async function ShopPage({ params }: { params: Promise<{ locale: s
             <p className="text-slate-400">{t('noProducts')}</p>
           </div>
         ) : (
-          <ProductList products={products} />
+          <ProductList products={products} discount={newsletterDiscount} />
         )}
       </section>
+      <DiscountInitializer discount={newsletterDiscount} />
     </main>
   )
 }
 
 import { ProductList } from "./product-list"
+import { DiscountInitializer } from '@/components/product/discount-initializer'

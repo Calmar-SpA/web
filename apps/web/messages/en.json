@@ -63,14 +63,14 @@
       "creditAvailable": "Available: ${amount}"
     },
     "summary": {
-      "title": "Order Summary",
-      "quantity": "Quantity: {qty}",
       "subtotal": "Subtotal",
-      "b2bDiscount": "B2B Discount ({percent}%)",
-      "calmarPoints": "Calmar Points",
       "shipping": "Shipping",
-      "free": "FREE",
-      "total": "Total"
+      "free": "Free",
+      "total": "Total",
+      "b2bDiscount": "B2B Discount ({percent}%)",
+      "newsletterDiscount": "Newsletter Discount ({percent}%)",
+      "calmarPoints": "Calmar Points",
+      "quantity": "{qty} units"
     },
     "buttons": {
       "processing": "PROCESSING...",

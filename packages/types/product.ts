@@ -28,6 +28,7 @@ export interface Product {
   meta_title?: string;
   meta_description?: string;
   image_url?: string;
+  discount_percentage?: number;
   translations?: Record<string, {
     name?: string;
     description?: string;

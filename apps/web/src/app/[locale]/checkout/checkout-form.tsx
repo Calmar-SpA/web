@@ -15,9 +15,10 @@ import { useTranslations } from "next-intl"
 interface CheckoutFormProps {
   user: any
   b2bClient: any
+  initialNewsletterDiscount?: number | null
 }
 
-export function CheckoutForm({ user, b2bClient }: CheckoutFormProps) {
+export function CheckoutForm({ user, b2bClient, initialNewsletterDiscount }: CheckoutFormProps) {
   const t = useTranslations("Checkout")
   const { items, total, itemCount } = useCart()
   const [isMounted, setIsMounted] = useState(false)
@@ -33,16 +34,38 @@ export function CheckoutForm({ user, b2bClient }: CheckoutFormProps) {
   })
 
   const [pointsToRedeem, setPointsToRedeem] = useState(0)
+  const [newsletterDiscountPercent, setNewsletterDiscountPercent] = useState<number | null>(initialNewsletterDiscount || null)
+
+  const checkDiscountForEmail = async (email: string) => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setNewsletterDiscountPercent(null)
+      return
+    }
+    
+    try {
+      const { checkNewsletterDiscount } = await import("./actions")
+      const discount = await checkNewsletterDiscount(email)
+      setNewsletterDiscountPercent(discount)
+    } catch (error) {
+      console.error("Error checking discount:", error)
+      setNewsletterDiscountPercent(null)
+    }
+  }
 
   useEffect(() => {
     setIsMounted(true)
-  }, [])
-
-  if (!isMounted) return null
+    if (user?.email) {
+      checkDiscountForEmail(user.email)
+    }
+  }, [user?.email])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+    
+    if (name === 'email') {
+      checkDiscountForEmail(value)
+    }
   }
 
   const handleRedeem = (points: number) => {
@@ -68,13 +91,17 @@ export function CheckoutForm({ user, b2bClient }: CheckoutFormProps) {
     }
   }
 
-  // Calculate B2B Discount
   const b2bDiscount = (b2bClient?.is_active && b2bClient.discount_percentage > 0) 
     ? Math.floor(total * (b2bClient.discount_percentage / 100))
     : 0
   
-  const subtotalAfterB2B = total - b2bDiscount
-  const finalTotal = subtotalAfterB2B - pointsToRedeem
+  // Newsletter Discount (Only if NO B2B discount was applied)
+  const appliedNewsletterDiscount = (b2bDiscount === 0 && newsletterDiscountPercent && newsletterDiscountPercent > 0)
+    ? Math.floor((total - b2bDiscount) * (newsletterDiscountPercent / 100))
+    : 0
+
+  const subtotalAfterDiscounts = total - b2bDiscount - appliedNewsletterDiscount
+  const finalTotal = subtotalAfterDiscounts - pointsToRedeem
 
   if (items.length === 0) {
     return (
@@ -219,7 +246,7 @@ export function CheckoutForm({ user, b2bClient }: CheckoutFormProps) {
               </div>
 
               <div className="space-y-3 pt-6 border-t border-slate-100">
-                <PointsRedemption cartTotal={subtotalAfterB2B} onRedeem={handleRedeem} disabled={isSubmitting} />
+                <PointsRedemption cartTotal={subtotalAfterDiscounts} onRedeem={handleRedeem} disabled={isSubmitting} />
 
                 <div className="flex justify-between text-sm mt-4">
                   <span className="text-slate-500 font-medium">{t("summary.subtotal")}</span>
@@ -230,6 +257,13 @@ export function CheckoutForm({ user, b2bClient }: CheckoutFormProps) {
                   <div className="flex justify-between text-sm text-calmar-ocean-dark font-black uppercase tracking-tighter">
                     <span>{t("summary.b2bDiscount", { percent: b2bClient.discount_percentage })}</span>
                     <span>-${b2bDiscount.toLocaleString('es-CL')}</span>
+                  </div>
+                )}
+                
+                {appliedNewsletterDiscount > 0 && (
+                  <div className="flex justify-between text-sm text-calmar-mint-dark font-black uppercase tracking-tighter">
+                    <span>{t("summary.newsletterDiscount", { percent: newsletterDiscountPercent ?? 0 })}</span>
+                    <span>-${appliedNewsletterDiscount.toLocaleString('es-CL')}</span>
                   </div>
                 )}
 

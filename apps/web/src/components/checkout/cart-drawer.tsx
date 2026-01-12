@@ -144,9 +144,22 @@ export function CartDrawer() {
                           <Plus className="w-3 h-3" />
                         </button>
                       </div>
-                      <p className="font-black text-calmar-ocean">
-                        ${(item.product.base_price * item.quantity).toLocaleString('es-CL')}
-                      </p>
+                      <div className="text-right">
+                        {(item.product.discount_percentage || (useCart.getState().newsletterDiscount)) ? (
+                          <>
+                            <p className="text-[10px] text-slate-400 line-through font-bold">
+                              ${(item.product.base_price * item.quantity).toLocaleString('es-CL')}
+                            </p>
+                            <p className="font-black text-calmar-ocean">
+                              ${Math.floor((item.product.base_price * item.quantity) * (1 - (item.product.discount_percentage || (useCart.getState().newsletterDiscount || 0)) / 100)).toLocaleString('es-CL')}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="font-black text-calmar-ocean">
+                            ${(item.product.base_price * item.quantity).toLocaleString('es-CL')}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

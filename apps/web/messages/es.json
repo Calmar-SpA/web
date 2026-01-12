@@ -63,14 +63,14 @@
       "creditAvailable": "Disponible: ${amount}"
     },
     "summary": {
-      "title": "Resumen del Pedido",
-      "quantity": "Cantidad: {qty}",
       "subtotal": "Subtotal",
-      "b2bDiscount": "Descuento B2B ({percent}%)",
-      "calmarPoints": "Puntos Calmar",
       "shipping": "Envío",
-      "free": "GRATIS",
-      "total": "Total"
+      "free": "Gratis",
+      "total": "Total",
+      "b2bDiscount": "Descuento B2B ({percent}%)",
+      "newsletterDiscount": "Descuento Newsletter ({percent}%)",
+      "calmarPoints": "Puntos Calmar",
+      "quantity": "{qty} unid."
     },
     "buttons": {
       "processing": "PROCESANDO...",

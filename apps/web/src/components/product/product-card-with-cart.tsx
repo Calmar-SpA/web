@@ -7,9 +7,10 @@ import { Product } from "@calmar/types"
 interface ProductCardWithCartProps {
   product: Product;
   priority?: boolean;
+  discountPercentage?: number | null;
 }
 
-export function ProductCardWithCart({ product, priority }: ProductCardWithCartProps) {
+export function ProductCardWithCart({ product, priority, discountPercentage }: ProductCardWithCartProps) {
   const { addItem, setIsOpen } = useCart()
 
   const handleAddToCart = () => {
@@ -22,6 +23,7 @@ export function ProductCardWithCart({ product, priority }: ProductCardWithCartPr
       product={product} 
       onAdd={handleAddToCart}
       priority={priority}
+      discount_percentage={discountPercentage || 0}
     />
   )
 }

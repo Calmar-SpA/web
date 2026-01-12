@@ -19,6 +19,37 @@ interface CheckoutData {
   paymentMethod?: 'flow' | 'credit';
 }
 
+export async function checkNewsletterDiscount(email: string) {
+  console.log('[checkNewsletterDiscount] Checking for email:', email)
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('newsletter_subscribers')
+    .select('discount_percentage, discount_expires_at')
+    .eq('email', email)
+    .eq('is_active', true)
+    .single()
+
+  console.log('[checkNewsletterDiscount] Query result:', { data, error })
+
+  if (error || !data) {
+    console.log('[checkNewsletterDiscount] Returning null due to error or no data')
+    return null
+  }
+
+  const now = new Date()
+  const expiresAt = new Date(data.discount_expires_at)
+  
+  console.log('[checkNewsletterDiscount] Dates:', { now, expiresAt, isExpired: now > expiresAt })
+  
+  if (now > expiresAt) {
+    console.log('[checkNewsletterDiscount] Discount expired')
+    return null
+  }
+  
+  console.log('[checkNewsletterDiscount] Returning discount:', data.discount_percentage)
+  return data.discount_percentage
+}
+
 export async function createOrderAndInitiatePayment(data: CheckoutData) {
   const supabase = await createClient()
   
@@ -27,7 +58,11 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
 
   let baseTotal = data.total
   let b2bDiscount = 0
+  let newsletterDiscountAmount = 0
   let redeemedPoints = 0
+
+  // 1.5 Handle Newsletter Discount (Only if NOT B2B as per user request)
+  const newsletterDiscountPercent = await checkNewsletterDiscount(data.customerInfo.email)
 
   // 2. Handle B2B Discount
   if (user) {
@@ -40,6 +75,11 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
       baseTotal -= b2bDiscount
     }
 
+    // Apply newsletter discount if NO B2B discount was applied
+    if (b2bDiscount === 0 && newsletterDiscountPercent && newsletterDiscountPercent > 0) {
+      newsletterDiscountAmount = Math.floor(baseTotal * (Number(newsletterDiscountPercent) / 100))
+      baseTotal -= newsletterDiscountAmount
+    }
     // Handle Credit Limit Check if payment method is 'credit'
     if (data.paymentMethod === 'credit') {
       if (!b2bClient?.is_active || Number(b2bClient.credit_limit) < baseTotal) {
@@ -85,7 +125,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
       subtotal: subtotal,
       tax_amount: taxAmount,
       shipping_cost: shippingCost,
-      discount_amount: b2bDiscount,
+      discount_amount: b2bDiscount + newsletterDiscountAmount,
       total_amount: finalAmount,
       status: data.paymentMethod === 'credit' ? 'paid' : 'pending_payment',
       shipping_address: {

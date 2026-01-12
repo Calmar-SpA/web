@@ -48,6 +48,17 @@ export const NewsletterConfirmationEmail = ({
             <Text style={paragraph}>
               Has registrado el correo: <strong>{email}</strong>
             </Text>
+            <Section style={discountHighlight}>
+              <Text style={discountText}>
+                🎁 ¡Tu regalo de bienvenida!
+              </Text>
+              <Heading style={discountPercentage}>
+                10% OFF
+              </Heading>
+              <Text style={discountDescription}>
+                Tu descuento se aplicará <strong>automáticamente</strong> en todas tus compras durante el próximo año al usar tu correo <strong>{email}</strong> en el checkout.
+              </Text>
+            </Section>
             <Section style={btnContainer}>
               <Link
                 style={button}
@@ -135,6 +146,39 @@ const paragraph = {
 const btnContainer = {
   textAlign: "center" as const,
   margin: "32px 0",
+};
+
+const discountHighlight = {
+  backgroundColor: "#f8f9fa",
+  padding: "24px",
+  borderRadius: "12px",
+  border: "2px dashed #62A49E",
+  textAlign: "center" as const,
+  margin: "24px 0",
+};
+
+const discountText = {
+  color: "#62A49E",
+  fontSize: "14px",
+  fontWeight: "700",
+  textTransform: "uppercase" as const,
+  letterSpacing: "1px",
+  margin: "0 0 8px 0",
+};
+
+const discountPercentage = {
+  color: "#1D504B",
+  fontSize: "48px",
+  fontWeight: "900",
+  margin: "0 0 8px 0",
+  lineHeight: "1",
+};
+
+const discountDescription = {
+  color: "#343431",
+  fontSize: "14px",
+  lineHeight: "1.5",
+  margin: "0",
 };
 
 const button = {

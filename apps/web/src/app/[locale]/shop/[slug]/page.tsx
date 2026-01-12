@@ -6,6 +6,7 @@ import { AddToCart } from './add-to-cart'
 import { Metadata } from 'next'
 import { locales } from '@/i18n/config'
 import Image from 'next/image'
+import { DiscountInitializer } from '@/components/product/discount-initializer'
 
 export const revalidate = 60 // Revalidate once per minute
 
@@ -64,9 +65,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductDetailPage({ params }: Props) {
   const { slug } = await params
-  const supabase = await createClient(true)
+  const supabase = await createClient(true)  // Static client for products (cacheable)
+  const authSupabase = await createClient()  // Auth client for user detection
   const productService = new ProductService(supabase)
   
+  const { data: { user } } = await authSupabase.auth.getUser()
+  const { checkNewsletterDiscount } = await import("../../checkout/actions")
+  const newsletterDiscount = user ? await checkNewsletterDiscount(user.email!) : null
+
   let product
   try {
     product = await productService.getProductBySku(slug)
@@ -76,12 +82,18 @@ export default async function ProductDetailPage({ params }: Props) {
 
   if (!product) return notFound()
 
+  const productPrice = product.base_price;
+  const discountedPrice = newsletterDiscount 
+    ? Math.floor(productPrice * (1 - newsletterDiscount / 100))
+    : productPrice;
+
   const productImage = product.image_url?.includes('supabase.co') 
     ? `${product.image_url}${product.image_url.includes('?') ? '&' : '?'}v=${Date.now()}` 
     : (product.image_url || "/placeholder.png");
 
   return (
     <main className="min-h-screen bg-white">
+      <DiscountInitializer discount={newsletterDiscount} />
       <div className="max-w-7xl mx-auto py-12 px-4 grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Product Image */}
         <div className="bg-slate-50 rounded-3xl p-12 flex items-center justify-center">
@@ -101,9 +113,16 @@ export default async function ProductDetailPage({ params }: Props) {
           <div className="space-y-2">
             <span className="text-calmar-ocean font-bold tracking-widest uppercase text-xs">Agua de Mar + Vertiente</span>
             <h1 className="text-5xl font-black tracking-tighter text-slate-900">{product.name}</h1>
-            <p className="text-3xl font-black bg-calmar-gradient bg-clip-text text-transparent">
-              ${product.base_price.toLocaleString('es-CL')}
-            </p>
+            <div className="flex flex-col">
+              {newsletterDiscount && (
+                <span className="text-sm text-slate-400 line-through decoration-red-400 font-bold">
+                  ${productPrice.toLocaleString('es-CL')}
+                </span>
+              )}
+              <p className="text-3xl font-black bg-calmar-gradient bg-clip-text text-transparent">
+                ${discountedPrice.toLocaleString('es-CL')}
+              </p>
+            </div>
           </div>
 
           <div className="space-y-4">
