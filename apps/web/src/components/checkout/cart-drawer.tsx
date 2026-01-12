@@ -186,7 +186,7 @@ export function CartDrawer() {
               </div>
             </div>
             
-            <Link href="/checkout" className="block w-full">
+            <Link href="/checkout" className="block w-full" onClick={() => setOpen(false)}>
               <Button className="w-full h-14 bg-slate-900 hover:bg-calmar-ocean text-white font-black shadow-lg shadow-slate-900/20 transition-all active:scale-95">
                 INICIAR COMPRA
               </Button>
