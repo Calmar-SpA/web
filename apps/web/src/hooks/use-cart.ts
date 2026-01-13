@@ -21,12 +21,8 @@ interface CartStore {
   itemCount: number;
 }
 
-const calculateTotal = (items: CartItem[], discount: number | null) => {
-  const subtotal = items.reduce((acc, item) => acc + item.product.base_price * item.quantity, 0)
-  if (discount && discount > 0) {
-    return Math.floor(subtotal * (1 - discount / 100))
-  }
-  return subtotal
+const calculateTotal = (items: CartItem[]) => {
+  return items.reduce((acc, item) => acc + item.product.base_price * item.quantity, 0)
 }
 
 export const useCart = create<CartStore>()(
@@ -37,7 +33,7 @@ export const useCart = create<CartStore>()(
       itemCount: 0,
       newsletterDiscount: null,
       setNewsletterDiscount: (discount) => {
-        set({ newsletterDiscount: discount, total: calculateTotal(get().items, discount) })
+        set({ newsletterDiscount: discount })
       },
       addItem: (product, quantity = 1) => {
         const items = get().items
@@ -54,14 +50,14 @@ export const useCart = create<CartStore>()(
           newItems = [...items, { product, quantity }]
         }
 
-        const total = calculateTotal(newItems, get().newsletterDiscount)
+        const total = calculateTotal(newItems)
         const itemCount = newItems.reduce((acc, item) => acc + item.quantity, 0)
         
         set({ items: newItems, total, itemCount })
       },
       removeItem: (productId) => {
         const newItems = get().items.filter((item) => item.product.id !== productId)
-        const total = calculateTotal(newItems, get().newsletterDiscount)
+        const total = calculateTotal(newItems)
         const itemCount = newItems.reduce((acc, item) => acc + item.quantity, 0)
         
         set({ items: newItems, total, itemCount })
@@ -71,7 +67,7 @@ export const useCart = create<CartStore>()(
         const newItems = get().items.map((item) =>
           item.product.id === productId ? { ...item, quantity } : item
         )
-        const total = calculateTotal(newItems, get().newsletterDiscount)
+        const total = calculateTotal(newItems)
         const itemCount = newItems.reduce((acc, item) => acc + item.quantity, 0)
         
         set({ items: newItems, total, itemCount })

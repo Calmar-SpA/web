@@ -168,7 +168,6 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                     <ProductCardWithCart 
                       product={product} 
                       priority={index === 0} 
-                      discountPercentage={newsletterDiscount}
                     />
                   </div>
                 </Reveal>

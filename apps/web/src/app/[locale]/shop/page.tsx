@@ -72,7 +72,7 @@ export default async function ShopPage({ params }: { params: Promise<{ locale: s
             <p className="text-slate-400">{t('noProducts')}</p>
           </div>
         ) : (
-          <ProductList products={products} discount={newsletterDiscount} />
+          <ProductList products={products} />
         )}
       </section>
       <DiscountInitializer discount={newsletterDiscount} />

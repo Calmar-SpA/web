@@ -6,10 +6,9 @@ import { useCart } from "@/hooks/use-cart"
 
 interface ProductListProps {
   products: ProductWithDetails[];
-  discount: number | null;
 }
 
-export function ProductList({ products, discount }: ProductListProps) {
+export function ProductList({ products }: ProductListProps) {
   const { addItem } = useCart()
 
   return (
@@ -19,7 +18,6 @@ export function ProductList({ products, discount }: ProductListProps) {
           key={product.id}
           product={product}
           onAdd={() => addItem(product)}
-          discount_percentage={discount || 0}
         />
       ))}
     </div>
