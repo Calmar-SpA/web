@@ -264,5 +264,23 @@
       "invalidEmail": "Email inválido."
     },
     "rights": "© 2026 CALMAR SPA • TODOS LOS DERECHOS RESERVADOS"
+  },
+  "ComingSoon": {
+    "badge": "Próximamente",
+    "title": "Próximamente",
+    "description": "Estamos preparando algo increíble para ti. Mientras tanto, regístrate en nuestra newsletter y obtén un 10% de descuento en tu primera compra.",
+    "newsletter": {
+      "title": "Únete a nuestra Newsletter",
+      "description": "Sé el primero en conocer nuestros lanzamientos y recibe un 10% de descuento exclusivo para futuras compras."
+    },
+    "accessTitle": "Acceso de Prueba",
+    "accessDescription": "Si tienes un código de acceso, ingrésalo aquí para acceder al sitio completo.",
+    "accessLink": "Acceso de prueba",
+    "codePlaceholder": "Ingresa tu código aquí",
+    "validating": "Validando...",
+    "submitCode": "Acceder",
+    "cancel": "Cancelar",
+    "codeSuccess": "Acceso concedido",
+    "codeError": "Código inválido"
   }
 }

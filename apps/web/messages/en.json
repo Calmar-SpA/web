@@ -263,5 +263,23 @@
       "invalidEmail": "Invalid email."
     },
     "rights": "© 2026 CALMAR SPA • ALL RIGHTS RESERVED"
+  },
+  "ComingSoon": {
+    "badge": "Coming Soon",
+    "title": "Coming Soon",
+    "description": "We're preparing something amazing for you. In the meantime, sign up for our newsletter and get 10% off your first purchase.",
+    "newsletter": {
+      "title": "Join our Newsletter",
+      "description": "Be the first to know about our launches and receive an exclusive 10% discount for future purchases."
+    },
+    "accessTitle": "Test Access",
+    "accessDescription": "If you have an access code, enter it here to access the full site.",
+    "accessLink": "Test access",
+    "codePlaceholder": "Enter your code here",
+    "validating": "Validating...",
+    "submitCode": "Access",
+    "cancel": "Cancel",
+    "codeSuccess": "Access granted",
+    "codeError": "Invalid code"
   }
 }
