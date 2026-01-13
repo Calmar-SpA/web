@@ -10,7 +10,7 @@ export default function AdminLoginPage() {
       <Card className="w-full max-w-md shadow-xl border-slate-200 dark:border-slate-800">
         <CardHeader className="space-y-4 text-center flex flex-col items-center">
           <Image 
-            src="/logo.png" 
+            src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp" 
             alt="CALMAR" 
             width={200} 
             height={60} 

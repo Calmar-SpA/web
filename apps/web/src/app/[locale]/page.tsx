@@ -5,9 +5,9 @@ import { Waves, Zap, ArrowRight, Heart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ProductService } from "@calmar/database";
 import { Reveal } from "@/components/ui/reveal";
-import Image from "next/image";
 import { ProductCardWithCart } from "@/components/product/product-card-with-cart";
 import { DiscountInitializer } from "@/components/product/discount-initializer";
+import { VideoHero } from "@/components/hero/video-hero";
 
 export const revalidate = 60;
 
@@ -27,6 +27,16 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const newsletterDiscount = user ? await checkNewsletterDiscount(user.email!) : null;
   console.log('[Home] Newsletter discount result:', newsletterDiscount)
 
+  // Get active hero video
+  const { data: heroVideo } = await supabase
+    .from('site_media')
+    .select('url')
+    .eq('type', 'hero_video')
+    .eq('is_active', true)
+    .single();
+  
+  const heroVideoUrl = heroVideo?.url || null;
+
   let featuredProducts: any[] = [];
   try {
     featuredProducts = await productService.getProducts({ featuredOnly: true, locale, activeOnly: true });
@@ -43,66 +53,16 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   return (
     <main className="flex-1 overflow-x-hidden">
       <DiscountInitializer discount={newsletterDiscount} />
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-background">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-1/4 -left-20 w-[500px] h-[500px] bg-primary/10 blur-[120px] rounded-full" />
-          <div className="absolute bottom-1/4 -right-20 w-[500px] h-[500px] bg-secondary/20 blur-[120px] rounded-full" />
-          <div className="absolute inset-0 bg-[url('/ocean-texture.jpg')] opacity-10 mix-blend-overlay bg-cover bg-center" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 relative z-10 text-center space-y-8">
-          <Reveal direction="down" delay={0.1}>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 text-accent text-xs font-black tracking-[0.2em] uppercase mx-auto">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
-              </span>
-              Nueva Era de Hidratación
-            </div>
-          </Reveal>
-          
-          <Reveal delay={0.2}>
-            <div className="flex justify-center py-4">
-              <Image 
-                src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar.png" 
-                alt="CALMAR" 
-                width={800} 
-                height={240}
-                className="w-full max-w-4xl h-auto object-contain"
-                priority
-              />
-            </div>
-          </Reveal>
-          
-          <Reveal delay={0.4}>
-            <p className="max-w-2xl mx-auto text-foreground/70 text-lg md:text-xl font-medium tracking-wide uppercase leading-relaxed">
-              {t("hero.subtitle")}
-            </p>
-          </Reveal>
-
-          <Reveal delay={0.6}>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Link href="/shop">
-                <Button size="lg" className="h-16 px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xl rounded-none tracking-tight">
-                  {t("hero.cta")} <ArrowRight className="ml-2 h-6 w-6" />
-                </Button>
-              </Link>
-              <Link href="/about">
-                <Button size="lg" variant="outline" className="h-16 px-8 border-primary/20 text-primary hover:bg-primary/5 font-bold tracking-widest text-xs uppercase rounded-none">
-                  Nuestro Origen
-                </Button>
-              </Link>
-            </div>
-          </Reveal>
-        </div>
-
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-px h-12 bg-gradient-to-b from-primary to-transparent" />
-        </div>
-      </section>
+      
+      {/* Video Hero Section */}
+      <VideoHero 
+        videoUrl={heroVideoUrl}
+        title={`${t("hero.title")}\n${t("hero.subtitle")}`}
+        primaryButtonText={t("hero.cta")}
+        primaryButtonHref="/shop"
+        secondaryButtonText={locale === 'es' ? 'Nuestro Origen' : 'Our Origin'}
+        secondaryButtonHref="/about"
+      />
 
       {/* Brand Benefits */}
       <section className="py-24 bg-white">

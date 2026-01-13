@@ -33,7 +33,7 @@ export default function RootLayout({
         <aside className="w-64 bg-slate-900 text-white flex flex-col sticky top-0 h-screen hidden md:flex">
           <div className="p-8">
             <Image 
-              src="/logo.png" 
+              src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp" 
               alt="CALMAR" 
               width={140} 
               height={40} 

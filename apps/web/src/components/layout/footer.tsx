@@ -14,7 +14,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
         <div>
           <Image 
-            src="/logo.png" 
+            src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp" 
             alt="CALMAR" 
             width={150} 
             height={50} 

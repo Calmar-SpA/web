@@ -29,7 +29,7 @@ export function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image 
-            src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.png" 
+            src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp" 
             alt="CALMAR" 
             width={120} 
             height={40} 

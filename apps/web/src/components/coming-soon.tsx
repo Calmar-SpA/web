@@ -53,7 +53,7 @@ export function ComingSoonPage() {
         {/* Logo */}
         <div className="flex justify-center opacity-0 animate-[fadeIn_0.8s_ease-out_0s_forwards]">
           <Image 
-            src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar.png" 
+            src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp" 
             alt="CALMAR" 
             width={600} 
             height={180}

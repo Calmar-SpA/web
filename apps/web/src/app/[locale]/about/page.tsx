@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/navigation";
 import { Button } from "@calmar/ui";
-import { Heart, Zap, ShieldCheck, ArrowRight } from "lucide-react";
+import { Heart, Zap, ShieldCheck, ArrowRight, Sparkles } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 
 export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -76,7 +76,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             </h2>
           </Reveal>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
             <Reveal delay={0.1} direction="up" className="h-full">
               <div className="group text-center space-y-4">
                 <div className="w-20 h-20 mx-auto rounded-2xl bg-calmar-ocean/10 flex items-center justify-center text-calmar-ocean group-hover:scale-110 transition-transform">
@@ -104,6 +104,16 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
                 </div>
                 <h3 className="text-2xl font-black uppercase tracking-tight">{t("values.sustainability.title")}</h3>
                 <p className="text-slate-500 leading-relaxed">{t("values.sustainability.description")}</p>
+              </div>
+            </Reveal>
+
+            <Reveal delay={0.7} direction="up" className="h-full">
+              <div className="group text-center space-y-4">
+                <div className="w-20 h-20 mx-auto rounded-2xl bg-calmar-ocean/10 flex items-center justify-center text-calmar-ocean group-hover:scale-110 transition-transform">
+                  <Sparkles className="h-10 w-10" />
+                </div>
+                <h3 className="text-2xl font-black uppercase tracking-tight">{t("values.authenticity.title")}</h3>
+                <p className="text-slate-500 leading-relaxed">{t("values.authenticity.description")}</p>
               </div>
             </Reveal>
           </div>

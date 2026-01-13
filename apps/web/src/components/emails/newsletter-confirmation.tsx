@@ -27,7 +27,7 @@ export const NewsletterConfirmationEmail = ({
         <Container style={container}>
           <Section style={header}>
             <Img
-              src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.png"
+              src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp"
               alt="Calmar"
               width="200"
               height="auto"

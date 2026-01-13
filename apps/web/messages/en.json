@@ -1,32 +1,32 @@
 {
   "Index": {
     "hero": {
-      "title": "THE FUTURE IS CALMAR",
-      "subtitle": "ADVANCED HYDRATION AND HIGH-LEVEL SUPPLEMENTATION FOR THE MODERN ATHLETE.",
+      "title": "HYDRATION THAT NOURISHES",
+      "subtitle": "78 minerals from the South Pacific. Physical filtration, zero chemicals. Your body recognizes it.",
       "cta": "EXPLORE SHOP"
     },
     "featured": {
       "title": "FEATURED PRODUCTS",
-      "subtitle": "The best of our selection for your recovery"
+      "subtitle": "Authentic mineral hydration from the South Pacific"
     },
     "benefits": {
       "marine": {
-        "title": "PREMIUM SEA WATER",
-        "description": "Deep-filtered to preserve all its unique minerals and electrolytes."
+        "title": "INTACT PURITY",
+        "description": "No unnecessary intervention. What comes from the sea and spring of southern Chile, reaches you."
       },
       "recovery": {
-        "title": "ADVANCED RECOVERY",
-        "description": "Designed to optimize your physical and mental performance in every drop."
+        "title": "78 NATURAL MINERALS",
+        "description": "Complete electrolytes your body recognizes. No added sugars, no chemicals."
       },
       "purity": {
-        "title": "TOTAL WELL-BEING",
-        "description": "Designed to integrate health and balance into your daily routine with quality ingredients."
+        "title": "TOTAL TRANSPARENCY",
+        "description": "Every batch analyzed in the laboratory. We know exactly what you're drinking and where it comes from."
       }
     },
     "cta_footer": {
-      "title": "JOIN THE REVOLUTION",
-      "subtitle": "Start your journey to superior hydration today.",
-      "button": "GET STARTED NOW"
+      "title": "RETURN TO YOUR BODY WHAT IT NEEDS",
+      "subtitle": "Regular water only hydrates. CALMAR hydrates AND mineralizes.",
+      "button": "EXPLORE SHOP"
     }
   },
   "Navigation": {
@@ -45,7 +45,8 @@
     "subtotal": "Subtotal",
     "shipping": "Shipping",
     "shippingCalculated": "Calculated at checkout",
-    "newsletterDiscount": "Newsletter Discount ({percent}%)"
+    "newsletterDiscount": "Newsletter Discount ({percent}%)",
+    "newsletterCta": "💌 Subscribe to our newsletter and get 10% off!"
   },
   "Checkout": {
     "title": "Checkout",
@@ -67,12 +68,14 @@
       "creditAvailable": "Available: ${amount}"
     },
     "summary": {
+      "title": "Order Summary",
       "subtotal": "Subtotal",
       "shipping": "Shipping",
       "free": "Free",
       "total": "Total",
       "b2bDiscount": "B2B Discount ({percent}%)",
       "newsletterDiscount": "Newsletter Discount ({percent}%)",
+      "newsletterCta": "💌 Subscribe to our newsletter and save 10% on your next purchase!",
       "calmarPoints": "Calmar Points",
       "quantity": "{qty} units"
     },
@@ -183,7 +186,7 @@
   },
   "Shop": {
     "title": "CALMAR SHOP",
-    "subtitle": "Premium hydration for your daily life",
+    "subtitle": "From the South Pacific to your body. Intact minerals, as it should be.",
     "allProducts": "ALL PRODUCTS",
     "noProducts": "No products available at this moment.",
     "categories": {
@@ -209,26 +212,30 @@
     },
     "story": {
       "title": "OUR STORY",
-      "p1": "Calmar was born from the fascination with the natural power of seawater. For centuries, civilizations have recognized the unique benefits of marine minerals for human health and performance.",
-      "p2": "We combine the purity of spring water with the mineral richness of the deep ocean, creating a unique formula that enhances your hydration like never before."
+      "p1": "The sea has spent millions of years perfecting its formula. 78 minerals and trace elements in exact balance. A composition your body recognizes because it resembles yours.",
+      "p2": "At CALMAR we don't invent anything. We go to southern Chile, where the Pacific is still pristine, and bring that water to you —physically filtered, analyzed, intact. Because nature already did the hard work."
     },
     "mission": {
-      "title": "OUR MISSION",
-      "text": "To revolutionize the way the world hydrates, offering solutions focused on well-being and performance for people seeking their best version."
+      "title": "OUR PURPOSE",
+      "text": "Return to the body what modern life takes away. Regular water only hydrates. CALMAR hydrates AND mineralizes."
     },
     "values": {
       "title": "OUR VALUES",
       "purity": {
-        "title": "WELL-BEING",
-        "description": "Your holistic health is our priority, creating products that help you feel and perform better."
+        "title": "PURITY",
+        "description": "No unnecessary intervention. What comes from the sea and spring, reaches you."
       },
       "performance": {
-        "title": "EFFECTIVENESS",
-        "description": "Precisely designed formulas to deliver the benefits your body truly needs."
+        "title": "TRANSPARENCY",
+        "description": "We say exactly what it is, where it comes from, and we back it up with laboratory analysis."
       },
       "sustainability": {
-        "title": "COMMITMENT",
-        "description": "We work every day to evolve and deliver the best, with total transparency in everything we do."
+        "title": "RESPECT",
+        "description": "For nature (responsible extraction) and for your body (no chemicals)."
+      },
+      "authenticity": {
+        "title": "AUTHENTICITY",
+        "description": "We don't invent benefits. The sea already did the work for us."
       }
     }
   },
@@ -255,7 +262,7 @@
     }
   },
   "Footer": {
-    "description": "We treat hydration with the power of the sea and the purity of the spring.",
+    "description": "We don't add anything. We only remove what's unnecessary. Sea water and spring from southern Chile.",
     "links": "Links",
     "newsletter": {
       "title": "NEWSLETTER",

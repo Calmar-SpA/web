@@ -19,7 +19,7 @@ export default async function LoginPage({ params }: { params: Promise<{ locale: 
       <Card className="w-full max-w-md backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-calmar-ocean/20 shadow-2xl relative z-10">
         <CardHeader className="space-y-1 text-center flex flex-col items-center">
           <Image 
-            src="/logo.png" 
+            src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp" 
             alt="CALMAR" 
             width={180} 
             height={60} 

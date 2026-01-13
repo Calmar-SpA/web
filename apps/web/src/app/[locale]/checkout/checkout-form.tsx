@@ -313,6 +313,14 @@ export function CheckoutForm({ user, b2bClient, initialNewsletterDiscount }: Che
                     <span>-${appliedNewsletterDiscount.toLocaleString('es-CL')}</span>
                   </div>
                 )}
+                
+                {appliedNewsletterDiscount === 0 && !newsletterDiscountPercent && (
+                  <div className="bg-calmar-mint/10 px-3 py-2 rounded-lg border border-calmar-mint/30">
+                    <p className="text-xs text-calmar-ocean-dark font-bold text-center">
+                      {t("summary.newsletterCta")}
+                    </p>
+                  </div>
+                )}
 
                 {pointsToRedeem > 0 && (
                   <div className="flex justify-between text-sm text-indigo-600 font-bold">

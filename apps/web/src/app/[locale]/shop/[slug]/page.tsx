@@ -123,10 +123,16 @@ export default async function ProductDetailPage({ params }: Props) {
                 ${discountedPrice.toLocaleString('es-CL')}
               </p>
             </div>
-            {newsletterDiscount && (
+            {newsletterDiscount ? (
               <div className="bg-calmar-mint/10 px-4 py-3 rounded-lg border border-calmar-mint/30">
                 <p className="text-sm text-calmar-ocean-dark font-bold">
                   ¡Tienes un {newsletterDiscount}% de descuento por estar suscrito a nuestro newsletter!
+                </p>
+              </div>
+            ) : (
+              <div className="bg-gradient-to-r from-calmar-mint/20 to-calmar-ocean/10 px-4 py-3 rounded-lg border border-calmar-mint/30">
+                <p className="text-sm text-calmar-ocean-dark font-bold">
+                  💌 ¡Suscríbete a nuestro newsletter y obtén 10% de descuento en todas tus compras!
                 </p>
               </div>
             )}

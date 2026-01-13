@@ -1,32 +1,32 @@
 {
   "Index": {
     "hero": {
-      "title": "EL FUTURO ES CALMAR",
-      "subtitle": "HIDRATACIÓN AVANZADA Y SUPLEMENTACIÓN DE ALTO NIVEL PARA EL ATLETA MODERNO.",
+      "title": "HIDRATACIÓN QUE NUTRE",
+      "subtitle": "78 minerales del Pacífico sur. Filtración física, cero químicos. Tu cuerpo lo reconoce.",
       "cta": "EXPLORAR TIENDA"
     },
     "featured": {
       "title": "PRODUCTOS DESTACADOS",
-      "subtitle": "Lo mejor de nuestra selección para tu recuperación"
+      "subtitle": "Hidratación mineral auténtica del Pacífico sur"
     },
     "benefits": {
       "marine": {
-        "title": "AGUA DE MAR PREMIUM",
-        "description": "Filtrada a profundidad para conservar todos sus minerales y electrolitos únicos."
+        "title": "PUREZA INTACTA",
+        "description": "Sin intervención innecesaria. Lo que sale del mar y la vertiente del sur de Chile, llega a ti."
       },
       "recovery": {
-        "title": "RECUPERACIÓN AVANZADA",
-        "description": "Diseñado para optimizar tu rendimiento físico y mental en cada gota."
+        "title": "78 MINERALES NATURALES",
+        "description": "Electrolitos completos que tu cuerpo reconoce. Sin azúcares añadidos, sin químicos."
       },
       "purity": {
-        "title": "BIENESTAR TOTAL",
-        "description": "Diseñado para integrar salud y equilibrio en tu rutina diaria con ingredientes de calidad."
+        "title": "TRANSPARENCIA TOTAL",
+        "description": "Cada lote analizado en laboratorio. Sabemos exactamente qué tomas y de dónde viene."
       }
     },
     "cta_footer": {
-      "title": "ÚNETE A LA REVOLUCIÓN",
-      "subtitle": "Empieza hoy tu camino hacia una hidratación superior.",
-      "button": "COMENZAR AHORA"
+      "title": "DEVUELVE A TU CUERPO LO QUE NECESITA",
+      "subtitle": "El agua común solo hidrata. CALMAR hidrata y mineraliza.",
+      "button": "EXPLORAR TIENDA"
     }
   },
   "Navigation": {
@@ -45,7 +45,8 @@
     "subtotal": "Subtotal",
     "shipping": "Despacho",
     "shippingCalculated": "Calculado al checkout",
-    "newsletterDiscount": "Descuento Newsletter ({percent}%)"
+    "newsletterDiscount": "Descuento Newsletter ({percent}%)",
+    "newsletterCta": "💌 ¡Suscríbete al newsletter y obtén 10% de descuento!"
   },
   "Checkout": {
     "title": "Finalizar Compra",
@@ -74,6 +75,7 @@
       "total": "Total",
       "b2bDiscount": "Descuento B2B ({percent}%)",
       "newsletterDiscount": "Descuento Newsletter ({percent}%)",
+      "newsletterCta": "💌 ¡Suscríbete al newsletter y ahorra 10% en tu próxima compra!",
       "calmarPoints": "Puntos Calmar",
       "quantity": "{qty} unid."
     },
@@ -184,7 +186,7 @@
   },
   "Shop": {
     "title": "TIENDA CALMAR",
-    "subtitle": "Hidratación premium para tu vida diaria",
+    "subtitle": "Del Pacífico sur a tu cuerpo. Minerales intactos, como debe ser.",
     "allProducts": "TODOS LOS PRODUCTOS",
     "noProducts": "No hay productos disponibles en este momento.",
     "categories": {
@@ -210,26 +212,30 @@
     },
     "story": {
       "title": "NUESTRA HISTORIA",
-      "p1": "Calmar nació de la fascinación por el poder natural del agua de mar. Durante siglos, las civilizaciones han reconocido los beneficios únicos de los minerales marinos para la salud y el rendimiento humano.",
-      "p2": "Combinamos la pureza del agua de vertiente con la riqueza mineral del océano profundo, creando una fórmula única que potencia tu hidratación como nunca antes."
+      "p1": "El mar lleva millones de años perfeccionando su fórmula. 78 minerales y oligoelementos en equilibrio exacto. Una composición que tu cuerpo reconoce porque se parece a la tuya.",
+      "p2": "En CALMAR no inventamos nada. Vamos al sur de Chile, donde el Pacífico todavía es prístino, y traemos esa agua a ti —filtrada físicamente, analizada, intacta. Porque la naturaleza ya hizo el trabajo difícil."
     },
     "mission": {
-      "title": "NUESTRA MISIÓN",
-      "text": "Revolucionar la manera en que el mundo se hidrata, ofreciendo soluciones enfocadas en el bienestar y el rendimiento para personas que buscan su mejor versión."
+      "title": "NUESTRO PROPÓSITO",
+      "text": "Devolver al cuerpo lo que la vida moderna le quita. El agua común solo hidrata. CALMAR hidrata Y mineraliza."
     },
     "values": {
       "title": "NUESTROS VALORES",
       "purity": {
-        "title": "BIENESTAR",
-        "description": "Tu salud integral es nuestra prioridad, creando productos que te ayudan a sentirte y rendir mejor."
+        "title": "PUREZA",
+        "description": "Sin intervención innecesaria. Lo que sale del mar y la vertiente, llega a ti."
       },
       "performance": {
-        "title": "EFECTIVIDAD",
-        "description": "Fórmulas diseñadas con precisión para entregarte los beneficios que tu cuerpo realmente necesita."
+        "title": "TRANSPARENCIA",
+        "description": "Decimos exactamente qué es, de dónde viene, y lo respaldamos con análisis de laboratorio."
       },
       "sustainability": {
-        "title": "COMPROMISO",
-        "description": "Trabajamos día a día para evolucionar y entregarte lo mejor, con total transparencia en lo que hacemos."
+        "title": "RESPETO",
+        "description": "Por la naturaleza (extracción responsable) y por tu cuerpo (sin químicos)."
+      },
+      "authenticity": {
+        "title": "AUTENTICIDAD",
+        "description": "No inventamos beneficios. El mar ya hizo el trabajo por nosotros."
       }
     }
   },
@@ -256,7 +262,7 @@
     }
   },
   "Footer": {
-    "description": "Buscamos revolucionar la hidratación con el poder del mar y la pureza de la vertiente.",
+    "description": "No le agregamos nada. Solo le quitamos lo que sobra. Agua de mar y vertiente del sur de Chile.",
     "links": "Enlaces",
     "newsletter": {
       "title": "BOLETÍN",

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@calmar/ui'
 import { logout } from '../login/actions'
 
@@ -25,9 +26,18 @@ export default async function AdminDashboardPage() {
         <h2 className="text-xl font-bold mb-8 text-calmar-ocean">Calmar Admin</h2>
         <nav className="space-y-2">
           <div className="px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-md font-medium">Dashboard</div>
-          <div className="px-3 py-2 text-slate-500">Pedidos</div>
-          <div className="px-3 py-2 text-slate-500">Productos</div>
-          <div className="px-3 py-2 text-slate-500">Clientes</div>
+          <Link href="/dashboard/orders" className="block px-3 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md">
+            Pedidos
+          </Link>
+          <Link href="/dashboard/products" className="block px-3 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md">
+            Productos
+          </Link>
+          <Link href="/dashboard/media" className="block px-3 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md">
+            Media
+          </Link>
+          <Link href="/dashboard/b2b" className="block px-3 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md">
+            B2B
+          </Link>
         </nav>
       </aside>
       <main className="flex-1 p-8">

@@ -180,6 +180,13 @@ export function CartDrawer() {
 
         {items.length > 0 && (
           <div className="p-6 border-t space-y-4 bg-slate-50/50">
+            {!newsletterDiscount && (
+              <div className="bg-calmar-mint/10 px-3 py-2 rounded-lg border border-calmar-mint/30">
+                <p className="text-xs text-calmar-ocean-dark font-bold text-center">
+                  {t("newsletterCta")}
+                </p>
+              </div>
+            )}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">{t("subtotal")}</span>
