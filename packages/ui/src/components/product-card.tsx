@@ -26,18 +26,26 @@ interface ProductCardProps {
   className?: string;
   onAdd?: () => void;
   priority?: boolean;
+  newsletterDiscount?: number | null;
 }
 
-export function ProductCard({ product, id, name, price, discount_percentage, image, category, className, onAdd, priority }: ProductCardProps) {
+export function ProductCard({ product, id, name, price, discount_percentage, image, category, className, onAdd, priority, newsletterDiscount }: ProductCardProps) {
   // Use product object if provided, otherwise fall back to individual props
   const productId = product?.id || id || '';
   const productName = product?.name || name || '';
   const productPrice = product?.base_price || price || 0;
   const productDiscount = product?.discount_percentage || discount_percentage || 0;
   
-  const discountedPrice = productDiscount > 0 
-    ? Math.floor(productPrice * (1 - productDiscount / 100))
+  // Priorizar descuento de newsletter si existe, sino usar descuento del producto
+  const effectiveDiscount = newsletterDiscount && newsletterDiscount > 0 
+    ? newsletterDiscount 
+    : productDiscount;
+  
+  const discountedPrice = effectiveDiscount > 0 
+    ? Math.floor(productPrice * (1 - effectiveDiscount / 100))
     : productPrice;
+  
+  const hasNewsletterDiscount = newsletterDiscount && newsletterDiscount > 0;
 
   // Handle image URL and cache busting
   let finalProductImage = product?.image_url || image;
@@ -90,13 +98,20 @@ export function ProductCard({ product, id, name, price, discount_percentage, ima
               </span>
             </div>
           )}
+          {hasNewsletterDiscount && (
+            <div className="absolute top-4 right-4">
+              <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-widest bg-calmar-mint/90 backdrop-blur-sm text-calmar-ocean-dark rounded-sm border border-calmar-mint/30">
+                -{effectiveDiscount}% Newsletter
+              </span>
+            </div>
+          )}
         </div>
         <CardContent className="p-4 space-y-1">
           <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">
             {productName}
           </h3>
           <div className="flex flex-col">
-            {productDiscount > 0 && (
+            {effectiveDiscount > 0 && (
               <span className="text-xs text-slate-400 line-through decoration-red-400 font-bold">
                 ${productPrice.toLocaleString('es-CL')}
               </span>

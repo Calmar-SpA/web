@@ -14,11 +14,20 @@ import { useCart } from "@/hooks/use-cart"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import Image from "next/image"
+import { useTranslations } from "next-intl"
 
 export function CartDrawer() {
-  const { items, removeItem, updateQuantity, total, itemCount, isOpen, setIsOpen } = useCart()
+  const t = useTranslations("Cart")
+  const { items, removeItem, updateQuantity, total, itemCount, isOpen, setIsOpen, newsletterDiscount } = useCart()
   const [isMounted, setIsMounted] = useState(false)
   const [open, setOpen] = useState(false)
+  
+  // Calcular descuento total aplicado
+  const newsletterDiscountAmount = newsletterDiscount && newsletterDiscount > 0
+    ? Math.floor(total * (newsletterDiscount / 100))
+    : 0
+  
+  const totalWithDiscount = total - newsletterDiscountAmount
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -145,9 +154,20 @@ export function CartDrawer() {
                         </button>
                       </div>
                       <div className="text-right">
-                        <p className="font-black text-calmar-ocean">
-                          ${(item.product.base_price * item.quantity).toLocaleString('es-CL')}
-                        </p>
+                        {newsletterDiscount && newsletterDiscount > 0 ? (
+                          <div className="flex flex-col items-end">
+                            <span className="text-xs text-slate-400 line-through decoration-red-400 font-bold">
+                              ${(item.product.base_price * item.quantity).toLocaleString('es-CL')}
+                            </span>
+                            <p className="font-black text-calmar-ocean">
+                              ${Math.floor(item.product.base_price * item.quantity * (1 - newsletterDiscount / 100)).toLocaleString('es-CL')}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="font-black text-calmar-ocean">
+                            ${(item.product.base_price * item.quantity).toLocaleString('es-CL')}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -162,16 +182,22 @@ export function CartDrawer() {
           <div className="p-6 border-t space-y-4 bg-slate-50/50">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Subtotal</span>
+                <span className="text-slate-500">{t("subtotal")}</span>
                 <span className="font-bold">${total.toLocaleString('es-CL')}</span>
               </div>
+              {newsletterDiscountAmount > 0 && (
+                <div className="flex justify-between text-sm text-calmar-mint-dark font-black uppercase tracking-tighter">
+                  <span>{t("newsletterDiscount", { percent: newsletterDiscount })}</span>
+                  <span>-${newsletterDiscountAmount.toLocaleString('es-CL')}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Despacho</span>
-                <span className="text-green-600 font-bold uppercase text-[10px] tracking-widest">Calculado al checkout</span>
+                <span className="text-slate-500">{t("shipping")}</span>
+                <span className="text-green-600 font-bold uppercase text-[10px] tracking-widest">{t("shippingCalculated")}</span>
               </div>
               <div className="flex justify-between text-lg pt-2 border-t border-slate-200">
-                <span className="font-black">TOTAL</span>
-                <span className="font-black text-calmar-ocean">${total.toLocaleString('es-CL')}</span>
+                <span className="font-black">{t("total")}</span>
+                <span className="font-black text-calmar-ocean">${totalWithDiscount.toLocaleString('es-CL')}</span>
               </div>
             </div>
             

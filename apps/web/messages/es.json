@@ -41,7 +41,11 @@
     "title": "Tu Carrito",
     "empty": "Tu carro está vacío",
     "checkout": "Finalizar Compra",
-    "total": "Total"
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "shipping": "Despacho",
+    "shippingCalculated": "Calculado al checkout",
+    "newsletterDiscount": "Descuento Newsletter ({percent}%)"
   },
   "Checkout": {
     "title": "Finalizar Compra",

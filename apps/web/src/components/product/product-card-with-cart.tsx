@@ -10,7 +10,7 @@ interface ProductCardWithCartProps {
 }
 
 export function ProductCardWithCart({ product, priority }: ProductCardWithCartProps) {
-  const { addItem, setIsOpen } = useCart()
+  const { addItem, setIsOpen, newsletterDiscount } = useCart()
 
   const handleAddToCart = () => {
     addItem(product, 1)
@@ -22,6 +22,7 @@ export function ProductCardWithCart({ product, priority }: ProductCardWithCartPr
       product={product} 
       onAdd={handleAddToCart}
       priority={priority}
+      newsletterDiscount={newsletterDiscount}
     />
   )
 }

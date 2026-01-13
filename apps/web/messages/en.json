@@ -41,7 +41,11 @@
     "title": "Your Cart",
     "empty": "Your cart is empty",
     "checkout": "Checkout",
-    "total": "Total"
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "shippingCalculated": "Calculated at checkout",
+    "newsletterDiscount": "Newsletter Discount ({percent}%)"
   },
   "Checkout": {
     "title": "Checkout",
