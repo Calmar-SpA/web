@@ -187,7 +187,7 @@ export function CartDrawer() {
               </div>
               {newsletterDiscountAmount > 0 && (
                 <div className="flex justify-between text-sm text-calmar-mint-dark font-black uppercase tracking-tighter">
-                  <span>{t("newsletterDiscount", { percent: newsletterDiscount })}</span>
+                  <span>{t("newsletterDiscount", { percent: newsletterDiscount ?? 0 })}</span>
                   <span>-${newsletterDiscountAmount.toLocaleString('es-CL')}</span>
                 </div>
               )}
