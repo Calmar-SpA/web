@@ -98,14 +98,14 @@ export const ContactConfirmationEmail = ({
 export default ContactConfirmationEmail;
 
 const main = {
-  backgroundColor: "#DBDBCE",
+  backgroundColor: "#ffffff",
   fontFamily: 'Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 };
 
 const container = {
   margin: "0 auto",
   padding: "40px 20px",
-  backgroundColor: "#DBDBCE",
+  backgroundColor: "#ffffff",
 };
 
 const header = {

@@ -83,7 +83,7 @@ naturaleza:
 
 | Nombre               | Hex       | Uso                                                   |
 | -------------------- | --------- | ----------------------------------------------------- |
-| **Background**       | `#DBDBCE` | Color de fondo principal                              |
+| **Background**       | `#ffffff` | Color de fondo principal                              |
 | **Accent/Highlight** | `#86651D` | Elementos resaltados, CTAs, acentos dorados           |
 | **Primary Dark**     | `#1D504B` | Color primario oscuro, headers, elementos principales |
 | **Primary**          | `#62A49E` | Color primario, botones, enlaces                      |
@@ -94,7 +94,7 @@ naturaleza:
 
 ```
 ┌──────────────┬──────────────┬──────────────┐
-│   #DBDBCE    │   #86651D    │   #1D504B    │
+│   #ffffff    │   #86651D    │   #1D504B    │
 │  Background  │    Accent    │ Primary Dark │
 ├──────────────┼──────────────┼──────────────┤
 │   #62A49E    │   #A5C1B1    │   #343431    │
@@ -104,7 +104,7 @@ naturaleza:
 
 #### Uso de Colores
 
-- **Fondos**: Usar `#DBDBCE` como fondo principal para mantener la calidez de la
+- **Fondos**: Usar `#ffffff` como fondo principal para mantener la limpieza de la
   marca
 - **Textos**: Usar `#343431` para máxima legibilidad sobre fondos claros
 - **Acciones primarias**: Usar `#62A49E` para botones y enlaces principales
@@ -136,7 +136,7 @@ MONTSERRAT
 ```css
 /* Variables de colores */
 :root {
-  --color-background: #dbdbce;
+  --color-background: #ffffff;
   --color-accent: #86651d;
   --color-primary-dark: #1d504b;
   --color-primary: #62a49e;

@@ -15,7 +15,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,
           })
@@ -27,8 +27,38 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // refreshing the auth token
-  await supabase.auth.getUser()
+  // Rutas públicas que no requieren verificación de rol
+  const publicPaths = ['/login', '/access-denied', '/auth/callback']
+  const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
 
+  // Obtener usuario autenticado
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Si es ruta pública, permitir acceso
+  if (isPublicPath) {
+    return supabaseResponse
+  }
+
+  // Si no hay usuario, redirigir a login
+  if (!user) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // Verificar rol de admin en la tabla users
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  // Si no es admin, redirigir a página de acceso denegado
+  if (!profile || profile.role !== 'admin') {
+    const accessDeniedUrl = new URL('/access-denied', request.url)
+    return NextResponse.redirect(accessDeniedUrl)
+  }
+
+  // Usuario es admin, permitir acceso
   return supabaseResponse
 }

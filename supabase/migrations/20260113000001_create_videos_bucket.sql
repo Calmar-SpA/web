@@ -5,21 +5,25 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Set up access control for the videos bucket
 -- Allow public read access to objects in the videos bucket
+DROP POLICY IF EXISTS "Videos Public Access" ON storage.objects;
 CREATE POLICY "Videos Public Access"
 ON storage.objects FOR SELECT
 USING ( bucket_id = 'videos' );
 
 -- Allow authenticated users to upload to the videos bucket
+DROP POLICY IF EXISTS "Videos Admin Upload Access" ON storage.objects;
 CREATE POLICY "Videos Admin Upload Access"
 ON storage.objects FOR INSERT
 WITH CHECK ( bucket_id = 'videos' AND auth.role() = 'authenticated' );
 
 -- Allow authenticated users to update objects in videos bucket
+DROP POLICY IF EXISTS "Videos Admin Update Access" ON storage.objects;
 CREATE POLICY "Videos Admin Update Access" 
 ON storage.objects FOR UPDATE 
 USING ( bucket_id = 'videos' AND auth.role() = 'authenticated' );
 
 -- Allow authenticated users to delete objects in videos bucket
+DROP POLICY IF EXISTS "Videos Admin Delete Access" ON storage.objects;
 CREATE POLICY "Videos Admin Delete Access" 
 ON storage.objects FOR DELETE 
 USING ( bucket_id = 'videos' AND auth.role() = 'authenticated' );

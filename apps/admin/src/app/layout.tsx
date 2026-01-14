@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
-import { Package, ShoppingCart, LayoutDashboard, LogOut } from "lucide-react";
+import { Package, ShoppingCart, LayoutDashboard, LogOut, Users } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import Image from "next/image";
 
@@ -51,6 +51,9 @@ export default function RootLayout({
             </Link>
             <Link href="/products" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors text-sm font-medium">
               <Package className="w-4 h-4 text-amber-500" /> Productos
+            </Link>
+            <Link href="/users" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors text-sm font-medium">
+              <Users className="w-4 h-4 text-violet-400" /> Usuarios
             </Link>
           </nav>
 

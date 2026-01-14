@@ -9,7 +9,7 @@
   --color-calmar-primary: #62a49e;
   --color-calmar-primary-light: #a5c1b1;
   --color-calmar-accent: #86651d;
-  --color-calmar-background: #dbdbce;
+  --color-calmar-background: #ffffff;
   --color-calmar-text: #343431;
 
   --color-primary: var(--color-calmar-primary);
@@ -29,20 +29,20 @@
 :root {
   --calmar-gradient: linear-gradient(135deg, #1d504b 0%, #62a49e 100%);
   --radius: 0.625rem;
-  --background: #dbdbce;
+  --background: #ffffff;
   --foreground: #343431;
-  --card: #dbdbce;
+  --card: #ffffff;
   --card-foreground: #343431;
-  --popover: #dbdbce;
+  --popover: #ffffff;
   --popover-foreground: #343431;
   --primary: #1d504b;
-  --primary-foreground: #dbdbce;
+  --primary-foreground: #ffffff;
   --secondary: #a5c1b1;
   --secondary-foreground: #343431;
   --muted: #a5c1b1;
   --muted-foreground: #343431;
   --accent: #86651d;
-  --accent-foreground: #dbdbce;
+  --accent-foreground: #ffffff;
   --destructive: oklch(0.577 0.245 27.325);
   --border: rgba(52, 52, 49, 0.1);
   --input: rgba(52, 52, 49, 0.1);
@@ -52,12 +52,12 @@
   --chart-3: #86651d;
   --chart-4: #a5c1b1;
   --chart-5: #343431;
-  --sidebar: #dbdbce;
+  --sidebar: #ffffff;
   --sidebar-foreground: #343431;
   --sidebar-primary: #1d504b;
-  --sidebar-primary-foreground: #dbdbce;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #86651d;
-  --sidebar-accent-foreground: #dbdbce;
+  --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(52, 52, 49, 0.1);
   --sidebar-ring: #62a49e;
 }

@@ -87,8 +87,10 @@ export default async function ProductDetailPage({ params }: Props) {
     ? Math.floor(productPrice * (1 - newsletterDiscount / 100))
     : productPrice;
 
-  const productImage = product.image_url?.includes('supabase.co') 
-    ? `${product.image_url}${product.image_url.includes('?') ? '&' : '?'}v=${Date.now()}` 
+  // Cache busting usando updated_at del producto
+  const timestamp = product?.updated_at ? new Date(product.updated_at).getTime() : 0;
+  const productImage = product.image_url?.includes('supabase.co') && timestamp > 0
+    ? `${product.image_url}${product.image_url.includes('?') ? '&' : '?'}v=${timestamp}` 
     : (product.image_url || "/placeholder.png");
 
   return (

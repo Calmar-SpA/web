@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
   experimental: {
     clientMaxBodySize: '100mb',
   } as any,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'zyqkuhzsnomufwmfoily.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;
