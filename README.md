@@ -119,7 +119,7 @@ naturaleza:
 | Fuente                  | Uso                                                     | Enlace                                                                   |
 | ----------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------ |
 | **Zalando Sans Expanded** | Tipografía para títulos y encabezados (H1-H6)           | [Google Fonts](https://fonts.google.com/specimen/Zalando+Sans+Expanded)  |
-| **Lato**                | Tipografía para cuerpo de texto, párrafos y UI general  | [Google Fonts](https://fonts.google.com/specimen/Lato)                  |
+| **Inter**                 | Tipografía para cuerpo de texto, párrafos y UI general  | [Google Fonts](https://fonts.google.com/specimen/Inter)                  |
 
 #### Jerarquía Tipográfica
 
@@ -129,11 +129,11 @@ ZALANDO SANS EXPANDED (Títulos)
 ├── Uso: Headers de sección, títulos de productos, headings principales
 └── Características: Sans-serif moderna, expandida, con fuerte impacto visual
 
-LATO (Cuerpo)
-├── Body: Regular/Light para lectura confortable
-├── Navigation: Regular/Bold para navegación clara
+INTER (Cuerpo)
+├── Body: Regular para lectura óptima
+├── Navigation: Regular/Medium/Bold para navegación clara
 ├── Buttons: Bold para CTAs
-└── Características: Sans-serif limpia y moderna con excelente legibilidad
+└── Características: Sans-serif moderna, versátil y altamente legible, diseñada para interfaces
 ```
 
 #### Configuración CSS
@@ -151,7 +151,7 @@ LATO (Cuerpo)
 
 /* Tipografías */
 :root {
-  --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Zalando Sans Expanded", ui-sans-serif, system-ui, sans-serif;
 }
 

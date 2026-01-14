@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Zalando_Sans_Expanded, Lato } from "next/font/google";
+import { Zalando_Sans_Expanded, Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { Package, ShoppingCart, LayoutDashboard, LogOut, Users } from "lucide-react";
@@ -13,10 +13,9 @@ const zalando = Zalando_Sans_Expanded({
   display: "swap",
 });
 
-const lato = Lato({
-  variable: "--font-lato",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "700", "900"],
   display: "swap",
 });
 
@@ -32,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${zalando.variable} ${lato.variable} antialiased bg-slate-50 min-h-screen flex font-sans`}>
+      <body className={`${zalando.variable} ${inter.variable} antialiased bg-slate-50 min-h-screen flex font-sans`}>
         {/* Sidebar */}
         <aside className="w-64 bg-slate-900 text-white flex flex-col sticky top-0 h-screen hidden md:flex">
           <div className="p-8">

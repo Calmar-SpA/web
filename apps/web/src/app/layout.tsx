@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Zalando_Sans_Expanded, Lato } from "next/font/google";
+import { Zalando_Sans_Expanded, Inter } from "next/font/google";
 import "./globals.css";
 
 const zalando = Zalando_Sans_Expanded({
@@ -9,10 +9,9 @@ const zalando = Zalando_Sans_Expanded({
   display: "swap",
 });
 
-const lato = Lato({
-  variable: "--font-lato",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "700", "900"],
   display: "swap",
 });
 
@@ -30,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body
-        className={`${zalando.variable} ${lato.variable} antialiased min-h-screen flex flex-col font-sans`}
+        className={`${zalando.variable} ${inter.variable} antialiased min-h-screen flex flex-col font-sans`}
       >
         {children}
       </body>

@@ -93,7 +93,7 @@ export default NewsletterConfirmationEmail;
 
 const main = {
   backgroundColor: "#ffffff",
-  fontFamily: 'Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 };
 
 const container = {

@@ -14,7 +14,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   
-  --font-family-sans: var(--font-lato), ui-sans-serif, system-ui, sans-serif;
+  --font-family-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-family-serif: var(--font-zalando), ui-sans-serif, system-ui, sans-serif;
 }
 
