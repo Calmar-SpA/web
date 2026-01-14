@@ -8,7 +8,7 @@ export default function NewProductPage() {
         <Link href="/products">
           <Button variant="ghost" size="sm">← Volver</Button>
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight">NUEVO PRODUCTO</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Nuevo producto</h1>
       </div>
 
       <form className="space-y-6">

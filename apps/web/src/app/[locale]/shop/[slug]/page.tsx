@@ -153,7 +153,7 @@ export default async function ProductDetailPage({ params }: Props) {
               <p className="font-medium">Botella 500ml</p>
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">SKU</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Sku</p>
               <p className="font-mono text-xs">{product.sku}</p>
             </div>
           </div>

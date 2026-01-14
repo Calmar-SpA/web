@@ -129,7 +129,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
                 <Input name="name" defaultValue={product.name} required />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">SKU</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Sku</label>
                 <Input name="sku" defaultValue={product.sku} disabled className="bg-slate-100" />
                 <p className="text-xs text-slate-400">El SKU no se puede modificar</p>
               </div>
@@ -152,7 +152,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Precio Base (CLP) *</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Precio base (Clp) *</label>
                 <Input name="base_price" type="number" step="0.01" defaultValue={product.base_price} required />
               </div>
               <div className="space-y-2">
@@ -205,7 +205,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         {/* SEO */}
         <Card className="border-none shadow-xl">
           <CardHeader className="bg-slate-50 border-b">
-            <CardTitle className="text-sm font-bold uppercase tracking-widest">SEO (Opcional)</CardTitle>
+            <CardTitle className="text-sm font-bold uppercase tracking-widest">Seo (Opcional)</CardTitle>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <div className="space-y-2">

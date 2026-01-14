@@ -46,12 +46,12 @@ export default function B2BApplyPage() {
         <div className="bg-emerald-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle2 className="h-10 w-10 text-emerald-600" />
         </div>
-        <h1 className="text-3xl font-black uppercase tracking-tight mb-4">Postulación Recibida</h1>
+        <h1 className="text-3xl font-black tracking-tight mb-4">Postulación Recibida</h1>
         <p className="text-slate-600 text-lg mb-8">
           Hemos recibido los datos de **{formData.company_name}**. Nuestro equipo revisará la información y te contactaremos en un plazo de 24-48 horas hábiles.
         </p>
         <Link href="/shop">
-          <Button className="bg-slate-900 text-white font-bold px-8">VOLVER A LA TIENDA</Button>
+          <Button className="bg-slate-900 text-white font-bold px-8">Volver a la tienda</Button>
         </Link>
       </div>
     )
@@ -61,8 +61,8 @@ export default function B2BApplyPage() {
     <div className="max-w-7xl mx-auto py-12 px-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div>
-          <h1 className="text-5xl font-black tracking-tighter uppercase mb-6 leading-tight">
-            POTENCIA TU NEGOCIO CON <span className="text-calmar-ocean">CALMAR B2B</span>
+          <h1 className="text-5xl font-medium tracking-tighter mb-6 leading-tight">
+            Potencia tu negocio con <span className="text-calmar-ocean">Calmar B2B</span>
           </h1>
           <p className="text-xl text-slate-600 mb-8 leading-relaxed">
             Accede a precios mayoristas, líneas de crédito personalizadas y herramientas exclusivas para distribuidores y empresas del rubro.
@@ -73,7 +73,7 @@ export default function B2BApplyPage() {
               'Descuentos exclusivos por volumen',
               'Línea de crédito para compras a 30 días',
               'Soporte prioritario y ejecutivo de cuentas',
-              'Acceso a nuestra API de inventario'
+              'Acceso a nuestra API de inventario (próximamente)'
             ].map((feature, i) => (
               <li key={i} className="flex items-center gap-3 font-bold text-slate-800">
                 <div className="w-6 h-6 rounded-full bg-calmar-mint flex items-center justify-center">
@@ -106,7 +106,7 @@ export default function B2BApplyPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">RUT Empresa</label>
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Rut empresa</label>
                 <div className="relative">
                   <Fingerprint className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input 
@@ -168,7 +168,7 @@ export default function B2BApplyPage() {
                 disabled={isSubmitting}
                 className="w-full bg-slate-900 hover:bg-calmar-ocean text-white h-14 text-lg font-black uppercase mt-6 shadow-xl"
               >
-                {isSubmitting ? 'ENVIANDO...' : 'POSTULAR AHORA'}
+                {isSubmitting ? 'Enviando...' : 'Postular ahora'}
               </Button>
             </form>
           </CardContent>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Zalando_Sans_Expanded, Lato } from "next/font/google";
 import "../globals.css";
 import { Header } from "@/components/layout/header";
 import { Toaster } from "@/components/ui/sonner";
@@ -7,14 +7,18 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { Footer } from "@/components/layout/footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const zalando = Zalando_Sans_Expanded({
+  variable: "--font-zalando",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const lato = Lato({
+  variable: "--font-lato",
   subsets: ["latin"],
+  weight: ["300", "400", "700", "900"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -35,7 +39,7 @@ export default async function CheckoutLayout({
   return (
     <html lang="es">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${zalando.variable} ${lato.variable} antialiased min-h-screen flex flex-col font-sans`}
       >
         <NextIntlClientProvider messages={messages}>
           <Header />

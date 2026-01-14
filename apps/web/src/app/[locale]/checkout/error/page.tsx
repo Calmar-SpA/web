@@ -29,12 +29,12 @@ function CheckoutErrorContent() {
       <div className="flex flex-col sm:flex-row gap-4 w-full">
         <Link href="/checkout" className="flex-1">
           <Button className="w-full h-14 bg-slate-900 hover:bg-calmar-ocean text-white font-black shadow-lg shadow-slate-900/10">
-            REINTENTAR PAGO
+            Reintentar pago
           </Button>
         </Link>
         <Link href="/contact" className="flex-1">
           <Button variant="outline" className="w-full h-14 font-bold border-2">
-            SOLICITAR AYUDA
+            Solicitar ayuda
           </Button>
         </Link>
       </div>

@@ -13,6 +13,9 @@
   
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  
+  --font-family-sans: var(--font-lato), ui-sans-serif, system-ui, sans-serif;
+  --font-family-serif: var(--font-zalando), ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
@@ -27,8 +30,14 @@
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
 }
 

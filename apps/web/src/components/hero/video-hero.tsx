@@ -17,8 +17,8 @@ interface VideoHeroProps {
 
 export function VideoHero({
   videoUrl,
-  title = "HIDRATACIÓN AVANZADA Y SUPLEMENTACIÓN DE ALTO NIVEL PARA EL ATLETA MODERNO",
-  primaryButtonText = "EXPLORAR TIENDA",
+  title = "Hidratación avanzada y suplementación de alto nivel para el atleta moderno",
+  primaryButtonText = "Explorar tienda",
   primaryButtonHref = "/shop",
   secondaryButtonText = "Nuestro Origen",
   secondaryButtonHref = "/about"
@@ -93,10 +93,10 @@ export function VideoHero({
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black text-white uppercase tracking-tight leading-tight mb-8 md:mb-12"
+          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-serif font-medium text-white tracking-tight leading-tight mb-8 md:mb-12"
         >
           {title.split('\n').map((line, index) => (
-            <span key={index} className={index > 0 ? "block mt-2 md:mt-4 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-medium normal-case tracking-normal" : ""}>
+            <span key={index} className={index > 0 ? "block mt-2 md:mt-4 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-medium normal-case tracking-normal font-sans" : ""}>
               {line}
             </span>
           ))}

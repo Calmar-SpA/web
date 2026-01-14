@@ -99,7 +99,7 @@ export default ContactConfirmationEmail;
 
 const main = {
   backgroundColor: "#ffffff",
-  fontFamily: 'Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  fontFamily: 'Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 };
 
 const container = {
@@ -120,10 +120,11 @@ const logo = {
 
 const h2 = {
   color: "#343431",
-  fontSize: "24px",
+  fontSize: "28px",
   fontWeight: "700",
   margin: "30px 0 20px",
   textAlign: "center" as const,
+  fontFamily: '"Zalando Sans Expanded", sans-serif',
 };
 
 const content = {
@@ -150,11 +151,12 @@ const summaryBox = {
 
 const summaryTitle = {
   color: "#1D504B",
-  fontSize: "14px",
+  fontSize: "16px",
   fontWeight: "700",
   margin: "0 0 12px 0",
   textTransform: "uppercase" as const,
   letterSpacing: "0.5px",
+  fontFamily: '"Zalando Sans Expanded", sans-serif',
 };
 
 const summaryItem = {

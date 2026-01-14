@@ -20,7 +20,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
 
         <div className="max-w-5xl mx-auto px-4 relative z-10 text-center space-y-6">
           <Reveal>
-            <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[0.8] uppercase">
+            <h1 className="text-6xl md:text-8xl font-serif font-medium tracking-tighter text-white leading-[0.8]">
               {t("hero.title")}
             </h1>
           </Reveal>
@@ -36,7 +36,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       <section className="py-24 bg-white">
         <div className="max-w-4xl mx-auto px-4 space-y-12">
           <Reveal>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase text-center">
+            <h2 className="text-4xl md:text-5xl font-serif font-medium tracking-tighter text-center">
               {t("story.title")}
             </h2>
           </Reveal>
@@ -55,7 +55,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       <section className="py-24 bg-slate-50">
         <div className="max-w-4xl mx-auto px-4 text-center space-y-8">
           <Reveal>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">
+            <h2 className="text-4xl md:text-5xl font-serif font-medium tracking-tighter">
               {t("mission.title")}
             </h2>
           </Reveal>
@@ -71,7 +71,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       <section className="py-24 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <Reveal>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-serif font-medium tracking-tighter text-center mb-16">
               {t("values.title")}
             </h2>
           </Reveal>
@@ -82,7 +82,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
                 <div className="w-20 h-20 mx-auto rounded-2xl bg-calmar-ocean/10 flex items-center justify-center text-calmar-ocean group-hover:scale-110 transition-transform">
                   <Heart className="h-10 w-10" />
                 </div>
-                <h3 className="text-2xl font-black uppercase tracking-tight">{t("values.purity.title")}</h3>
+                <h3 className="text-2xl font-serif font-medium tracking-tight">{t("values.purity.title")}</h3>
                 <p className="text-slate-500 leading-relaxed">{t("values.purity.description")}</p>
               </div>
             </Reveal>
@@ -92,7 +92,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
                 <div className="w-20 h-20 mx-auto rounded-2xl bg-calmar-ocean/10 flex items-center justify-center text-calmar-ocean group-hover:scale-110 transition-transform">
                   <Zap className="h-10 w-10" />
                 </div>
-                <h3 className="text-2xl font-black uppercase tracking-tight">{t("values.performance.title")}</h3>
+                <h3 className="text-2xl font-serif font-medium tracking-tight">{t("values.performance.title")}</h3>
                 <p className="text-slate-500 leading-relaxed">{t("values.performance.description")}</p>
               </div>
             </Reveal>
@@ -102,7 +102,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
                 <div className="w-20 h-20 mx-auto rounded-2xl bg-calmar-ocean/10 flex items-center justify-center text-calmar-ocean group-hover:scale-110 transition-transform">
                   <ShieldCheck className="h-10 w-10" />
                 </div>
-                <h3 className="text-2xl font-black uppercase tracking-tight">{t("values.sustainability.title")}</h3>
+                <h3 className="text-2xl font-black tracking-tight">{t("values.sustainability.title")}</h3>
                 <p className="text-slate-500 leading-relaxed">{t("values.sustainability.description")}</p>
               </div>
             </Reveal>
@@ -112,7 +112,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
                 <div className="w-20 h-20 mx-auto rounded-2xl bg-calmar-ocean/10 flex items-center justify-center text-calmar-ocean group-hover:scale-110 transition-transform">
                   <Sparkles className="h-10 w-10" />
                 </div>
-                <h3 className="text-2xl font-black uppercase tracking-tight">{t("values.authenticity.title")}</h3>
+                <h3 className="text-2xl font-serif font-medium tracking-tight">{t("values.authenticity.title")}</h3>
                 <p className="text-slate-500 leading-relaxed">{t("values.authenticity.description")}</p>
               </div>
             </Reveal>
@@ -124,14 +124,14 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       <section className="py-24 bg-slate-950">
         <div className="max-w-4xl mx-auto px-4 text-center space-y-8">
           <Reveal>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-white uppercase">
-              {locale === 'es' ? '¿LISTO PARA PROBAR LA DIFERENCIA?' : 'READY TO FEEL THE DIFFERENCE?'}
+            <h2 className="text-4xl md:text-6xl font-medium tracking-tighter text-white">
+              {locale === 'es' ? '¿Listo para probar la diferencia?' : 'Ready to feel the difference?'}
             </h2>
           </Reveal>
           <Reveal delay={0.2}>
             <Link href="/shop">
               <Button size="lg" className="h-16 px-10 bg-white text-slate-950 hover:bg-calmar-mint transition-colors font-black text-xl rounded-none tracking-tight">
-                {locale === 'es' ? 'VER PRODUCTOS' : 'VIEW PRODUCTS'} <ArrowRight className="ml-2 h-6 w-6" />
+                {locale === 'es' ? 'Ver productos' : 'View products'} <ArrowRight className="ml-2 h-6 w-6" />
               </Button>
             </Link>
           </Reveal>

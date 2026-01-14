@@ -36,7 +36,7 @@ export default function ContactPage() {
 
         <div className="max-w-4xl mx-auto px-4 relative z-10 text-center space-y-4">
           <Reveal>
-            <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white leading-[0.8] uppercase">
+            <h1 className="text-5xl md:text-7xl font-serif font-medium tracking-tighter text-white leading-[0.8]">
               {t("hero.title")}
             </h1>
           </Reveal>
@@ -123,7 +123,7 @@ export default function ContactPage() {
             {/* Contact Info */}
             <div className="space-y-8">
               <Reveal>
-                <h2 className="text-2xl font-black uppercase tracking-tight">
+                <h2 className="text-2xl font-serif font-medium tracking-tight">
                   {t("info.title")}
                 </h2>
               </Reveal>

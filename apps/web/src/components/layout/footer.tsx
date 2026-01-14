@@ -20,24 +20,24 @@ export function Footer() {
             height={50} 
             className="h-12 w-auto object-contain invert"
           />
-          <p className="mt-4 text-slate-400 text-sm max-w-xs leading-relaxed">
+          <p className="mt-4 text-white text-sm max-w-xs leading-relaxed">
             {t('description')}
           </p>
         </div>
         <div className="space-y-4">
-          <h4 className="font-bold text-xs uppercase tracking-widest text-secondary">{t('links')}</h4>
-          <nav className="flex flex-col gap-2 text-sm text-primary-foreground/70">
-            <Link href="/shop" className="hover:text-primary-foreground transition-colors">{navigationT('shop')}</Link>
-            <Link href="/about" className="hover:text-primary-foreground transition-colors">{navigationT('about')}</Link>
-            <Link href="/contact" className="hover:text-primary-foreground transition-colors">{navigationT('contact')}</Link>
+          <h4 className="font-bold text-xs uppercase tracking-widest text-white">{t('links')}</h4>
+          <nav className="flex flex-col gap-2 text-sm text-white/70">
+            <Link href="/shop" className="hover:text-white transition-colors">{navigationT('shop')}</Link>
+            <Link href="/about" className="hover:text-white transition-colors">{navigationT('about')}</Link>
+            <Link href="/contact" className="hover:text-white transition-colors">{navigationT('contact')}</Link>
           </nav>
         </div>
         <div className="space-y-4">
-          <h4 className="font-bold text-xs uppercase tracking-widest text-secondary">{t('newsletter.title')}</h4>
+          <h4 className="font-bold text-xs uppercase tracking-widest text-white">{t('newsletter.title')}</h4>
           <NewsletterForm />
         </div>
       </div>
-      <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-white/5 text-center text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+      <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-white/5 text-center text-[10px] text-white/50 font-bold uppercase tracking-widest">
         {t('rights')}
       </div>
     </footer>

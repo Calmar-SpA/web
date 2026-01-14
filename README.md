@@ -116,19 +116,24 @@ naturaleza:
 
 ### Tipografía
 
-| Fuente         | Uso                                                                 | Enlace                                                       |
-| -------------- | ------------------------------------------------------------------- | ------------------------------------------------------------ |
-| **Montserrat** | Tipografía principal para textos, párrafos, navegación y UI general | [Google Fonts](https://fonts.google.com/specimen/Montserrat) |
-| **Montserrat** | Tipografía principal y única para toda la interfaz                  | [Google Fonts](https://fonts.google.com/specimen/Montserrat) |
+| Fuente                  | Uso                                                     | Enlace                                                                   |
+| ----------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Zalando Sans Expanded** | Tipografía para títulos y encabezados (H1-H6)           | [Google Fonts](https://fonts.google.com/specimen/Zalando+Sans+Expanded)  |
+| **Lato**                | Tipografía para cuerpo de texto, párrafos y UI general  | [Google Fonts](https://fonts.google.com/specimen/Lato)                  |
 
 #### Jerarquía Tipográfica
 
 ```
-MONTSERRAT
-├── Headings (H1-H6): Bold/Black, uppercase para impacto
-├── Body: Regular/Medium, para legibilidad
-├── Navigation: Semi-bold, uppercase con tracking
-└── Buttons: Bold, uppercase
+ZALANDO SANS EXPANDED (Títulos)
+├── H1-H6: Regular/Medium/Bold/Black para jerarquía visual moderna y expandida
+├── Uso: Headers de sección, títulos de productos, headings principales
+└── Características: Sans-serif moderna, expandida, con fuerte impacto visual
+
+LATO (Cuerpo)
+├── Body: Regular/Light para lectura confortable
+├── Navigation: Regular/Bold para navegación clara
+├── Buttons: Bold para CTAs
+└── Características: Sans-serif limpia y moderna con excelente legibilidad
 ```
 
 #### Configuración CSS
@@ -145,11 +150,18 @@ MONTSERRAT
 }
 
 /* Tipografías */
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap");
-
 :root {
-  --font-primary: "Montserrat", sans-serif;
-  --font-decorative: "Montserrat", sans-serif;
+  --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Zalando Sans Expanded", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Aplicación automática */
+body {
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
 }
 ```
 

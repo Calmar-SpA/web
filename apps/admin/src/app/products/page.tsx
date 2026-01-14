@@ -27,12 +27,12 @@ export default async function ProductsPage() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">PRODUCTOS</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Productos</h1>
           <p className="text-slate-500">Gestiona tu catálogo e inventario</p>
         </div>
         <Link href="/products/new">
           <Button className="bg-calmar-ocean hover:bg-calmar-ocean-dark text-white font-bold">
-            + NUEVO PRODUCTO
+            + Nuevo producto
           </Button>
         </Link>
       </div>

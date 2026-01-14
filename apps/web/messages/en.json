@@ -1,32 +1,32 @@
 {
   "Index": {
     "hero": {
-      "title": "HYDRATION THAT NOURISHES",
+      "title": "Hydration that nourishes",
       "subtitle": "78 minerals from the South Pacific. Physical filtration, zero chemicals. Your body recognizes it.",
-      "cta": "EXPLORE SHOP"
+      "cta": "Explore shop"
     },
     "featured": {
-      "title": "FEATURED PRODUCTS",
+      "title": "Featured products",
       "subtitle": "Authentic mineral hydration from the South Pacific"
     },
     "benefits": {
       "marine": {
-        "title": "INTACT PURITY",
+        "title": "Intact purity",
         "description": "No unnecessary intervention. What comes from the sea and spring of southern Chile, reaches you."
       },
       "recovery": {
-        "title": "78 NATURAL MINERALS",
+        "title": "78 Natural minerals",
         "description": "Complete electrolytes your body recognizes. No added sugars, no chemicals."
       },
       "purity": {
-        "title": "TOTAL TRANSPARENCY",
+        "title": "Total transparency",
         "description": "Every batch analyzed in the laboratory. We know exactly what you're drinking and where it comes from."
       }
     },
     "cta_footer": {
-      "title": "RETURN TO YOUR BODY WHAT IT NEEDS",
+      "title": "Return to your body what it needs",
       "subtitle": "Regular water only hydrates. CALMAR hydrates AND mineralizes.",
-      "button": "EXPLORE SHOP"
+      "button": "Explore shop"
     }
   },
   "Navigation": {
@@ -80,9 +80,9 @@
       "quantity": "{qty} units"
     },
     "buttons": {
-      "processing": "PROCESSING...",
-      "payWithCredit": "PAY WITH CREDIT",
-      "payWithFlow": "PAY WITH FLOW"
+      "processing": "Processing...",
+      "payWithCredit": "Pay with credit",
+      "payWithFlow": "Pay with Flow"
     },
     "messages": {
       "creditApproval": "Order subject to credit approval",
@@ -90,15 +90,15 @@
       "error": "There was an error processing your order."
     },
     "emptyCart": {
-      "title": "YOUR CART IS EMPTY",
+      "title": "Your cart is empty",
       "description": "Add products before checkout.",
-      "button": "GO TO SHOP"
+      "button": "Go to shop"
     },
     "points": {
       "title": "Redeem your Calmar Points",
       "available": "You have {points} points available (${value} CLP)",
       "placeholder": "e.g. 500",
-      "apply": "APPLY",
+      "apply": "Apply",
       "applied": "{points} points applied (-${value})",
       "errorInvalid": "Enter a valid amount",
       "errorInsufficient": "You only have {max} points available",
@@ -121,14 +121,14 @@
     "pendingReview": "Your application is being reviewed by our team.",
     "isBusiness": "Are you a business?",
     "b2bBenefit": "Apply for our B2B program to access wholesale pricing and direct credit.",
-    "applyNow": "APPLY NOW",
+    "applyNow": "Apply now",
     "rewardsTitle": "Rewards Center",
     "soon": "Coming Soon: Product Redemption",
     "soonDesc": "Use your points to get Calmar products for free.",
     "ordersList": {
-      "title": "MY ORDERS",
+      "title": "My orders",
       "subtitle": "Manage and track your purchases at Calmar.",
-      "goToShop": "GO TO SHOP",
+      "goToShop": "Go to shop",
       "empty": {
         "title": "You don't have any orders yet",
         "description": "How about trying our filtered sea water?",
@@ -142,7 +142,7 @@
         "delivered": "Delivered",
         "cancelled": "Cancelled"
       },
-      "orderNumber": "ORDER #{number}",
+      "orderNumber": "Order #{number}",
       "date": "{date} • {count} products",
       "total": "Total"
     },
@@ -153,41 +153,41 @@
       "history": "History"
     },
     "apiKeys": {
-      "title": "API KEYS",
+      "title": "Api keys",
       "placeholder": "Key Name (e.g. ERP Integration)",
-      "newKey": "NEW KEY",
-      "generating": "GENERATING...",
+      "newKey": "New key",
+      "generating": "Generating...",
       "success": "API Key generated successfully",
       "error": "Error generating API Key",
       "copy": "Copied to clipboard",
       "warningTitle": "Save this key now",
       "warningDesc": "For security, we will not show this full key again.",
-      "understood": "UNDERSTOOD, I SAVED IT",
-      "lastUsed": "LAST USED",
+      "understood": "Understood, I saved it",
+      "lastUsed": "Last used",
       "never": "Never",
       "empty": "You have no API keys generated"
     },
     "settings": {
       "navTitle": "Settings",
-      "title": "SETTINGS",
+      "title": "Settings",
       "subtitle": "Manage your preferences and security.",
       "profile": "Profile",
       "fullName": "Full Name",
       "email": "Email",
-      "update": "UPDATE PROFILE",
+      "update": "Update profile",
       "security": "Security",
-      "changePassword": "CHANGE PASSWORD",
-      "logout": "LOG OUT FROM ALL DEVICES",
+      "changePassword": "Change password",
+      "logout": "Log out from all devices",
       "notifications": "Notifications",
       "marketing": "Receive marketing emails and offers",
       "transactional": "Receive transactional emails (Required)",
-      "save": "SAVE CHANGES"
+      "save": "Save changes"
     }
   },
   "Shop": {
-    "title": "CALMAR SHOP",
+    "title": "Calmar shop",
     "subtitle": "From the South Pacific to your body. Intact minerals, as it should be.",
-    "allProducts": "ALL PRODUCTS",
+    "allProducts": "All products",
     "noProducts": "No products available at this moment.",
     "categories": {
       "all": "All",
@@ -197,7 +197,7 @@
     }
   },
   "Login": {
-    "title": "WELCOME",
+    "title": "Welcome",
     "description": "Log in to your Calmar account",
     "email": "Email",
     "password": "Password",
@@ -207,41 +207,41 @@
   },
   "About": {
     "hero": {
-      "title": "CALMAR WORLD",
+      "title": "Calmar world",
       "subtitle": "Where the sea and the spring meet"
     },
     "story": {
-      "title": "OUR STORY",
+      "title": "Our story",
       "p1": "The sea has spent millions of years perfecting its formula. 78 minerals and trace elements in exact balance. A composition your body recognizes because it resembles yours.",
       "p2": "At CALMAR we don't invent anything. We go to southern Chile, where the Pacific is still pristine, and bring that water to you —physically filtered, analyzed, intact. Because nature already did the hard work."
     },
     "mission": {
-      "title": "OUR PURPOSE",
+      "title": "Our purpose",
       "text": "Return to the body what modern life takes away. Regular water only hydrates. CALMAR hydrates AND mineralizes."
     },
     "values": {
-      "title": "OUR VALUES",
+      "title": "Our values",
       "purity": {
-        "title": "PURITY",
+        "title": "Purity",
         "description": "No unnecessary intervention. What comes from the sea and spring, reaches you."
       },
       "performance": {
-        "title": "TRANSPARENCY",
+        "title": "Transparency",
         "description": "We say exactly what it is, where it comes from, and we back it up with laboratory analysis."
       },
       "sustainability": {
-        "title": "RESPECT",
+        "title": "Respect",
         "description": "For nature (responsible extraction) and for your body (no chemicals)."
       },
       "authenticity": {
-        "title": "AUTHENTICITY",
+        "title": "Authenticity",
         "description": "We don't invent benefits. The sea already did the work for us."
       }
     }
   },
   "Contact": {
     "hero": {
-      "title": "CONTACT US",
+      "title": "Contact us",
       "subtitle": "We're here to help you"
     },
     "form": {
@@ -249,13 +249,13 @@
       "email": "Email",
       "subject": "Subject",
       "message": "Message",
-      "send": "SEND MESSAGE",
-      "sending": "SENDING...",
+      "send": "Send message",
+      "sending": "Sending...",
       "success": "Message sent! We'll get back to you soon.",
       "error": "Error sending. Please try again."
     },
     "info": {
-      "title": "INFORMATION",
+      "title": "Information",
       "email": "contact@calmar.cl",
       "phone": "+56 9 1234 5678",
       "hours": "Mon - Fri: 9:00 AM - 6:00 PM"
@@ -265,15 +265,15 @@
     "description": "We don't add anything. We only remove what's unnecessary. Sea water and spring from southern Chile.",
     "links": "Links",
     "newsletter": {
-      "title": "NEWSLETTER",
+      "title": "Newsletter",
       "placeholder": "you@email.com",
-      "button": "JOIN",
+      "button": "Join",
       "success": "Successfully subscribed!",
       "alreadySubscribed": "You are already subscribed.",
       "error": "An error occurred. Please try again.",
       "invalidEmail": "Invalid email."
     },
-    "rights": "© 2026 CALMAR SPA • ALL RIGHTS RESERVED"
+    "rights": "© 2026 Calmar SpA • All rights reserved"
   },
   "ComingSoon": {
     "badge": "Coming Soon",

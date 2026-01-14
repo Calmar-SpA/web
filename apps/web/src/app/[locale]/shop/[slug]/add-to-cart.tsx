@@ -48,7 +48,7 @@ export function AddToCart({ product }: AddToCartProps) {
         onClick={handleAddToCart}
         className="flex-1 h-14 bg-slate-900 hover:bg-calmar-ocean text-white text-lg font-black transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98]"
       >
-        AÑADIR AL CARRO
+        Añadir al carro
       </Button>
     </div>
   )

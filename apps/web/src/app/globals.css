@@ -9,6 +9,10 @@
   --color-calmar-primary: #62a49e;
   --color-calmar-primary-light: #a5c1b1;
   --color-calmar-accent: #86651d;
+  --color-calmar-ocean-dark: oklch(35% 0.1 230);
+  --color-calmar-ocean: oklch(55% 0.15 210);
+  --color-calmar-ocean-light: oklch(75% 0.1 200);
+  --color-calmar-mint: oklch(80% 0.15 160);
   --color-calmar-background: #ffffff;
   --color-calmar-text: #343431;
 
@@ -19,8 +23,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  --font-sans: var(--font-montserrat);
-  --font-decorative: var(--font-montserrat);
+  --font-family-sans: var(--font-lato), ui-sans-serif, system-ui, sans-serif;
+  --font-family-serif: var(--font-zalando), ui-sans-serif, system-ui, sans-serif;
 
   /* Gradients */
   --background-image-calmar-gradient: linear-gradient(135deg, #1d504b 0%, #62a49e 100%);
@@ -143,6 +147,10 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+    font-family: var(--font-zalando), ui-sans-serif, system-ui, sans-serif !important;
   }
 }
 

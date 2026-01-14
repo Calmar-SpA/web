@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import { Zalando_Sans_Expanded, Lato } from "next/font/google";
 import "./globals.css";
 
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
+const zalando = Zalando_Sans_Expanded({
+  variable: "--font-zalando",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
+});
+
+const lato = Lato({
+  variable: "--font-lato",
+  subsets: ["latin"],
+  weight: ["300", "400", "700", "900"],
+  display: "swap",
 });
 
 
@@ -22,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body
-        className={`${montserrat.variable} antialiased min-h-screen flex flex-col font-sans`}
+        className={`${zalando.variable} ${lato.variable} antialiased min-h-screen flex flex-col font-sans`}
       >
         {children}
       </body>

@@ -73,7 +73,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                 <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center text-calmar-ocean group-hover:scale-110 transition-transform">
                   <Waves className="h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-black uppercase tracking-tight">{t("benefits.marine.title")}</h3>
+                <h3 className="text-xl font-serif font-medium tracking-tight">{t("benefits.marine.title")}</h3>
                 <p className="text-slate-500 text-sm leading-relaxed">{t("benefits.marine.description")}</p>
               </div>
             </Reveal>
@@ -83,7 +83,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                 <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center text-calmar-ocean group-hover:scale-110 transition-transform">
                   <Zap className="h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-black uppercase tracking-tight">{t("benefits.recovery.title")}</h3>
+                <h3 className="text-xl font-serif font-medium tracking-tight">{t("benefits.recovery.title")}</h3>
                 <p className="text-slate-500 text-sm leading-relaxed">{t("benefits.recovery.description")}</p>
               </div>
             </Reveal>
@@ -93,7 +93,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                 <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                   <Heart className="h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-black uppercase tracking-tight">{t("benefits.purity.title")}</h3>
+                <h3 className="text-xl font-serif font-medium tracking-tight">{t("benefits.purity.title")}</h3>
                 <p className="text-foreground/70 text-sm leading-relaxed">{t("benefits.purity.description")}</p>
               </div>
             </Reveal>
@@ -108,7 +108,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             <Reveal>
               <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
                 <div>
-                  <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-[0.8]">
+                  <h2 className="text-5xl md:text-7xl font-serif font-medium tracking-tighter leading-[0.8]">
                     {t("featured.title")}
                   </h2>
                   <p className="text-primary font-bold uppercase tracking-[0.2em] text-sm mt-4">
@@ -121,10 +121,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               </div>
             </Reveal>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="flex flex-wrap justify-center gap-8">
               {featuredProducts.map((product, index) => (
                 <Reveal key={product.id} delay={index * 0.1}>
-                  <div className="hover:-translate-y-2 transition-transform duration-500">
+                  <div className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(25%-1.5rem)] min-w-[280px] max-w-[350px] hover:-translate-y-2 transition-transform duration-500">
                     <ProductCardWithCart 
                       product={product} 
                       priority={index === 0} 
@@ -146,7 +146,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         <div className="max-w-4xl mx-auto px-4 relative z-10 text-center space-y-12">
           <Reveal>
             <div className="space-y-4">
-              <h2 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-primary-foreground leading-[0.8] uppercase">
+              <h2 className="text-5xl md:text-7xl lg:text-8xl font-serif font-medium tracking-tighter text-primary-foreground leading-[0.8]">
                 {t("cta_footer.title")}
               </h2>
               <p className="text-primary-foreground/70 text-lg uppercase tracking-widest">

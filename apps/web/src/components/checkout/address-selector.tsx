@@ -26,22 +26,22 @@ interface AddressSelectorProps {
 
 // Chilean regions mapping (region code to name)
 const REGION_MAP: Record<number, string> = {
-  15: "ARICA Y PARINACOTA",
-  1: "TARAPACÁ",
-  2: "ANTOFAGASTA",
-  3: "ATACAMA",
-  4: "COQUIMBO",
-  5: "VALPARAÍSO",
-  6: "O'HIGGINS",
-  7: "MAULE",
-  8: "BIOBÍO",
-  9: "LA ARAUCANÍA",
-  10: "LOS LAGOS",
-  11: "AYSÉN",
-  12: "MAGALLANES",
-  13: "METROPOLITANA",
-  14: "LOS RÍOS",
-  16: "ÑUBLE",
+  15: "Arica y Parinacota",
+  1: "Tarapacá",
+  2: "Antofagasta",
+  3: "Atacama",
+  4: "Coquimbo",
+  5: "Valparaíso",
+  6: "O'higgins",
+  7: "Maule",
+  8: "Biobío",
+  9: "La Araucanía",
+  10: "Los Lagos",
+  11: "Aysén",
+  12: "Magallanes",
+  13: "Metropolitana",
+  14: "Los Ríos",
+  16: "Ñuble",
 }
 
 export function AddressSelector({

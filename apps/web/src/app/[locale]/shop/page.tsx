@@ -44,7 +44,7 @@ export default async function ShopPage({ params }: { params: Promise<{ locale: s
       <section className="bg-primary text-primary-foreground py-16 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-primary-light/10 opacity-20" />
         <div className="max-w-7xl mx-auto relative z-10 text-center space-y-4">
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase">{t('title')}</h1>
+          <h1 className="text-5xl md:text-7xl font-serif font-medium tracking-tighter">{t('title')}</h1>
           <p className="text-secondary font-medium tracking-widest uppercase text-sm">
             {t('subtitle')}
           </p>
@@ -54,7 +54,7 @@ export default async function ShopPage({ params }: { params: Promise<{ locale: s
       {/* Product Grid */}
       <section className="max-w-7xl mx-auto py-12 px-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <h2 className="text-2xl font-bold uppercase">{t('allProducts')}</h2>
+          <h2 className="text-2xl font-bold">{t('allProducts')}</h2>
           <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
             {categories.map((cat) => (
               <button 

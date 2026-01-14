@@ -24,7 +24,7 @@ export default async function UsersPage() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">USUARIOS</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Usuarios</h1>
         <p className="text-slate-500">Gestiona usuarios y sus roles de acceso</p>
       </div>
 

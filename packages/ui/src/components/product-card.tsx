@@ -127,7 +127,7 @@ export function ProductCard({ product, id, name, price, discount_percentage, ima
           onClick={onAdd}
           className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-colors"
         >
-          AGREGAR AL CARRO
+          Agregar al carro
         </Button>
       </CardFooter>
     </Card>

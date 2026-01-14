@@ -62,7 +62,7 @@ export function CartDrawer() {
           <div className="flex-1" />
           <SheetTitle className="flex items-center gap-2">
             <ShoppingBag className="w-5 h-5 text-calmar-ocean" />
-            MI CARRO
+            Mi carro
           </SheetTitle>
           <div className="flex-1 flex justify-end">
             <Button 
@@ -210,12 +210,12 @@ export function CartDrawer() {
             
             <Link href="/checkout" className="block w-full" onClick={() => setOpen(false)}>
               <Button className="w-full h-14 bg-slate-900 hover:bg-calmar-ocean text-white font-black shadow-lg shadow-slate-900/20 transition-all active:scale-95">
-                INICIAR COMPRA
+                Iniciar compra
               </Button>
             </Link>
             
             <p className="text-[10px] text-center text-slate-400 font-medium">
-              ENVÍOS A TODO CHILE • PAGOS SEGUROS
+              Envíos a todo Chile • Pagos seguros
             </p>
           </div>
         )}

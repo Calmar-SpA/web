@@ -175,7 +175,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
               
               {order.status === 'pending_payment' && (
                 <Button className="w-full bg-calmar-ocean hover:bg-calmar-ocean-dark text-white font-black mt-4 h-12">
-                  COMPLETAR PAGO
+                  Completar pago
                 </Button>
               )}
             </CardContent>

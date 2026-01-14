@@ -39,12 +39,12 @@ function CheckoutSuccessContent() {
       <div className="flex flex-col sm:flex-row gap-4 w-full">
         <Link href="/shop" className="flex-1">
           <Button className="w-full h-14 bg-slate-900 hover:bg-calmar-ocean text-white font-black shadow-lg shadow-slate-900/10">
-            SEGUIR COMPRANDO
+            Seguir comprando
           </Button>
         </Link>
         <Link href="/account" className="flex-1">
           <Button variant="outline" className="w-full h-14 font-bold border-2">
-            VER MI PEDIDO
+            Ver mi pedido
           </Button>
         </Link>
       </div>

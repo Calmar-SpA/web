@@ -1,32 +1,32 @@
 {
   "Index": {
     "hero": {
-      "title": "HIDRATACIÓN QUE NUTRE",
+      "title": "Hidratación que nutre",
       "subtitle": "78 minerales del Pacífico sur. Filtración física, cero químicos. Tu cuerpo lo reconoce.",
-      "cta": "EXPLORAR TIENDA"
+      "cta": "Explorar tienda"
     },
     "featured": {
-      "title": "PRODUCTOS DESTACADOS",
+      "title": "Productos destacados",
       "subtitle": "Hidratación mineral auténtica del Pacífico sur"
     },
     "benefits": {
       "marine": {
-        "title": "PUREZA INTACTA",
+        "title": "Pureza Intacta",
         "description": "Sin intervención innecesaria. Lo que sale del mar y la vertiente del sur de Chile, llega a ti."
       },
       "recovery": {
-        "title": "78 MINERALES NATURALES",
+        "title": "78 Minerales naturales",
         "description": "Electrolitos completos que tu cuerpo reconoce. Sin azúcares añadidos, sin químicos."
       },
       "purity": {
-        "title": "TRANSPARENCIA TOTAL",
+        "title": "Transparencia total",
         "description": "Cada lote analizado en laboratorio. Sabemos exactamente qué tomas y de dónde viene."
       }
     },
     "cta_footer": {
-      "title": "DEVUELVE A TU CUERPO LO QUE NECESITA",
+      "title": "Devuelve a tu cuerpo lo que necesita",
       "subtitle": "El agua común solo hidrata. CALMAR hidrata y mineraliza.",
-      "button": "EXPLORAR TIENDA"
+      "button": "Explorar tienda"
     }
   },
   "Navigation": {
@@ -80,9 +80,9 @@
       "quantity": "{qty} unid."
     },
     "buttons": {
-      "processing": "PROCESANDO...",
-      "payWithCredit": "PAGAR CON CRÉDITO",
-      "payWithFlow": "PAGAR CON FLOW"
+      "processing": "Procesando...",
+      "payWithCredit": "Pagar con crédito",
+      "payWithFlow": "Pagar con Flow"
     },
     "messages": {
       "creditApproval": "Orden sujeta a aprobación de crédito",
@@ -90,15 +90,15 @@
       "error": "Hubo un error al procesar tu pedido."
     },
     "emptyCart": {
-      "title": "TU CARRO ESTÁ VACÍO",
+      "title": "Tu carro está vacío",
       "description": "Agrega productos antes de realizar el checkout.",
-      "button": "IR A LA TIENDA"
+      "button": "Ir a la tienda"
     },
     "points": {
       "title": "Canjea tus Puntos Calmar",
       "available": "Tienes {points} puntos disponibles (${value} CLP)",
       "placeholder": "Ej: 500",
-      "apply": "APLICAR",
+      "apply": "Aplicar",
       "applied": "{points} puntos aplicados (-${value})",
       "errorInvalid": "Ingresa una cantidad válida",
       "errorInsufficient": "Solo tienes {max} puntos disponibles",
@@ -121,14 +121,14 @@
     "pendingReview": "Tu postulación está siendo revisada por nuestro equipo.",
     "isBusiness": "¿Eres una empresa?",
     "b2bBenefit": "Postula a nuestro programa B2B para acceder a precios mayoristas y crédito directo.",
-    "applyNow": "POSTULAR AHORA",
+    "applyNow": "Postular ahora",
     "rewardsTitle": "Centro de Recompensas",
     "soon": "Pronto: Canje por productos",
     "soonDesc": "Usa tus puntos para llevarte productos Calmar gratis.",
     "ordersList": {
-      "title": "MIS PEDIDOS",
+      "title": "Mis pedidos",
       "subtitle": "Gestiona y rastrea tus compras en Calmar.",
-      "goToShop": "IR A LA TIENDA",
+      "goToShop": "Ir a la tienda",
       "empty": {
         "title": "Aún no tienes pedidos",
         "description": "¿Qué tal si pruebas nuestra agua de mar filtrada?",
@@ -142,7 +142,7 @@
         "delivered": "Entregado",
         "cancelled": "Cancelado"
       },
-      "orderNumber": "PEDIDO #{number}",
+      "orderNumber": "Pedido #{number}",
       "date": "{date} • {count} productos",
       "total": "Total"
     },
@@ -153,41 +153,41 @@
       "history": "Historial"
     },
     "apiKeys": {
-      "title": "CLAVES DE API",
+      "title": "Claves de API",
       "placeholder": "Nombre de la clave (Ej: Integración ERP)",
-      "newKey": "NUEVA CLAVE",
-      "generating": "GENERANDO...",
+      "newKey": "Nueva clave",
+      "generating": "Generando...",
       "success": "API Key generada con éxito",
       "error": "Error al generar la API Key",
       "copy": "Copiado al portapapeles",
       "warningTitle": "Guarda esta clave ahora",
       "warningDesc": "Por seguridad, no volveremos a mostrar esta clave completa.",
-      "understood": "ENTENDIDO, LA HE GUARDADO",
-      "lastUsed": "ÚLTIMO USO",
+      "understood": "Entendido, la he guardado",
+      "lastUsed": "Último uso",
       "never": "Nunca",
       "empty": "No tienes claves de API generadas"
     },
     "settings": {
       "navTitle": "Ajustes",
-      "title": "AJUSTES",
+      "title": "Ajustes",
       "subtitle": "Administra tus preferencias y seguridad.",
       "profile": "Perfil",
       "fullName": "Nombre Completo",
       "email": "Email",
-      "update": "ACTUALIZAR PERFIL",
+      "update": "Actualizar perfil",
       "security": "Seguridad",
-      "changePassword": "CAMBIAR CONTRASEÑA",
-      "logout": "CERRAR SESIÓN DE TODOS LOS DISPOSITIVOS",
+      "changePassword": "Cambiar contraseña",
+      "logout": "Cerrar sesión de todos los dispositivos",
       "notifications": "Notificaciones",
       "marketing": "Recibir correos de marketing y ofertas",
       "transactional": "Recibir correos sobre mis pedidos (Requerido)",
-      "save": "GUARDAR CAMBIOS"
+      "save": "Guardar cambios"
     }
   },
   "Shop": {
-    "title": "TIENDA CALMAR",
+    "title": "Tienda Calmar",
     "subtitle": "Del Pacífico sur a tu cuerpo. Minerales intactos, como debe ser.",
-    "allProducts": "TODOS LOS PRODUCTOS",
+    "allProducts": "Todos los productos",
     "noProducts": "No hay productos disponibles en este momento.",
     "categories": {
       "all": "Todos",
@@ -197,7 +197,7 @@
     }
   },
   "Login": {
-    "title": "BIENVENIDO",
+    "title": "Bienvenido",
     "description": "Ingresa a tu cuenta Calmar",
     "email": "Email",
     "password": "Contraseña",
@@ -207,41 +207,41 @@
   },
   "About": {
     "hero": {
-      "title": "MUNDO CALMAR",
+      "title": "Mundo Calmar",
       "subtitle": "Donde el mar y la vertiente se encuentran"
     },
     "story": {
-      "title": "NUESTRA HISTORIA",
+      "title": "Nuestra historia",
       "p1": "El mar lleva millones de años perfeccionando su fórmula. 78 minerales y oligoelementos en equilibrio exacto. Una composición que tu cuerpo reconoce porque se parece a la tuya.",
       "p2": "En CALMAR no inventamos nada. Vamos al sur de Chile, donde el Pacífico todavía es prístino, y traemos esa agua a ti —filtrada físicamente, analizada, intacta. Porque la naturaleza ya hizo el trabajo difícil."
     },
     "mission": {
-      "title": "NUESTRO PROPÓSITO",
+      "title": "Nuestro propósito",
       "text": "Devolver al cuerpo lo que la vida moderna le quita. El agua común solo hidrata. CALMAR hidrata Y mineraliza."
     },
     "values": {
-      "title": "NUESTROS VALORES",
+      "title": "Nuestros valores",
       "purity": {
-        "title": "PUREZA",
+        "title": "Pureza",
         "description": "Sin intervención innecesaria. Lo que sale del mar y la vertiente, llega a ti."
       },
       "performance": {
-        "title": "TRANSPARENCIA",
+        "title": "Transparencia",
         "description": "Decimos exactamente qué es, de dónde viene, y lo respaldamos con análisis de laboratorio."
       },
       "sustainability": {
-        "title": "RESPETO",
+        "title": "Respeto",
         "description": "Por la naturaleza (extracción responsable) y por tu cuerpo (sin químicos)."
       },
       "authenticity": {
-        "title": "AUTENTICIDAD",
+        "title": "Autenticidad",
         "description": "No inventamos beneficios. El mar ya hizo el trabajo por nosotros."
       }
     }
   },
   "Contact": {
     "hero": {
-      "title": "CONTÁCTANOS",
+      "title": "Contáctanos",
       "subtitle": "Estamos aquí para ayudarte"
     },
     "form": {
@@ -249,13 +249,13 @@
       "email": "Email",
       "subject": "Asunto",
       "message": "Mensaje",
-      "send": "ENVIAR MENSAJE",
-      "sending": "ENVIANDO...",
+      "send": "Enviar mensaje",
+      "sending": "Enviando...",
       "success": "¡Mensaje enviado! Te responderemos pronto.",
       "error": "Error al enviar. Intenta nuevamente."
     },
     "info": {
-      "title": "INFORMACIÓN",
+      "title": "Información",
       "email": "contacto@calmar.cl",
       "phone": "+56 9 1234 5678",
       "hours": "Lun - Vie: 9:00 - 18:00"
@@ -265,15 +265,15 @@
     "description": "No le agregamos nada. Solo le quitamos lo que sobra. Agua de mar y vertiente del sur de Chile.",
     "links": "Enlaces",
     "newsletter": {
-      "title": "BOLETÍN",
+      "title": "Newsletter",
       "placeholder": "tu@email.com",
-      "button": "UNIRSE",
+      "button": "Unirse",
       "success": "¡Te has suscrito correctamente!",
       "alreadySubscribed": "Ya estás suscrito a nuestro boletín.",
       "error": "Ocurrió un error. Intenta nuevamente.",
       "invalidEmail": "Email inválido."
     },
-    "rights": "© 2026 CALMAR SPA • TODOS LOS DERECHOS RESERVADOS"
+    "rights": "© 2026 Calmar SpA • Todos los derechos reservados"
   },
   "ComingSoon": {
     "badge": "Próximamente",
