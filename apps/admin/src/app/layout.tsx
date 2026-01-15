@@ -21,6 +21,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "CALMAR | Admin Panel",
   description: "Panel de administración de Calmar SpA",
+  icons: {
+    icon: "https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/Isotipo%20circular%20admin.png",
+    shortcut: "https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/Isotipo%20circular%20admin.png",
+    apple: "https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/Isotipo%20circular%20admin.png",
+  },
 };
 
 export default function RootLayout({
