@@ -45,13 +45,17 @@ const sendEmail = async ({
 };
 
 const LOGO_URL =
-  'https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp';
+  'https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/CALMAR%20Sin%20Fondo.png';
+
+const FONT_LINK =
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Zalando+Sans+Expanded:wght@300;400;500;600;700;800;900&display=swap';
 
 const buildEmailShell = (title: string, contentHtml: string) => `
 <!doctype html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="${FONT_LINK}" />
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Zalando+Sans+Expanded:wght@300;400;500;600;700;800;900&display=swap');
     </style>

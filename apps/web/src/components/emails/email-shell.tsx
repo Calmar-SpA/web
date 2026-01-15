@@ -133,16 +133,20 @@ export const baseStyles = {
 };
 
 const LOGO_URL =
-  "https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp";
+  "https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/CALMAR%20Sin%20Fondo.png";
 
 const FONT_IMPORT = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Zalando+Sans+Expanded:wght@300;400;500;600;700;800;900&display=swap');
 `;
 
+const FONT_LINK =
+  "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Zalando+Sans+Expanded:wght@300;400;500;600;700;800;900&display=swap";
+
 export const EmailShell = ({ preview, children }: EmailShellProps) => {
   return (
     <Html>
       <Head>
+        <link rel="stylesheet" href={FONT_LINK} />
         <style>{FONT_IMPORT}</style>
       </Head>
       <Preview>{preview}</Preview>
