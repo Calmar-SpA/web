@@ -116,7 +116,7 @@ export async function updateProduct(productId: string, updates: {
   cost_price?: number
   is_active?: boolean
   is_featured?: boolean
-  weight_grams?: number
+  weight_grams: number
   requires_refrigeration?: boolean
   meta_title?: string
   meta_description?: string

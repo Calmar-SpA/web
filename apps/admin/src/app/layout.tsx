@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { Zalando_Sans_Expanded, Inter } from "next/font/google";
+import { Zalando_Sans_Expanded, Montserrat } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
-import { Package, ShoppingCart, LayoutDashboard, LogOut, Users } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
-import Image from "next/image";
+import { Sidebar } from "@/components/sidebar";
 
 const zalando = Zalando_Sans_Expanded({
   variable: "--font-zalando",
@@ -13,9 +11,10 @@ const zalando = Zalando_Sans_Expanded({
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
+  weight: "200",
   display: "swap",
 });
 
@@ -31,54 +30,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${zalando.variable} ${inter.variable} antialiased bg-slate-50 min-h-screen flex font-sans`}>
-        {/* Sidebar */}
-        <aside className="w-64 bg-slate-900 text-white flex flex-col sticky top-0 h-screen hidden md:flex">
-          <div className="p-8">
-            <Image 
-              src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp" 
-              alt="CALMAR" 
-              width={140} 
-              height={40} 
-              className="h-10 w-auto object-contain invert"
-            />
-            <p className="text-[10px] font-bold text-slate-500 tracking-[0.2em] uppercase mt-1">Admin Panel</p>
-          </div>
-          
-          <nav className="flex-1 px-4 space-y-2">
-            <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors text-sm font-medium">
-              <LayoutDashboard className="w-4 h-4 text-calmar-mint" /> Dashboard
-            </Link>
-            <Link href="/orders" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors text-sm font-medium">
-              <ShoppingCart className="w-4 h-4 text-calmar-ocean" /> Pedidos
-            </Link>
-            <Link href="/products" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors text-sm font-medium">
-              <Package className="w-4 h-4 text-amber-500" /> Productos
-            </Link>
-            <Link href="/users" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors text-sm font-medium">
-              <Users className="w-4 h-4 text-violet-400" /> Usuarios
-            </Link>
-          </nav>
-
-          <div className="p-4 border-t border-white/5">
-            <button className="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors text-sm font-medium">
-              <LogOut className="w-4 h-4" /> Cerrar Sesión
-            </button>
-          </div>
-        </aside>
+      <body className={`${zalando.variable} ${montserrat.variable} antialiased bg-slate-50 min-h-screen flex font-sans`}>
+        <Sidebar />
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col min-w-0">
-          <header className="h-16 bg-white border-b border-slate-200 flex items-center px-8 sticky top-0 z-30">
+        <main className="flex-1 flex flex-col min-w-0 md:ml-0">
+          <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 md:px-8 sticky top-0 z-30 shadow-sm">
              <div className="flex-1" />
              <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full bg-calmar-ocean/10 flex items-center justify-center text-calmar-ocean font-bold text-xs">
+                <div className="w-8 h-8 rounded-full bg-calmar-primary/10 flex items-center justify-center text-calmar-primary font-bold text-xs">
                   AD
                 </div>
-                <span className="text-sm font-bold text-slate-700">Administrador</span>
+                <span className="text-sm font-bold text-calmar-text hidden sm:inline">Administrador</span>
              </div>
           </header>
-          <div className="overflow-auto">
+          <div className="overflow-auto flex-1">
             {children}
           </div>
         </main>

@@ -46,7 +46,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       cost_price: formData.get('cost_price') ? parseFloat(formData.get('cost_price') as string) : undefined,
       is_active: formData.get('is_active') === 'on',
       is_featured: formData.get('is_featured') === 'on',
-      weight_grams: formData.get('weight_grams') ? parseInt(formData.get('weight_grams') as string) : undefined,
+      weight_grams: parseInt(formData.get('weight_grams') as string),
       requires_refrigeration: formData.get('requires_refrigeration') === 'on',
       meta_title: formData.get('meta_title') as string || undefined,
       meta_description: formData.get('meta_description') as string || undefined,
@@ -160,8 +160,8 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
                 <Input name="cost_price" type="number" step="0.01" defaultValue={product.cost_price || ''} />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Peso (gramos)</label>
-                <Input name="weight_grams" type="number" defaultValue={product.weight_grams || ''} />
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Peso (gramos) *</label>
+                <Input name="weight_grams" type="number" defaultValue={product.weight_grams || ''} required />
               </div>
             </div>
 

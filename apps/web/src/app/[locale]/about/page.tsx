@@ -18,7 +18,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           <div className="absolute bottom-1/3 -right-20 w-[400px] h-[400px] bg-calmar-mint/20 blur-[100px] rounded-full" />
         </div>
 
-        <div className="max-w-5xl mx-auto px-4 relative z-10 text-center space-y-6">
+        <div className="w-[90%] max-w-5xl mx-auto relative z-10 text-center space-y-6">
           <Reveal>
             <h1 className="text-6xl md:text-8xl font-serif font-medium tracking-tighter text-white leading-[0.8]">
               {t("hero.title")}
@@ -34,7 +34,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
 
       {/* Story Section */}
       <section className="py-24 bg-white">
-        <div className="max-w-4xl mx-auto px-4 space-y-12">
+        <div className="w-[90%] max-w-4xl mx-auto space-y-12">
           <Reveal>
             <h2 className="text-4xl md:text-5xl font-serif font-medium tracking-tighter text-center">
               {t("story.title")}
@@ -69,7 +69,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
 
       {/* Values Section */}
       <section className="py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="w-[90%] max-w-6xl mx-auto">
           <Reveal>
             <h2 className="text-4xl md:text-5xl font-serif font-medium tracking-tighter text-center mb-16">
               {t("values.title")}

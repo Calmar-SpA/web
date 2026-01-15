@@ -57,7 +57,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
+    <div className="w-[90%] max-w-4xl mx-auto py-12">
       <div className="mb-0 flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{t("title")}</h1>

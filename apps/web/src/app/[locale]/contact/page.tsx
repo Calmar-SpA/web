@@ -34,7 +34,7 @@ export default function ContactPage() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-calmar-ocean/20 blur-[150px] rounded-full" />
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 relative z-10 text-center space-y-4">
+        <div className="w-[90%] max-w-4xl mx-auto relative z-10 text-center space-y-4">
           <Reveal>
             <h1 className="text-5xl md:text-7xl font-serif font-medium tracking-tighter text-white leading-[0.8]">
               {t("hero.title")}
@@ -50,7 +50,7 @@ export default function ContactPage() {
 
       {/* Contact Form & Info */}
       <section className="py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="w-[90%] max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* Contact Form */}
             <Reveal className="lg:col-span-2">
@@ -148,7 +148,14 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Teléfono</p>
-                      <p className="text-slate-900 font-medium">{t("info.phone")}</p>
+                      <a 
+                        href="https://wa.me/56929763779" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-slate-900 font-medium hover:text-calmar-ocean transition-colors"
+                      >
+                        {t("info.phone")}
+                      </a>
                     </div>
                   </div>
                 </Reveal>

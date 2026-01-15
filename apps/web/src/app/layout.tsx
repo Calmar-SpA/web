@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Zalando_Sans_Expanded, Inter } from "next/font/google";
+import { Zalando_Sans_Expanded, Montserrat } from "next/font/google";
 import "./globals.css";
 
 const zalando = Zalando_Sans_Expanded({
@@ -9,9 +9,10 @@ const zalando = Zalando_Sans_Expanded({
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
+  weight: "200",
   display: "swap",
 });
 
@@ -29,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body
-        className={`${zalando.variable} ${inter.variable} antialiased min-h-screen flex flex-col font-sans`}
+        className={`${zalando.variable} ${montserrat.variable} antialiased min-h-screen flex flex-col font-sans`}
       >
         {children}
       </body>

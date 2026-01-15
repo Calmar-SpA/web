@@ -49,7 +49,7 @@ export function ComingSoonPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-calmar-primary/10 blur-[100px] rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-12 relative z-10 text-center space-y-10">
+      <div className="w-[90%] max-w-2xl mx-auto py-12 relative z-10 text-center space-y-10">
         {/* Logo */}
         <div className="flex justify-center opacity-0 animate-[fadeIn_0.8s_ease-out_0s_forwards]">
           <Image 

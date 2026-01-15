@@ -66,7 +66,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
       {/* Brand Benefits */}
       <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="w-[90%] max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             <Reveal delay={0.2} direction="right" className="h-full">
               <div className="group space-y-4">
@@ -104,7 +104,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       {/* Featured Products */}
       {featuredProducts.length > 0 && (
         <section className="py-24 bg-slate-50 overflow-hidden relative">
-          <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="w-[90%] max-w-7xl mx-auto relative z-10">
             <Reveal>
               <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
                 <div>
@@ -143,7 +143,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-secondary/20 blur-[150px] rounded-full" />
         </div>
         
-        <div className="max-w-4xl mx-auto px-4 relative z-10 text-center space-y-12">
+        <div className="w-[90%] max-w-4xl mx-auto relative z-10 text-center space-y-12">
           <Reveal>
             <div className="space-y-4">
               <h2 className="text-5xl md:text-7xl lg:text-8xl font-serif font-medium tracking-tighter text-primary-foreground leading-[0.8]">

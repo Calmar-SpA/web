@@ -3,8 +3,12 @@
 import { Link, usePathname } from "@/navigation"
 import { Button } from "@calmar/ui"
 import { useTranslations } from "next-intl"
-import { LanguageSwitcher } from "./language-switcher"
 import dynamic from 'next/dynamic'
+
+const LanguageSwitcher = dynamic(() => import("./language-switcher").then(mod => ({ default: mod.LanguageSwitcher })), {
+  ssr: false,
+  loading: () => <div className="w-9 h-9 rounded-full animate-pulse bg-slate-100" />
+})
 
 const CartDrawer = dynamic(() => import("../checkout/cart-drawer").then(mod => mod.CartDrawer), {
   ssr: false,
@@ -17,15 +21,17 @@ export function Header() {
   const pathname = usePathname()
   const t = useTranslations("Navigation")
   
+  const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+  
   const navLinks = [
-    { name: t("shop").toUpperCase(), href: "/shop" },
-    { name: t("about").toUpperCase(), href: "/about" },
-    { name: t("contact").toUpperCase(), href: "/contact" },
+    { name: capitalize(t("shop")), href: "/shop" },
+    { name: capitalize(t("about")), href: "/about" },
+    { name: capitalize(t("contact")), href: "/contact" },
   ]
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-primary/10 bg-background/80 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+      <div className="w-[90%] max-w-7xl mx-auto h-20 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image 
@@ -44,9 +50,10 @@ export function Header() {
             <Link 
               key={link.href} 
               href={link.href}
-              className={`text-xs font-bold tracking-widest transition-colors hover:text-primary ${
+              className={`text-base font-bold transition-colors hover:text-primary ${
                 pathname === link.href ? "text-primary" : "text-foreground/80"
               }`}
+              style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
             >
               {link.name}
             </Link>
@@ -58,8 +65,8 @@ export function Header() {
           <LanguageSwitcher />
           
           <Link href="/account" className="hidden sm:block">
-            <Button variant="ghost" className="text-xs font-bold tracking-widest hover:text-primary">
-              {t("account").toUpperCase()}
+            <Button variant="ghost" className="text-base font-bold hover:text-primary" style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}>
+              {t("account").charAt(0).toUpperCase() + t("account").slice(1).toLowerCase()}
             </Button>
           </Link>
           <CartDrawer />

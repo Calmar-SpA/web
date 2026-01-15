@@ -23,7 +23,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
     .single()
 
   return (
-    <div className="max-w-3xl mx-auto py-12 px-4">
+    <div className="w-[90%] max-w-3xl mx-auto py-12">
       <div className="mb-8">
         <h1 className="text-3xl font-black tracking-tighter uppercase">{t("title")}</h1>
         <p className="text-slate-500 text-sm">{t("subtitle")}</p>

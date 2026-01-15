@@ -32,7 +32,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
   const currentStep = steps.findIndex(s => s.key === order.status)
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4">
+    <div className="w-[90%] max-w-4xl mx-auto py-12">
       <div className="mb-8">
         <Link href="/account/orders" className="text-slate-500 hover:text-calmar-ocean flex items-center gap-1 text-xs font-bold uppercase tracking-widest transition-colors">
           <ChevronLeft className="w-4 h-4" /> Volver a mis pedidos
@@ -124,7 +124,12 @@ export default async function OrderDetailPage({ params }: { params: { id: string
                 </div>
                 <div className="text-sm space-y-1">
                   <p className="font-bold">{order.customer_name}</p>
-                  <p className="text-slate-500">{order.shipping_address}</p>
+                  {order.shipping_address && (
+                    <>
+                      <p className="text-slate-500">{order.shipping_address.address}</p>
+                      <p className="text-slate-500">{order.shipping_address.comuna}, {order.shipping_address.region}</p>
+                    </>
+                  )}
                   <p className="text-slate-500">{order.customer_email}</p>
                 </div>
               </CardContent>

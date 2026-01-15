@@ -33,7 +33,7 @@ export default async function OrdersPage({ params }: { params: Promise<{ locale:
   const orders = await orderService.getOrdersByUser(user.id)
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4">
+    <div className="w-[90%] max-w-4xl mx-auto py-12">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-black tracking-tighter uppercase">{t("title")}</h1>

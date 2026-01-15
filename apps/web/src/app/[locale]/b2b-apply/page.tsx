@@ -42,7 +42,7 @@ export default function B2BApplyPage() {
 
   if (isSuccess) {
     return (
-      <div className="max-w-2xl mx-auto py-20 px-4 text-center">
+      <div className="w-[90%] max-w-2xl mx-auto py-20 text-center">
         <div className="bg-emerald-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle2 className="h-10 w-10 text-emerald-600" />
         </div>
@@ -58,7 +58,7 @@ export default function B2BApplyPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-4">
+    <div className="w-[90%] max-w-7xl mx-auto py-12">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div>
           <h1 className="text-5xl font-medium tracking-tighter mb-6 leading-tight">

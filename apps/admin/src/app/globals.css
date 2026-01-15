@@ -1,20 +1,37 @@
 @import "tailwindcss";
 
 @theme {
+  /* Colores principales de Calmar */
+  --color-calmar-primary-dark: #1d504b;
+  --color-calmar-primary: #62a49e;
+  --color-calmar-primary-light: #a5c1b1;
+  --color-calmar-accent: #86651d;
+  
+  /* Colores océano */
   --color-calmar-ocean-dark: oklch(35% 0.1 230);
   --color-calmar-ocean: oklch(55% 0.15 210);
   --color-calmar-ocean-light: oklch(75% 0.1 200);
+  
+  /* Colores secundarios */
   --color-calmar-mint: oklch(80% 0.15 160);
   --color-calmar-lime: oklch(85% 0.2 110);
   
-  --color-primary: var(--color-calmar-ocean);
-  --color-secondary: var(--color-calmar-mint);
-  --color-accent: var(--color-calmar-lime);
+  /* Colores de texto y fondo */
+  --color-calmar-background: #ffffff;
+  --color-calmar-text: #343431;
+  
+  /* Variables de color principales */
+  --color-primary: var(--color-calmar-primary);
+  --color-secondary: var(--color-calmar-primary-light);
+  --color-accent: var(--color-calmar-accent);
   
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   
-  --font-family-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Gradiente de Calmar */
+  --background-image-calmar-gradient: linear-gradient(135deg, #1d504b 0%, #62a49e 100%);
+  
+  --font-family-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
   --font-family-serif: var(--font-zalando), ui-sans-serif, system-ui, sans-serif;
 }
 

@@ -10,8 +10,8 @@ export function Footer() {
   const navigationT = useTranslations('Navigation')
 
   return (
-    <footer className="bg-primary text-primary-foreground py-12 px-4 border-t border-white/10">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
+    <footer className="bg-primary text-primary-foreground py-12 border-t border-white/10">
+      <div className="w-[90%] max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
         <div>
           <Image 
             src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp" 
@@ -37,7 +37,7 @@ export function Footer() {
           <NewsletterForm />
         </div>
       </div>
-      <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-white/5 text-center text-[10px] text-white/50 font-bold uppercase tracking-widest">
+      <div className="w-[90%] max-w-7xl mx-auto mt-12 pt-8 border-t border-white/5 text-center text-[10px] text-white/50 font-bold uppercase tracking-widest">
         {t('rights')}
       </div>
     </footer>

@@ -38,7 +38,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
       <div className="overflow-x-auto" key={refreshKey}>
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b text-sm font-medium text-slate-500">
+            <tr className="border-b-2 border-slate-200 text-xs font-black text-slate-950 uppercase tracking-widest bg-slate-50">
               <th className="py-4 px-4">Imagen</th>
               <th className="py-4 px-4">SKU</th>
               <th className="py-4 px-4">Producto</th>
@@ -48,62 +48,76 @@ export function ProductsTable({ products }: ProductsTableProps) {
               <th className="py-4 px-4 text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y-2 divide-slate-100">
             {products.map((product) => (
-              <tr key={product.id} className="text-sm hover:bg-slate-50/50">
+              <tr key={product.id} className="text-sm hover:bg-slate-50 transition-colors group">
                 <td className="py-4 px-4">
-                  <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
+                  <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-white border-2 border-slate-200 shadow-sm group-hover:border-calmar-primary/30 transition-all">
                     {product.image_url ? (
                       <Image
                         src={product.image_url}
-                        alt={product.name}
+                        alt={product.name || 'Producto'}
                         fill
-                        className="object-contain p-1"
+                        className="object-contain p-2"
                         sizes="64px"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                      <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
                         <ImageIcon className="h-6 w-6" />
                       </div>
                     )}
                   </div>
                 </td>
-                <td className="py-4 px-4 font-mono text-xs">{product.sku}</td>
-                <td className="py-4 px-4 font-bold">{product.name}</td>
-                <td className="py-4 px-4">${product.base_price.toLocaleString('es-CL')}</td>
+                <td className="py-4 px-4 font-mono text-xs font-black text-slate-950">
+                  {product.sku || '---'}
+                </td>
                 <td className="py-4 px-4">
-                  <span className={`font-bold ${(product.inventory?.[0]?.quantity ?? 0) < 10 ? 'text-orange-500' : 'text-slate-900'}`}>
+                  <div className="font-black text-slate-950 uppercase tracking-tight text-base">
+                    {product.name || 'SIN NOMBRE'}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">
+                    ID: {product.id.slice(0, 8)}
+                  </div>
+                </td>
+                <td className="py-4 px-4 font-black text-slate-950 text-base">
+                  ${(product.base_price || 0).toLocaleString('es-CL')}
+                </td>
+                <td className="py-4 px-4">
+                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-md font-black text-sm border-2 ${
+                    (product.inventory?.[0]?.quantity ?? 0) < 10 
+                      ? 'bg-orange-50 text-orange-700 border-orange-200' 
+                      : 'bg-slate-50 text-slate-900 border-slate-200'
+                  }`}>
                     {product.inventory?.[0]?.quantity ?? 0}
-                  </span>
+                  </div>
                 </td>
                 <td className="py-4 px-4">
                   {product.is_active ? (
-                    <span className="px-2 py-1 rounded bg-green-100 text-green-700 text-xs font-bold uppercase">Activo</span>
+                    <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-[10px] font-black uppercase tracking-widest border-2 border-emerald-200 shadow-sm">
+                      Activo
+                    </span>
                   ) : (
-                    <span className="px-2 py-1 rounded bg-slate-100 text-slate-500 text-xs font-bold uppercase">Inactivo</span>
+                    <span className="px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-[10px] font-black uppercase tracking-widest border-2 border-slate-300">
+                      Inactivo
+                    </span>
                   )}
                 </td>
                 <td className="py-4 px-4">
-                  <div className="flex gap-2 justify-end">
+                  <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 text-[10px] font-bold uppercase tracking-widest"
+                      className="h-9 px-4 text-[10px] font-black uppercase tracking-widest border-2 border-slate-200 hover:border-calmar-primary hover:text-calmar-primary shadow-sm"
                       onClick={() => setSelectedProduct({
                         id: product.id,
                         sku: product.sku,
                         imageUrl: product.image_url
                       })}
                     >
-                      Cambiar Imagen
+                      Imagen
                     </Button>
-                    <Link href={`/products/${product.id}/translations`}>
-                      <Button variant="outline" size="sm" className="h-8 text-[10px] font-bold uppercase tracking-widest">
-                        Traducciones
-                      </Button>
-                    </Link>
                     <Link href={`/products/${product.id}/edit`}>
-                      <Button variant="ghost" size="sm" className="h-8">
+                      <Button className="h-9 px-4 text-[10px] font-black uppercase tracking-widest bg-slate-950 text-white hover:bg-slate-800 shadow-md">
                         Editar
                       </Button>
                     </Link>

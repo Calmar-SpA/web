@@ -3,7 +3,7 @@
 
 import { useCart } from "@/hooks/use-cart"
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from "@calmar/ui"
-import { ShoppingBag, ChevronLeft, CreditCard, Truck, Building2 } from "lucide-react"
+import { ShoppingBag, ChevronLeft, CreditCard, Truck, Building2, Plus, Minus } from "lucide-react"
 import { Link } from "@/navigation"
 import { useEffect, useState } from "react"
 import Image from "next/image"
@@ -30,7 +30,7 @@ interface CheckoutFormProps {
 
 export function CheckoutForm({ user, b2bClient, initialNewsletterDiscount }: CheckoutFormProps) {
   const t = useTranslations("Checkout")
-  const { items, total, itemCount } = useCart()
+  const { items, total, itemCount, updateQuantity, removeItem } = useCart()
   const [isMounted, setIsMounted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'flow' | 'credit'>('flow')
@@ -51,7 +51,7 @@ export function CheckoutForm({ user, b2bClient, initialNewsletterDiscount }: Che
 
   // Calculate total cart weight in kg (from weight_grams)
   const cartWeightKg = items.reduce((sum, item) => {
-    const weightGrams = item.product.weight_grams || 500 // Default 500g if not set
+    const weightGrams = item.product.weight_grams
     return sum + (weightGrams * item.quantity) / 1000
   }, 0)
 
@@ -89,6 +89,18 @@ export function CheckoutForm({ user, b2bClient, initialNewsletterDiscount }: Che
 
   const handleRedeem = (points: number) => {
     setPointsToRedeem(points)
+  }
+
+  const handleIncrement = (productId: string, currentQuantity: number) => {
+    updateQuantity(productId, currentQuantity + 1)
+  }
+
+  const handleDecrement = (productId: string, currentQuantity: number) => {
+    if (currentQuantity > 1) {
+      updateQuantity(productId, currentQuantity - 1)
+    } else {
+      removeItem(productId)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -146,7 +158,7 @@ export function CheckoutForm({ user, b2bClient, initialNewsletterDiscount }: Che
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-4">
+    <div className="w-[90%] max-w-7xl mx-auto py-12">
       <div className="mb-8">
         <Link href="/shop" className="text-slate-500 hover:text-calmar-ocean flex items-center gap-1 text-xs font-bold uppercase tracking-widest transition-colors group">
           <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> {t("backToShop")}
@@ -282,10 +294,32 @@ export function CheckoutForm({ user, b2bClient, initialNewsletterDiscount }: Che
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm truncate">{item.product.name}</p>
-                      <p className="text-xs text-slate-500">{t("summary.quantity", { qty: item.quantity })}</p>
-                      <p className="font-black text-calmar-ocean text-sm mt-1">
-                        ${(item.product.base_price * item.quantity).toLocaleString('es-CL')}
-                      </p>
+                      <div className="flex items-center justify-between gap-4 mt-2">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleDecrement(item.product.id, item.quantity)}
+                            disabled={isSubmitting}
+                            className="w-8 h-8 rounded-full border border-slate-300 hover:bg-slate-100 hover:border-calmar-ocean flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                            aria-label="Disminuir cantidad"
+                          >
+                            <Minus className="w-3.5 h-3.5 text-slate-600" />
+                          </button>
+                          <span className="font-bold text-sm min-w-[24px] text-center">{item.quantity}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleIncrement(item.product.id, item.quantity)}
+                            disabled={isSubmitting}
+                            className="w-8 h-8 rounded-full border border-slate-300 hover:bg-slate-100 hover:border-calmar-ocean flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                            aria-label="Aumentar cantidad"
+                          >
+                            <Plus className="w-3.5 h-3.5 text-slate-600" />
+                          </button>
+                        </div>
+                        <p className="font-black text-calmar-ocean text-sm">
+                          ${(item.product.base_price * item.quantity).toLocaleString('es-CL')}
+                        </p>
+                      </div>
                     </div>
                   </div>
                   )

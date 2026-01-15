@@ -20,14 +20,14 @@ export default async function AdminOrdersPage() {
     <div className="p-8 space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase">Gestión de Pedidos</h1>
-          <p className="text-slate-500 text-sm">Administra y procesa las ventas de Calmar.</p>
+          <h1 className="text-3xl font-black tracking-tighter uppercase text-slate-950">Gestión de Pedidos</h1>
+          <p className="text-slate-700 font-medium">Administra y procesa las ventas de Calmar.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="font-bold border-2">
+          <Button variant="outline" className="font-black border-2 border-slate-200 text-slate-950 hover:bg-slate-50 uppercase text-xs tracking-widest">
             <Filter className="w-4 h-4 mr-2" /> Filtrar
           </Button>
-          <Button className="bg-slate-900 hover:bg-calmar-ocean text-white font-bold">
+          <Button className="bg-[#1d504b] hover:bg-[#153f3b] text-white font-black uppercase text-xs tracking-widest px-6 shadow-lg">
             Exportar CSV
           </Button>
         </div>
@@ -50,24 +50,24 @@ export default async function AdminOrdersPage() {
               <tbody className="divide-y">
                 {orders.map((order: any) => (
                   <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-4 font-mono text-xs font-bold text-calmar-ocean">
+                    <td className="px-6 py-4 font-mono text-xs font-black text-slate-900">
                       #{order.id.slice(0, 8)}
                     </td>
-                    <td className="px-6 py-4 text-slate-500">
+                    <td className="px-6 py-4 text-slate-700 font-medium">
                       {new Date(order.created_at).toLocaleDateString('es-CL')}
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-bold">{order.customer_name}</p>
-                      <p className="text-[10px] text-slate-400">{order.customer_email}</p>
+                      <p className="font-black text-slate-900">{order.customer_name}</p>
+                      <p className="text-[10px] text-slate-600 font-bold uppercase">{order.customer_email}</p>
                     </td>
-                    <td className="px-6 py-4 font-black">
+                    <td className="px-6 py-4 font-black text-slate-900">
                       ${order.total_amount.toLocaleString('es-CL')}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full ${
-                        order.status === 'paid' ? 'bg-green-100 text-green-700' : 
-                        order.status === 'pending_payment' ? 'bg-amber-100 text-amber-700' :
-                        'bg-slate-100 text-slate-700'
+                      <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${
+                        order.status === 'paid' ? 'bg-emerald-100 text-emerald-900 border-emerald-200' : 
+                        order.status === 'pending_payment' ? 'bg-amber-100 text-amber-900 border-amber-200' :
+                        'bg-slate-200 text-slate-900 border-slate-300'
                       }`}>
                         {order.status}
                       </span>

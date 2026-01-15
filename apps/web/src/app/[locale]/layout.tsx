@@ -6,6 +6,7 @@ import { locales } from '@/i18n/config';
 import { Footer } from "@/components/layout/footer";
 import { ComingSoonPage } from "@/components/coming-soon";
 import { hasAccess } from "@/actions/access-code";
+import { WhatsAppButton } from "@/components/ui/whatsapp-button";
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -31,6 +32,7 @@ export default async function LocaleLayout({
     return (
       <NextIntlClientProvider messages={messages}>
         <ComingSoonPage />
+        <WhatsAppButton />
         <Toaster />
       </NextIntlClientProvider>
     );
@@ -43,6 +45,7 @@ export default async function LocaleLayout({
       <div className="flex-1">
         {children}
       </div>
+      <WhatsAppButton />
       <Toaster />
       <Footer />
     </NextIntlClientProvider>
