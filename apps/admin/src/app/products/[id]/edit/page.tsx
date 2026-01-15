@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { ProductService } from '@calmar/database'
+import type { ProductWithDetails } from '@calmar/types'
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@calmar/ui'
 import { ChevronLeft, Save, Trash2 } from 'lucide-react'
 import Link from 'next/link'
@@ -13,7 +14,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   const supabase = await createClient()
   const productService = new ProductService(supabase)
   
-  let product
+  let product: ProductWithDetails | null = null
   try {
     product = await productService.getProductBySku(id)
   } catch (error) {
