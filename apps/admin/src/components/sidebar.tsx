@@ -11,7 +11,8 @@ import {
   Film,
   Building2,
   Menu,
-  X
+  X,
+  UsersRound
 } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
@@ -24,6 +25,7 @@ export function Sidebar() {
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "text-calmar-mint" },
     { href: "/orders", label: "Pedidos", icon: ShoppingCart, color: "text-calmar-ocean" },
     { href: "/products", label: "Productos", icon: Package, color: "text-calmar-primary" },
+    { href: "/crm", label: "CRM", icon: UsersRound, color: "text-calmar-accent" },
     { href: "/media", label: "Media", icon: Film, color: "text-calmar-accent" },
     { href: "/b2b", label: "B2B", icon: Building2, color: "text-calmar-primary-light" },
     { href: "/users", label: "Usuarios", icon: Users, color: "text-calmar-mint" },
