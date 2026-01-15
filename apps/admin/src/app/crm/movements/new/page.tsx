@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ProductService, CRMService } from '@calmar/database'
@@ -20,6 +20,14 @@ interface MovementItem {
 }
 
 export default function NewMovementPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Cargando...</div>}>
+      <NewMovementContent />
+    </Suspense>
+  )
+}
+
+function NewMovementContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const defaultType = searchParams.get('type') || 'sample'
