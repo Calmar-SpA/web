@@ -4,6 +4,7 @@ import { Button, Card, CardHeader, CardTitle, CardContent } from "@calmar/ui"
 import { Package, ChevronLeft, MapPin, CreditCard, Receipt } from "lucide-react"
 import Link from "next/link"
 import { notFound, redirect } from 'next/navigation'
+import { formatClp, getPriceBreakdown } from '@calmar/utils'
 
 export default async function OrderDetailPage({ params }: { params: { id: string } }) {
   const { id } = await params
@@ -30,6 +31,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
   ]
 
   const currentStep = steps.findIndex(s => s.key === order.status)
+  const { net: totalNet, iva: totalIva } = getPriceBreakdown(order.total_amount)
 
   return (
     <div className="w-[90%] max-w-4xl mx-auto py-12">
@@ -90,7 +92,10 @@ export default async function OrderDetailPage({ params }: { params: { id: string
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-slate-100">
-                {order.order_items.map((item: any) => (
+                {order.order_items.map((item: any) => {
+                  const lineTotal = item.unit_price * item.quantity
+                  const { net: lineNet, iva: lineIva } = getPriceBreakdown(lineTotal)
+                  return (
                   <div key={item.id} className="p-6 flex gap-4">
                     <div className="w-20 h-20 bg-slate-50 rounded-lg flex-shrink-0 flex items-center justify-center p-2">
                       <img 
@@ -104,12 +109,19 @@ export default async function OrderDetailPage({ params }: { params: { id: string
                         <h4 className="font-bold">{item.products.name}</h4>
                         <p className="text-xs text-slate-500">Cantidad: {item.quantity}</p>
                       </div>
-                      <p className="font-black text-calmar-ocean">
-                        ${(item.unit_price * item.quantity).toLocaleString('es-CL')}
-                      </p>
+                      <div>
+                        <p className="font-black text-calmar-ocean">
+                          ${formatClp(lineTotal)}
+                        </p>
+                        <p className="text-[10px] text-slate-400">IVA incluido</p>
+                        <p className="text-[10px] text-slate-400">
+                          {`Neto: $${formatClp(lineNet)} · IVA (19%): $${formatClp(lineIva)}`}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </CardContent>
           </Card>
@@ -166,8 +178,12 @@ export default async function OrderDetailPage({ params }: { params: { id: string
               <div className="space-y-2 border-b border-white/10 pb-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Subtotal</span>
-                  <span className="font-bold">${order.total_amount.toLocaleString('es-CL')}</span>
+                  <span className="font-bold">${formatClp(order.total_amount)}</span>
                 </div>
+                <p className="text-[10px] text-slate-400 text-right">IVA incluido</p>
+                <p className="text-[10px] text-slate-400 text-right">
+                  {`Neto: $${formatClp(totalNet)} · IVA (19%): $${formatClp(totalIva)}`}
+                </p>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Envío</span>
                   <span className="font-bold text-calmar-mint">Gratis</span>
@@ -175,8 +191,12 @@ export default async function OrderDetailPage({ params }: { params: { id: string
               </div>
               <div className="flex justify-between text-xl uppercase">
                 <span className="font-black">Total</span>
-                <span className="font-black text-calmar-mint">${order.total_amount.toLocaleString('es-CL')}</span>
+                <span className="font-black text-calmar-mint">${formatClp(order.total_amount)}</span>
               </div>
+              <p className="text-[10px] text-slate-400 text-right">IVA incluido</p>
+              <p className="text-[10px] text-slate-400 text-right">
+                {`Neto: $${formatClp(totalNet)} · IVA (19%): $${formatClp(totalIva)}`}
+              </p>
               
               {order.status === 'pending_payment' && (
                 <Button className="w-full bg-calmar-ocean hover:bg-calmar-ocean-dark text-white font-black mt-4 h-12">

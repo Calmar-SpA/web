@@ -180,6 +180,20 @@ export class CRMService {
   }
 
   /**
+   * Get web orders linked to a prospect
+   */
+  async getProspectOrders(prospectId: string) {
+    const { data, error } = await this.supabase
+      .from('orders')
+      .select('*, order_items(*), payments(*)')
+      .eq('prospect_id', prospectId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data || []
+  }
+
+  /**
    * Create a new interaction
    */
   async createInteraction(data: ProspectInteractionData) {

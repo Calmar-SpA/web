@@ -2,11 +2,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@calmar/ui'
+import { Button, Input, Card, CardContent, CardHeader, CardTitle, RutInput } from '@calmar/ui'
 import { Building2, Mail, Phone, User, Fingerprint, CheckCircle2 } from 'lucide-react'
 import { submitB2BApplication } from './actions'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { isValidRut } from '@calmar/utils'
 
 export default function B2BApplyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -28,6 +29,12 @@ export default function B2BApplyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+
+    if (!isValidRut(formData.tax_id)) {
+      toast.error('El RUT no es válido')
+      setIsSubmitting(false)
+      return
+    }
 
     const result = await submitB2BApplication(formData)
 
@@ -109,13 +116,14 @@ export default function B2BApplyPage() {
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Rut empresa</label>
                 <div className="relative">
                   <Fingerprint className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input 
+                  <RutInput 
                     name="tax_id" 
                     placeholder="76.000.000-0" 
                     className="pl-10" 
                     onChange={handleChange}
                     required 
                   />
+                  <p className="text-xs text-slate-500 mt-1">Formato: 12.345.678-9</p>
                 </div>
               </div>
 

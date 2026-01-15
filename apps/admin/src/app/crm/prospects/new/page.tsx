@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createProspect } from '../../actions'
-import { Button, Input } from '@calmar/ui'
+import { Button, Input, RutInput } from '@calmar/ui'
 import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { isValidRut } from '@calmar/utils'
 
 export default function NewProspectPage() {
   const router = useRouter()
@@ -24,6 +25,12 @@ export default function NewProspectPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+
+    if (!isValidRut(formData.tax_id)) {
+      toast.error('El RUT no es válido')
+      setIsSubmitting(false)
+      return
+    }
 
     try {
       await createProspect({
@@ -165,20 +172,20 @@ export default function NewProspectPage() {
           />
         </div>
 
-        {/* Tax ID (B2B only) */}
-        {formData.type === 'b2b' && (
-          <div>
-            <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
-              RUT / Tax ID
-            </label>
-            <Input
-              value={formData.tax_id}
-              onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
-              placeholder="12.345.678-9"
-              className="h-12"
-            />
-          </div>
-        )}
+        {/* RUT */}
+        <div>
+          <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
+            RUT *
+          </label>
+          <RutInput
+            required
+            value={formData.tax_id}
+            onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
+            placeholder="12.345.678-9"
+            className="h-12"
+          />
+          <p className="text-xs text-slate-500 mt-1">Formato: 12.345.678-9</p>
+        </div>
 
         {/* Notes */}
         <div>

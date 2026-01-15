@@ -1,7 +1,7 @@
 import { login, signup } from './actions'
 import { Button } from '@calmar/ui'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@calmar/ui'
-import { Input } from '@calmar/ui'
+import { Input, RutInput } from '@calmar/ui'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import Image from 'next/image'
 
@@ -34,6 +34,11 @@ export default async function LoginPage({ params }: { params: Promise<{ locale: 
             <div className="grid gap-2">
               <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('email')}</label>
               <Input id="email" name="email" type="email" placeholder="hola@ejemplo.cl" required />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="rut" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('rut')}</label>
+              <RutInput id="rut" name="rut" placeholder={t('rutPlaceholder')} />
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t('rutHint')}</p>
             </div>
             <div className="grid gap-2">
               <label htmlFor="password" throws-error="true" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('password')}</label>

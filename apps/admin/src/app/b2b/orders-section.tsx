@@ -5,6 +5,7 @@ import { Button, Skeleton } from '@calmar/ui'
 import { ShoppingBag, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
 import { getB2BClientOrders } from './actions'
 import Link from 'next/link'
+import { formatClp, getPriceBreakdown } from '@calmar/utils'
 
 interface Order {
   id: string
@@ -99,11 +100,21 @@ export function OrdersSection({ userId }: OrdersSectionProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {orders.map((order) => (
-                    <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                  {orders.map((order) => {
+                    const { net, iva } = getPriceBreakdown(order.total_amount)
+                    return (
+                      <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-3 px-2 font-bold text-slate-900">#{order.order_number}</td>
                       <td className="py-3 px-2 text-slate-500">{new Date(order.created_at).toLocaleDateString()}</td>
-                      <td className="py-3 px-2 font-bold text-slate-900">${Number(order.total_amount).toLocaleString('es-CL')}</td>
+                      <td className="py-3 px-2">
+                        <div className="font-bold text-slate-900">
+                          ${formatClp(Number(order.total_amount))}
+                        </div>
+                        <div className="text-[10px] text-slate-400">IVA incluido</div>
+                        <div className="text-[10px] text-slate-400">
+                          {`Neto: $${formatClp(net)} · IVA (19%): $${formatClp(iva)}`}
+                        </div>
+                      </td>
                       <td className="py-3 px-2">
                         <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full ${getStatusColor(order.status)}`}>
                           {order.status}
@@ -116,8 +127,9 @@ export function OrdersSection({ userId }: OrdersSectionProps) {
                           </Button>
                         </Link>
                       </td>
-                    </tr>
-                  ))}
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

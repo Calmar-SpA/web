@@ -8,6 +8,7 @@ import { Package, ChevronLeft, MapPin, CreditCard, Receipt, Truck } from "lucide
 import Link from "next/link"
 import { updateOrderStatus } from "../actions"
 import { toast } from "sonner"
+import { formatClp, getPriceBreakdown } from "@calmar/utils"
 
 export default function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -57,6 +58,8 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     { value: "cancelled", label: "Cancelado", color: "bg-red-500" },
   ]
 
+  const { net: totalNet, iva: totalIva } = getPriceBreakdown(order.total_amount)
+
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
@@ -88,7 +91,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         <div className="text-right">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">Total Pedido</p>
           <p className="text-3xl font-black text-calmar-ocean">
-            ${order.total_amount.toLocaleString('es-CL')}
+            ${formatClp(order.total_amount)}
+          </p>
+          <p className="text-[10px] text-slate-400 mt-1">IVA incluido</p>
+          <p className="text-[10px] text-slate-400">
+            {`Neto: $${formatClp(totalNet)} · IVA (19%): $${formatClp(totalIva)}`}
           </p>
         </div>
       </div>
@@ -104,8 +111,12 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-slate-100">
-                {order.order_items.map((item: any) => (
-                  <div key={item.id} className="p-6 flex gap-4">
+                {order.order_items.map((item: any) => {
+                  const lineTotal = item.unit_price * item.quantity
+                  const { net: unitNet, iva: unitIva } = getPriceBreakdown(item.unit_price)
+                  const { net: lineNet, iva: lineIva } = getPriceBreakdown(lineTotal)
+                  return (
+                    <div key={item.id} className="p-6 flex gap-4">
                     <div className="w-16 h-16 bg-slate-50 rounded-lg flex-shrink-0 flex items-center justify-center p-2">
                       <img 
                         src="C:/Users/felip/.gemini/antigravity/brain/04bc3b89-36f7-4e81-9e30-2d86782a2e82/uploaded_image_0_1767715376929.png" 
@@ -113,17 +124,30 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                         className="object-contain w-full h-full"
                       />
                     </div>
-                    <div className="flex-1 flex items-center justify-between">
+                    <div className="flex-1 flex items-center justify-between gap-4">
                       <div>
                         <h4 className="font-bold">{item.products.name}</h4>
-                        <p className="text-xs text-slate-500">Cantidad: {item.quantity} • Unitario: ${item.unit_price.toLocaleString('es-CL')}</p>
+                        <p className="text-xs text-slate-500">
+                          Cantidad: {item.quantity} • Unitario: ${formatClp(item.unit_price)}
+                        </p>
+                        <p className="text-[10px] text-slate-400">IVA incluido</p>
+                        <p className="text-[10px] text-slate-400">
+                          {`Neto: $${formatClp(unitNet)} · IVA (19%): $${formatClp(unitIva)}`}
+                        </p>
                       </div>
-                      <p className="font-black text-slate-900">
-                        ${(item.unit_price * item.quantity).toLocaleString('es-CL')}
-                      </p>
+                      <div className="text-right">
+                        <p className="font-black text-slate-900">
+                          ${formatClp(lineTotal)}
+                        </p>
+                        <p className="text-[10px] text-slate-400">IVA incluido</p>
+                        <p className="text-[10px] text-slate-400">
+                          {`Neto: $${formatClp(lineNet)} · IVA (19%): $${formatClp(lineIva)}`}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </CardContent>
           </Card>

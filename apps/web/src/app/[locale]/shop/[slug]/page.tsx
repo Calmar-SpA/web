@@ -7,6 +7,7 @@ import { Metadata } from 'next'
 import { locales } from '@/i18n/config'
 import Image from 'next/image'
 import { DiscountInitializer } from '@/components/product/discount-initializer'
+import { formatClp, getPriceBreakdown } from '@calmar/utils'
 
 export const revalidate = 60 // Revalidate once per minute
 
@@ -86,6 +87,7 @@ export default async function ProductDetailPage({ params }: Props) {
   const discountedPrice = newsletterDiscount 
     ? Math.floor(productPrice * (1 - newsletterDiscount / 100))
     : productPrice;
+  const { net: discountedNet, iva: discountedIva } = getPriceBreakdown(discountedPrice)
 
   // Cache busting usando updated_at del producto
   const timestamp = product?.updated_at ? new Date(product.updated_at).getTime() : 0;
@@ -118,12 +120,16 @@ export default async function ProductDetailPage({ params }: Props) {
             <div className="flex flex-col">
               {newsletterDiscount && (
                 <span className="text-sm text-slate-400 line-through decoration-red-400 font-bold">
-                  ${productPrice.toLocaleString('es-CL')}
+                  ${formatClp(productPrice)}
                 </span>
               )}
               <p className="text-3xl font-black bg-calmar-gradient bg-clip-text text-transparent">
-                ${discountedPrice.toLocaleString('es-CL')}
+                ${formatClp(discountedPrice)}
               </p>
+              <div className="mt-2 text-[11px] text-slate-500">
+                <p>IVA incluido</p>
+                <p>{`Neto: $${formatClp(discountedNet)} · IVA (19%): $${formatClp(discountedIva)}`}</p>
+              </div>
             </div>
             {newsletterDiscount ? (
               <div className="bg-calmar-mint/10 px-4 py-3 rounded-lg border border-calmar-mint/30">

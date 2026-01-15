@@ -27,6 +27,7 @@ export default function ProspectDetailPage() {
   const [prospect, setProspect] = useState<any>(null)
   const [interactions, setInteractions] = useState<any[]>([])
   const [movements, setMovements] = useState<any[]>([])
+  const [orders, setOrders] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showInteractionForm, setShowInteractionForm] = useState(false)
   const [interactionForm, setInteractionForm] = useState({
@@ -41,18 +42,28 @@ export default function ProspectDetailPage() {
     const crmService = new CRMService(supabase)
     
     try {
-      const [prospectData, interactionsData, movementsData] = await Promise.all([
-        crmService.getProspectById(prospectId),
+      const prospectData = await crmService.getProspectById(prospectId)
+      setProspect(prospectData)
+    } catch (error: any) {
+      console.error('Error loading prospect:', error)
+      toast.error('Error al cargar el prospecto')
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const [interactionsData, movementsData, ordersData] = await Promise.all([
         crmService.getProspectInteractions(prospectId),
-        crmService.getMovements({ prospect_id: prospectId })
+        crmService.getMovements({ prospect_id: prospectId }),
+        crmService.getProspectOrders(prospectId)
       ])
       
-      setProspect(prospectData)
       setInteractions(interactionsData || [])
       setMovements(movementsData || [])
+      setOrders(ordersData || [])
     } catch (error: any) {
-      console.error('Error loading data:', error)
-      toast.error('Error al cargar datos del prospecto')
+      console.error('Error loading related data:', error)
+      toast.error('Algunos datos no se pudieron cargar')
     } finally {
       setIsLoading(false)
     }
@@ -356,6 +367,46 @@ export default function ProspectDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Web Orders */}
+          <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-black uppercase tracking-tight">Compras Web</h2>
+            </div>
+
+            <div className="space-y-3">
+              {orders.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-4">No hay compras registradas</p>
+              ) : (
+                orders.map((order) => (
+                  <Link
+                    key={order.id}
+                    href={`/orders/${order.id}`}
+                    className="block p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-calmar-ocean transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-600">
+                          Pedido {order.order_number}
+                        </span>
+                        <p className="text-sm font-bold text-slate-900 mt-1">
+                          ${Number(order.total_amount).toLocaleString('es-CL')}
+                        </p>
+                      </div>
+                      <span className="text-xs text-slate-500">
+                        {new Date(order.created_at).toLocaleDateString('es-CL')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-slate-600">
+                      <span>{order.status}</span>
+                      <span>•</span>
+                      <span>{order.order_items?.length || 0} productos</span>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Right Column - Stats */}
@@ -368,6 +419,12 @@ export default function ProspectDetailPage() {
                   Total Movimientos
                 </p>
                 <p className="text-2xl font-black text-slate-900">{movements.length}</p>
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
+                  Compras Web
+                </p>
+                <p className="text-2xl font-black text-slate-900">{orders.length}</p>
               </div>
               <div>
                 <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { CRMService } from '@calmar/database'
 import { Search, Plus, Building2, User, Mail, Phone } from 'lucide-react'
-import { Input, Button } from '@calmar/ui'
+import { Input } from '@calmar/ui'
 import Link from 'next/link'
 import { updateProspectStage } from '../actions'
 import { toast } from 'sonner'
@@ -24,6 +24,7 @@ export default function ProspectsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'b2b' | 'b2c'>('all')
   const [draggedProspect, setDraggedProspect] = useState<string | null>(null)
+  const [ordersByProspect, setOrdersByProspect] = useState<Record<string, { count: number; lastDate?: string; total: number }>>({})
 
   const loadProspects = async () => {
     setIsLoading(true)
@@ -41,6 +42,38 @@ export default function ProspectsPage() {
       
       const data = await crmService.getProspects(filters)
       setProspects(data || [])
+
+      if (data && data.length > 0) {
+        const prospectIds = data.map((p: any) => p.id)
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('id, prospect_id, created_at, total_amount')
+          .in('prospect_id', prospectIds)
+
+        if (ordersError) {
+          console.error('Error loading prospect orders:', ordersError)
+        } else {
+          const summary: Record<string, { count: number; lastDate?: string; total: number }> = {}
+          ordersData?.forEach((order: any) => {
+            if (!order.prospect_id) return
+            if (!summary[order.prospect_id]) {
+              summary[order.prospect_id] = { count: 0, lastDate: order.created_at, total: 0 }
+            }
+            summary[order.prospect_id].count += 1
+            summary[order.prospect_id].total += Number(order.total_amount || 0)
+            if (
+              order.created_at &&
+              (!summary[order.prospect_id].lastDate ||
+                new Date(order.created_at) > new Date(summary[order.prospect_id].lastDate!))
+            ) {
+              summary[order.prospect_id].lastDate = order.created_at
+            }
+          })
+          setOrdersByProspect(summary)
+        }
+      } else {
+        setOrdersByProspect({})
+      }
     } catch (error: any) {
       console.error('Error loading prospects:', error)
       toast.error('Error al cargar prospectos')
@@ -87,7 +120,8 @@ export default function ProspectsPage() {
         p.contact_name?.toLowerCase().includes(search) ||
         p.email?.toLowerCase().includes(search) ||
         p.company_name?.toLowerCase().includes(search) ||
-        p.phone?.toLowerCase().includes(search)
+        p.phone?.toLowerCase().includes(search) ||
+        p.tax_id?.toLowerCase().includes(search)
       )
     }
     return true
@@ -109,11 +143,12 @@ export default function ProspectsPage() {
             Arrastra las tarjetas entre columnas para cambiar la etapa
           </p>
         </div>
-        <Link href="/crm/prospects/new">
-          <Button className="uppercase font-black tracking-wider">
-            <Plus className="w-4 h-4 mr-2" />
-            Nuevo Prospecto
-          </Button>
+        <Link
+          href="/crm/prospects/new"
+          className="inline-flex items-center justify-center gap-2 bg-calmar-ocean text-white px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-sm hover:bg-calmar-ocean/90 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Nuevo Prospecto
         </Link>
       </div>
 
@@ -128,6 +163,13 @@ export default function ProspectsPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        <Link
+          href="/crm/prospects/new"
+          className="inline-flex items-center justify-center gap-2 bg-calmar-primary text-white px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-sm hover:bg-calmar-primary/90 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Agregar Prospecto
+        </Link>
         
         <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
           {(['all', 'b2b', 'b2c'] as const).map((type) => (
@@ -177,6 +219,7 @@ export default function ProspectsPage() {
                     prospect={prospect}
                     onDragStart={handleDragStart}
                     isDragging={draggedProspect === prospect.id}
+                    orderSummary={ordersByProspect[prospect.id]}
                   />
                 ))}
                 {stage.prospects.length === 0 && (
@@ -196,11 +239,13 @@ export default function ProspectsPage() {
 function ProspectCard({ 
   prospect, 
   onDragStart, 
-  isDragging 
+  isDragging,
+  orderSummary
 }: { 
   prospect: any
   onDragStart: (e: React.DragEvent, id: string) => void
   isDragging: boolean
+  orderSummary?: { count: number; lastDate?: string; total: number }
 }) {
   return (
     <Link href={`/crm/prospects/${prospect.id}`}>
@@ -238,6 +283,12 @@ function ProspectCard({
             <Mail className="w-3 h-3" />
             <span className="truncate">{prospect.email}</span>
           </div>
+          {prospect.tax_id && (
+            <div className="flex items-center gap-2 text-xs text-slate-600">
+              <span className="font-black uppercase tracking-wider text-[10px] text-slate-500">RUT</span>
+              <span>{prospect.tax_id}</span>
+            </div>
+          )}
           {prospect.phone && (
             <div className="flex items-center gap-2 text-xs text-slate-600">
               <Phone className="w-3 h-3" />
@@ -246,9 +297,15 @@ function ProspectCard({
           )}
         </div>
 
-        {prospect.notes && (
+        {(orderSummary?.count || prospect.notes) && (
           <p className="text-xs text-slate-500 mt-3 line-clamp-2">
-            {prospect.notes}
+            {orderSummary?.count
+              ? `Compras web: ${orderSummary.count} • Total: $${orderSummary.total.toLocaleString('es-CL')}${
+                  orderSummary.lastDate
+                    ? ` • Última: ${new Date(orderSummary.lastDate).toLocaleDateString('es-CL')}`
+                    : ''
+                }`
+              : prospect.notes}
           </p>
         )}
       </div>

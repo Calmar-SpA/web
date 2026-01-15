@@ -4,6 +4,7 @@ import { Button, Card, CardHeader, CardTitle, CardContent } from "@calmar/ui"
 import { Package, Search, Filter, Eye, MoreVertical } from "lucide-react"
 import Link from "next/link"
 import { redirect } from 'next/navigation'
+import { formatClp, getPriceBreakdown } from "@calmar/utils"
 
 export default async function AdminOrdersPage() {
   const supabase = await createClient()
@@ -48,8 +49,10 @@ export default async function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {orders.map((order: any) => (
-                  <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
+                {orders.map((order: any) => {
+                  const { net, iva } = getPriceBreakdown(order.total_amount)
+                  return (
+                    <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="px-6 py-4 font-mono text-xs font-black text-slate-900">
                       #{order.id.slice(0, 8)}
                     </td>
@@ -60,8 +63,14 @@ export default async function AdminOrdersPage() {
                       <p className="font-black text-slate-900">{order.customer_name}</p>
                       <p className="text-[10px] text-slate-600 font-bold uppercase">{order.customer_email}</p>
                     </td>
-                    <td className="px-6 py-4 font-black text-slate-900">
-                      ${order.total_amount.toLocaleString('es-CL')}
+                    <td className="px-6 py-4">
+                      <div className="font-black text-slate-900">
+                        ${formatClp(order.total_amount)}
+                      </div>
+                      <div className="text-[10px] text-slate-400">IVA incluido</div>
+                      <div className="text-[10px] text-slate-400">
+                        {`Neto: $${formatClp(net)} · IVA (19%): $${formatClp(iva)}`}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${
@@ -84,8 +93,9 @@ export default async function AdminOrdersPage() {
                         </Button>
                       </div>
                     </td>
-                  </tr>
-                ))}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

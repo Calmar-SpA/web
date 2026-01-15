@@ -2,7 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { CRMService } from '@calmar/database'
+import { sendProspectAdminNotification, sendRefundAdminNotification } from '@/lib/mail'
 import { revalidatePath } from 'next/cache'
+import { normalizeRut, isValidRut } from '@calmar/utils'
 
 export async function createProspect(data: {
   type: 'b2b' | 'b2c'
@@ -15,8 +17,36 @@ export async function createProspect(data: {
 }) {
   const supabase = await createClient()
   const crmService = new CRMService(supabase)
+  const taxId = normalizeRut(data.tax_id)
+
+  if (!taxId || !isValidRut(taxId)) {
+    throw new Error('El RUT no es válido')
+  }
+
+  const { data: existingProspect } = await supabase
+    .from('prospects')
+    .select('id')
+    .eq('tax_id', taxId)
+    .single()
+
+  if (existingProspect) {
+    throw new Error('Ya existe un prospecto con ese RUT')
+  }
   
-  const prospect = await crmService.createProspect(data)
+  const prospect = await crmService.createProspect({
+    ...data,
+    tax_id: taxId
+  })
+
+  await sendProspectAdminNotification({
+    contactName: data.contact_name,
+    email: data.email,
+    phone: data.phone,
+    type: data.type,
+    companyName: data.company_name,
+    taxId,
+    notes: data.notes,
+  })
   
   revalidatePath('/crm/prospects')
   revalidatePath('/crm')
@@ -127,6 +157,11 @@ export async function returnConsignment(
   const crmService = new CRMService(supabase)
   
   const movement = await crmService.returnConsignment(movementId, returnedItems)
+
+  await sendRefundAdminNotification({
+    referenceId: movementId,
+    reason: 'Devolucion de consignacion registrada en CRM',
+  })
   
   revalidatePath('/crm/movements')
   revalidatePath(`/crm/movements/${movementId}`)

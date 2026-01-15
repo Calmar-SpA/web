@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@calmar/ui'
 import { ProductWithDetails } from '@calmar/types'
+import { formatClp, getPriceBreakdown } from '@calmar/utils'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ImageUploadModal } from './image-upload-modal'
@@ -49,8 +50,10 @@ export function ProductsTable({ products }: ProductsTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y-2 divide-slate-100">
-            {products.map((product) => (
-              <tr key={product.id} className="text-sm hover:bg-slate-50 transition-colors group">
+            {products.map((product) => {
+              const { net, iva } = getPriceBreakdown(product.base_price || 0)
+              return (
+                <tr key={product.id} className="text-sm hover:bg-slate-50 transition-colors group">
                 <td className="py-4 px-4">
                   <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-white border-2 border-slate-200 shadow-sm group-hover:border-calmar-primary/30 transition-all">
                     {product.image_url ? (
@@ -79,8 +82,16 @@ export function ProductsTable({ products }: ProductsTableProps) {
                     ID: {product.id.slice(0, 8)}
                   </div>
                 </td>
-                <td className="py-4 px-4 font-black text-slate-950 text-base">
-                  ${(product.base_price || 0).toLocaleString('es-CL')}
+                <td className="py-4 px-4">
+                  <div className="font-black text-slate-950 text-base">
+                    ${formatClp(product.base_price || 0)}
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    IVA incluido
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    {`Neto: $${formatClp(net)} · IVA (19%): $${formatClp(iva)}`}
+                  </div>
                 </td>
                 <td className="py-4 px-4">
                   <div className={`inline-flex items-center px-2.5 py-0.5 rounded-md font-black text-sm border-2 ${
@@ -124,7 +135,8 @@ export function ProductsTable({ products }: ProductsTableProps) {
                   </div>
                 </td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
       </div>

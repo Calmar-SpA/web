@@ -4,12 +4,16 @@ import { createClient } from '@/lib/supabase/server'
 import { flow } from '@/lib/flow'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { sendOrderPaidAdminEmail, sendOrderPaidCustomerEmail } from '@/lib/mail'
+import { notifyLowInventoryIfNeeded } from '@/lib/inventory-alerts'
+import { normalizeRut, isValidRut } from '@calmar/utils'
 
 interface CheckoutData {
   items: any[];
   customerInfo: {
     name: string;
     email: string;
+    rut?: string;
     address: string;
     comuna: string;
     region: string;
@@ -59,8 +63,69 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
   // 1. Get current user (if logged in)
   const { data: { user } } = await supabase.auth.getUser()
 
-  let baseTotal = data.total
-  let b2bDiscount = 0
+  const inputRut = normalizeRut(data.customerInfo.rut)
+  let userRut: string | null = null
+
+  if (data.customerInfo.rut && !isValidRut(data.customerInfo.rut)) {
+    throw new Error('El RUT no es válido')
+  }
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from('users')
+      .select('id, rut')
+      .eq('id', user.id)
+      .single()
+
+    userRut = normalizeRut(profile?.rut)
+
+    if (!userRut) {
+      if (!inputRut) {
+        throw new Error('Debes ingresar tu RUT para continuar')
+      }
+
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('rut', inputRut)
+        .neq('id', user.id)
+        .single()
+
+      if (existingUser) {
+        throw new Error('Este RUT ya está asociado a otra cuenta')
+      }
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ rut: inputRut })
+        .eq('id', user.id)
+
+      if (updateError) {
+        throw new Error('No se pudo guardar el RUT en tu perfil')
+      }
+
+      userRut = inputRut
+    }
+  } else if (!inputRut) {
+    throw new Error('Debes ingresar tu RUT para continuar')
+  }
+
+  const prospectRut = userRut || inputRut
+  let prospectId: string | null = null
+
+  if (prospectRut) {
+    const { data: prospect } = await supabase
+      .rpc('get_or_create_prospect_for_order', {
+        rut_input: prospectRut,
+        email_input: data.customerInfo.email,
+        name_input: data.customerInfo.name,
+        user_id_input: user?.id || null
+      })
+
+    prospectId = prospect || null
+  }
+
+  let baseTotal = data.items.reduce((sum, item) => sum + (item.quantity * item.product.base_price), 0)
   let newsletterDiscountAmount = 0
   let redeemedPoints = 0
 
@@ -68,18 +133,37 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
   const newsletterDiscountPercent = await checkNewsletterDiscount(data.customerInfo.email)
 
   // 2. Handle B2B Discount
+  let b2bPriceMap = new Map<string, number>()
   if (user) {
     const { B2BService } = await import('@calmar/database')
     const b2bService = new B2BService(supabase)
     const b2bClient = await b2bService.getClientByUserId(user.id)
     
-    if (b2bClient?.is_active && b2bClient.discount_percentage > 0) {
-      b2bDiscount = Math.floor(baseTotal * (b2bClient.discount_percentage / 100))
-      baseTotal -= b2bDiscount
+    if (b2bClient?.is_active) {
+      const { data: b2bPrices, error: b2bPricesError } = await supabase
+        .from('b2b_product_prices')
+        .select('product_id, fixed_price')
+        .eq('b2b_client_id', b2bClient.id)
+
+      if (b2bPricesError) throw b2bPricesError
+
+      b2bPriceMap = new Map(
+        (b2bPrices || []).map(price => [price.product_id, Number(price.fixed_price)])
+      )
+
+      const b2bSubtotal = data.items.reduce((sum, item) => {
+        const fixedPrice = b2bPriceMap.get(item.product.id)
+        const unitPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
+          ? fixedPrice
+          : item.product.base_price
+        return sum + (item.quantity * unitPrice)
+      }, 0)
+
+      baseTotal = b2bSubtotal
     }
 
-    // Apply newsletter discount if NO B2B discount was applied
-    if (b2bDiscount === 0 && newsletterDiscountPercent && newsletterDiscountPercent > 0) {
+    // Apply newsletter discount only if NOT B2B pricing
+    if (!b2bClient?.is_active && newsletterDiscountPercent && newsletterDiscountPercent > 0) {
       newsletterDiscountAmount = Math.floor(baseTotal * (Number(newsletterDiscountPercent) / 100))
       baseTotal -= newsletterDiscountAmount
     }
@@ -110,8 +194,14 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
   // Generate order number
   const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
   
-  // Calculate subtotal (before discounts)
-  const subtotal = data.items.reduce((sum, item) => sum + (item.quantity * item.product.base_price), 0)
+  // Calculate subtotal using final unit prices
+  const subtotal = data.items.reduce((sum, item) => {
+    const fixedPrice = b2bPriceMap.get(item.product.id)
+    const unitPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
+      ? fixedPrice
+      : item.product.base_price
+    return sum + (item.quantity * unitPrice)
+  }, 0)
   
   // For now, set tax to 0 (you can calculate IVA if needed: subtotal * 0.19)
   const taxAmount = 0
@@ -124,21 +214,24 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
     .insert({
       order_number: orderNumber,
       user_id: user?.id,
+      prospect_id: prospectId,
       email: data.customerInfo.email,
       subtotal: subtotal,
       tax_amount: taxAmount,
       shipping_cost: shippingCost,
-      discount_amount: b2bDiscount + newsletterDiscountAmount,
+      discount_amount: newsletterDiscountAmount,
       total_amount: finalAmount + shippingCost,
       status: data.paymentMethod === 'credit' ? 'paid' : 'pending_payment',
       shipping_address: {
         name: data.customerInfo.name,
+        rut: prospectRut,
         address: data.customerInfo.address,
         comuna: data.customerInfo.comuna,
         region: data.customerInfo.region,
       },
       billing_address: {
         name: data.customerInfo.name,
+        rut: prospectRut,
         address: data.customerInfo.address,
         comuna: data.customerInfo.comuna,
         region: data.customerInfo.region,
@@ -162,16 +255,24 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
   }
 
   // 5. Create Order Items
-  const orderItems = data.items.map(item => ({
+  const orderItems = data.items.map(item => {
+    const fixedPrice = b2bPriceMap.get(item.product.id)
+    const unitPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
+      ? fixedPrice
+      : item.product.base_price
+    const lineSubtotal = item.quantity * unitPrice
+
+    return {
     order_id: order.id,
     product_id: item.product.id,
     variant_id: item.variant?.id,
     quantity: item.quantity,
-    unit_price: item.product.base_price,
-    subtotal: item.quantity * item.product.base_price,
+      unit_price: unitPrice,
+      subtotal: lineSubtotal,
     product_name: item.product.name,
     variant_name: item.variant?.name,
-  }))
+    }
+  })
 
   const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
   
@@ -206,6 +307,35 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
     const { LoyaltyService } = await import('@calmar/database')
     const loyaltyService = new LoyaltyService(supabase)
     await loyaltyService.awardPoints(user!.id, order.id, finalAmount)
+
+    const shippingSummary = `${data.customerInfo.address}, ${data.customerInfo.comuna}, ${data.customerInfo.region}`
+    const emailItems = orderItems.map(item => ({
+      name: item.product_name,
+      variantName: item.variant_name,
+      quantity: item.quantity,
+      subtotal: item.subtotal,
+    }))
+
+    await sendOrderPaidCustomerEmail({
+      email: data.customerInfo.email,
+      customerName: data.customerInfo.name,
+      orderNumber: order.order_number,
+      orderId: order.id,
+      orderStatusLabel: 'pagado',
+      totalAmount: Number(order.total_amount),
+      items: emailItems,
+    })
+
+    await sendOrderPaidAdminEmail({
+      orderNumber: order.order_number,
+      customerName: data.customerInfo.name,
+      customerEmail: data.customerInfo.email,
+      totalAmount: Number(order.total_amount),
+      paymentMethod: 'Credito B2B',
+      shippingSummary,
+    })
+
+    await notifyLowInventoryIfNeeded(supabase, orderItems)
 
     // 4. Redirect to success page
     redirect(`/checkout/success?orderId=${order.id}`)

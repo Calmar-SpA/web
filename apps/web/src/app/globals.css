@@ -13,6 +13,7 @@
   --color-calmar-ocean: oklch(55% 0.15 210);
   --color-calmar-ocean-light: oklch(75% 0.1 200);
   --color-calmar-mint: oklch(80% 0.15 160);
+  --color-calmar-lime: oklch(85% 0.2 110);
   --color-calmar-background: #ffffff;
   --color-calmar-text: #343431;
 
@@ -23,7 +24,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  --font-family-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --font-family-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-family-serif: var(--font-zalando), ui-sans-serif, system-ui, sans-serif;
 
   /* Gradients */

@@ -29,15 +29,34 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Apply B2B discount to prices
-  const discountedProducts = products.map(p => ({
-    ...p,
-    b2b_price: Math.floor(p.base_price * (1 - (client.discount_percentage / 100)))
-  }))
+  const { data: b2bPrices, error: b2bPricesError } = await supabase
+    .from('b2b_product_prices')
+    .select('product_id, fixed_price')
+    .eq('b2b_client_id', client.id)
+
+  if (b2bPricesError) {
+    return NextResponse.json({ error: b2bPricesError.message }, { status: 500 })
+  }
+
+  const priceMap = new Map((b2bPrices || []).map(p => [p.product_id, Number(p.fixed_price)]))
+
+  // Apply fixed B2B prices per product (fallback to base_price)
+  const pricedProducts = products.map(p => {
+    const fixedPrice = priceMap.get(p.id)
+    const b2bPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
+      ? fixedPrice
+      : p.base_price
+
+    return {
+      ...p,
+      b2b_price: b2bPrice,
+      price_source: fixedPrice ? 'fixed' : 'base'
+    }
+  })
 
   return NextResponse.json({
     client: client.company_name,
-    discount: client.discount_percentage + '%',
-    inventory: discountedProducts
+    pricing: 'fixed_per_product',
+    inventory: pricedProducts
   })
 }

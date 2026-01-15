@@ -15,6 +15,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
+import { formatClp, getPriceBreakdown } from "@calmar/utils"
 
 export function CartDrawer() {
   const t = useTranslations("Cart")
@@ -28,6 +29,8 @@ export function CartDrawer() {
     : 0
   
   const totalWithDiscount = total - newsletterDiscountAmount
+  const { net: totalNet, iva: totalIva } = getPriceBreakdown(totalWithDiscount)
+  const { net: subtotalNet, iva: subtotalIva } = getPriceBreakdown(total)
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -112,6 +115,11 @@ export function CartDrawer() {
                   }
                 }
                 
+                const lineTotal = Math.floor(item.product.base_price * item.quantity * (1 - (newsletterDiscount ?? 0) / 100))
+                const regularLineTotal = item.product.base_price * item.quantity
+                const effectiveLineTotal = newsletterDiscount && newsletterDiscount > 0 ? lineTotal : regularLineTotal
+                const { net: lineNet, iva: lineIva } = getPriceBreakdown(effectiveLineTotal)
+
                 return (
                 <div key={item.product.id} className="p-6 flex gap-4">
                   <div className="relative w-20 h-20 bg-slate-50 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center">
@@ -157,17 +165,21 @@ export function CartDrawer() {
                         {newsletterDiscount && newsletterDiscount > 0 ? (
                           <div className="flex flex-col items-end">
                             <span className="text-xs text-slate-400 line-through decoration-red-400 font-bold">
-                              ${(item.product.base_price * item.quantity).toLocaleString('es-CL')}
+                              ${formatClp(regularLineTotal)}
                             </span>
                             <p className="font-black text-calmar-ocean">
-                              ${Math.floor(item.product.base_price * item.quantity * (1 - newsletterDiscount / 100)).toLocaleString('es-CL')}
+                              ${formatClp(lineTotal)}
                             </p>
                           </div>
                         ) : (
                           <p className="font-black text-calmar-ocean">
-                            ${(item.product.base_price * item.quantity).toLocaleString('es-CL')}
+                            ${formatClp(regularLineTotal)}
                           </p>
                         )}
+                        <p className="text-[10px] text-slate-400">IVA incluido</p>
+                        <p className="text-[10px] text-slate-400">
+                          {`Neto: $${formatClp(lineNet)} · IVA (19%): $${formatClp(lineIva)}`}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -188,9 +200,15 @@ export function CartDrawer() {
               </div>
             )}
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">{t("subtotal")}</span>
-                <span className="font-bold">${total.toLocaleString('es-CL')}</span>
+              <div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">{t("subtotal")}</span>
+                  <span className="font-bold">${formatClp(total)}</span>
+                </div>
+                <p className="text-[10px] text-slate-400 text-right">IVA incluido</p>
+                <p className="text-[10px] text-slate-400 text-right">
+                  {`Neto: $${formatClp(subtotalNet)} · IVA (19%): $${formatClp(subtotalIva)}`}
+                </p>
               </div>
               {newsletterDiscountAmount > 0 && (
                 <div className="flex justify-between text-sm text-calmar-mint-dark font-black uppercase tracking-tighter">
@@ -202,9 +220,15 @@ export function CartDrawer() {
                 <span className="text-slate-500">{t("shipping")}</span>
                 <span className="text-green-600 font-bold uppercase text-[10px] tracking-widest">{t("shippingCalculated")}</span>
               </div>
-              <div className="flex justify-between text-lg pt-2 border-t border-slate-200">
-                <span className="font-black">{t("total")}</span>
-                <span className="font-black text-calmar-ocean">${totalWithDiscount.toLocaleString('es-CL')}</span>
+              <div className="pt-2 border-t border-slate-200">
+                <div className="flex justify-between text-lg">
+                  <span className="font-black">{t("total")}</span>
+                  <span className="font-black text-calmar-ocean">${formatClp(totalWithDiscount)}</span>
+                </div>
+                <p className="text-[10px] text-slate-400 text-right">IVA incluido</p>
+                <p className="text-[10px] text-slate-400 text-right">
+                  {`Neto: $${formatClp(totalNet)} · IVA (19%): $${formatClp(totalIva)}`}
+                </p>
               </div>
             </div>
             

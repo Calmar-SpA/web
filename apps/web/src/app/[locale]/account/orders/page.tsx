@@ -5,6 +5,7 @@ import { Button, Card, CardContent } from "@calmar/ui"
 import { Package, ChevronRight, Clock, CheckCircle2, Truck, AlertCircle } from "lucide-react"
 import { Link } from '@/navigation'
 import { redirect } from 'next/navigation'
+import { formatClp, getPriceBreakdown } from '@calmar/utils'
 
 import { getTranslations } from 'next-intl/server'
 
@@ -33,25 +34,27 @@ export default async function OrdersPage({ params }: { params: Promise<{ locale:
   const orders = await orderService.getOrdersByUser(user.id)
 
   return (
-    <div className="w-[90%] max-w-4xl mx-auto py-12">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase">{t("title")}</h1>
-          <p className="text-slate-500 text-sm">{t("subtitle")}</p>
+    <div className="space-y-6">
+      <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-calmar-ocean/10 via-white to-calmar-mint/10 p-6 sm:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">{t("title")}</h1>
+            <p className="text-slate-500 text-sm">{t("subtitle")}</p>
+          </div>
+          <Link href="/shop">
+            <Button variant="outline" className="font-bold border-2 text-xs uppercase tracking-widest">
+              {t("goToShop")}
+            </Button>
+          </Link>
         </div>
-        <Link href="/shop">
-          <Button variant="outline" className="font-bold border-2 text-xs uppercase tracking-widest">
-            {t("goToShop")}
-          </Button>
-        </Link>
       </div>
 
       <div className="space-y-4">
         {orders.length === 0 ? (
-          <Card className="border-dashed border-2 py-12">
+          <Card className="border-dashed border-2 py-12 bg-white">
             <CardContent className="flex flex-col items-center justify-center text-center space-y-4">
-              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
-                <Package className="w-8 h-8 text-slate-200" />
+              <div className="w-16 h-16 bg-calmar-ocean/10 rounded-full flex items-center justify-center">
+                <Package className="w-8 h-8 text-calmar-ocean/50" />
               </div>
               <div>
                 <p className="font-bold text-slate-900">{t("empty.title")}</p>
@@ -70,8 +73,9 @@ export default async function OrdersPage({ params }: { params: Promise<{ locale:
             const StatusIcon = statusConfig.icon
             const statusLabel = t(`status.${order.status}`)
 
+            const { net, iva } = getPriceBreakdown(order.total_amount)
             return (
-              <Card key={order.id} className="group hover:border-calmar-ocean/30 transition-all overflow-hidden">
+              <Card key={order.id} className="group hover:border-calmar-ocean/30 transition-all overflow-hidden bg-white shadow-sm">
                 <Link href={`/account/orders/${order.id}`}>
                   <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -102,7 +106,11 @@ export default async function OrdersPage({ params }: { params: Promise<{ locale:
                       <div className="text-right">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t("total")}</p>
                         <p className="font-black text-xl text-calmar-ocean">
-                          ${order.total_amount.toLocaleString('es-CL')}
+                          ${formatClp(order.total_amount)}
+                        </p>
+                        <p className="text-[10px] text-slate-400">IVA incluido</p>
+                        <p className="text-[10px] text-slate-400">
+                          {`Neto: $${formatClp(net)} · IVA (19%): $${formatClp(iva)}`}
                         </p>
                       </div>
                       <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-calmar-ocean transition-colors" />

@@ -208,15 +208,22 @@ calmar-ecommerce/
 - **Confirmación por email**
 - **Roles de usuario**: Customer, Admin, B2B
 - **Perfil de usuario** con historial de pedidos
+- **Identificación por RUT** para vincular compras con CRM
 - **Gestión de direcciones** de envío y facturación
 
 ### 🏢 Programa B2B (Business to Business)
 
 - **Postulación de empresas** al programa B2B
-- **Descuentos mayoristas** personalizados por cliente
+- **Precios fijos por producto** para clientes B2B
 - **Crédito directo** con límites configurables
 - **Generación de API Keys** para integraciones
 - **Términos de pago** configurables (30 días, etc.)
+
+### 📇 CRM y Prospectos
+
+- **Pipeline de prospectos** con etapas personalizables
+- **Registro de muestras, consignaciones y ventas**
+- **Vinculación de compras web a prospectos por RUT**
 
 ### 🎁 Programa de Fidelización (Calmar Points)
 
@@ -251,6 +258,7 @@ calmar-ecommerce/
 ### 📰 Marketing
 
 - **Newsletter** con suscripción por email
+- **Gestión de newsletter** desde el perfil (activar/desactivar descuento)
 - **Formulario de contacto** con almacenamiento en BD
 - **Productos destacados** en homepage
 
@@ -283,6 +291,7 @@ Panel de administración para gestión interna.
 - Gestión de productos
 - Gestión de pedidos
 - Gestión de usuarios y clientes B2B
+- CRM de prospectos y movimientos
 - Reportes y métricas
 
 ---
@@ -372,7 +381,24 @@ NEXT_PUBLIC_APP_URL=https://www.calmar.cl
 FLOW_API_KEY=your-flow-api-key
 FLOW_SECRET_KEY=your-flow-secret-key
 FLOW_BASE_URL=https://www.flow.cl/api  # o https://sandbox.flow.cl/api para testing
+
+# Email (SendGrid)
+SENDGRID_API_KEY=your-sendgrid-api-key
+SENDGRID_FROM_EMAIL=notificaciones@calmar.cl
+SENDGRID_FROM_NAME=Notificaciones Calmar
+ADMIN_EMAIL=contacto@calmar.cl
 ```
+
+---
+
+## ✉️ Plantillas de Email (Supabase Auth)
+
+Las plantillas HTML para los correos de autenticacion de Supabase se encuentran en:
+
+- `supabase/email-templates/`
+
+Estas plantillas usan la identidad visual de Calmar (colores y tipografias) y
+deben copiarse en el panel de Supabase Auth cuando se actualicen.
 
 ---
 
@@ -411,11 +437,16 @@ npm run supabase:migrate # Reset y aplicar migraciones
 | `inventory`              | Stock de productos                        |
 | `orders`                 | Pedidos de clientes                       |
 | `order_items`            | Ítems de cada pedido                      |
+| `prospects`              | Prospectos CRM                            |
+| `prospect_interactions`  | Historial de interacciones CRM            |
+| `product_movements`      | Muestras, consignaciones y ventas         |
+| `movement_payments`      | Pagos asociados a movimientos             |
 | `payments`               | Registros de pagos                        |
 | `shipments`              | Información de envíos                     |
 | `loyalty_points`         | Transacciones de puntos                   |
 | `rewards`                | Recompensas canjeables                    |
 | `b2b_clients`            | Clientes empresariales                    |
+| `b2b_product_prices`     | Precios fijos por producto (B2B)          |
 | `b2b_api_keys`           | API Keys para integraciones B2B           |
 | `contact_messages`       | Mensajes del formulario de contacto       |
 | `newsletter_subscribers` | Suscriptores al boletín                   |
@@ -437,7 +468,7 @@ npm run supabase:migrate # Reset y aplicar migraciones
 - [x] Integración con Flow para pagos
 - [x] Sistema de autenticación con Supabase
 - [x] Programa de puntos Calmar
-- [x] Programa B2B con descuentos y crédito
+- [x] Programa B2B con precios fijos y crédito
 - [x] Generación de API Keys para B2B
 - [x] Historial de pedidos
 - [x] Newsletter y formulario de contacto
@@ -445,12 +476,12 @@ npm run supabase:migrate # Reset y aplicar migraciones
 - [x] SEO optimizado (sitemap, robots.txt, meta tags)
 - [x] Diseño responsive y moderno
 - [x] Animaciones con Framer Motion
+- [x] Notificaciones por email transaccionales
 
 ### 🔄 En Desarrollo
 
 - [ ] Panel de administración completo
 - [ ] Sistema de recompensas canjeables
-- [ ] Notificaciones por email transaccionales
 - [ ] Integración con servicios de envío (Chilexpress, Starken)
 - [ ] Sistema de cupones de descuento
 

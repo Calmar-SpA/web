@@ -22,7 +22,6 @@ interface B2BClient {
   contact_name: string
   contact_email: string
   contact_phone: string
-  discount_percentage: number
   credit_limit: number
   payment_terms_days: number
   is_active: boolean
@@ -139,7 +138,7 @@ export function B2BClientCard({ client, onUpdate }: B2BClientCardProps) {
             <div className="space-y-3">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Comercial</p>
               <div className="space-y-1">
-                <p className="text-2xl font-black text-calmar-ocean">{client.discount_percentage}% <span className="text-[10px] text-slate-400 uppercase">Desc.</span></p>
+                <p className="text-sm font-black text-calmar-ocean uppercase tracking-tight">Precios fijos por producto</p>
                 <p className="text-sm font-bold text-slate-900">Plazo: {client.payment_terms_days} días</p>
               </div>
             </div>

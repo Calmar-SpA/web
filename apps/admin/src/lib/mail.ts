@@ -1,0 +1,208 @@
+import sendgrid from '@sendgrid/mail';
+
+const DEFAULT_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'notificaciones@calmar.cl';
+const DEFAULT_FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Notificaciones Calmar';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'contacto@calmar.cl';
+
+const brand = {
+  primaryDark: '#1D504B',
+  primary: '#62A49E',
+  text: '#343431',
+  muted: '#F5F5F0',
+};
+
+if (process.env.SENDGRID_API_KEY) {
+  sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
+}
+
+const buildFromAddress = () => `${DEFAULT_FROM_NAME} <${DEFAULT_FROM_EMAIL}>`;
+
+const sendEmail = async ({
+  to,
+  subject,
+  html,
+  replyTo,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  replyTo?: string;
+}) => {
+  if (!process.env.SENDGRID_API_KEY) {
+    console.warn('SendGrid API key is missing. Email skipped.');
+    return { success: false, error: 'Missing API key' };
+  }
+
+  await sendgrid.send({
+    to,
+    from: buildFromAddress(),
+    subject,
+    html,
+    replyTo,
+  });
+
+  return { success: true };
+};
+
+const LOGO_URL =
+  'https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp';
+
+const buildEmailShell = (title: string, contentHtml: string) => `
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Zalando+Sans+Expanded:wght@300;400;500;600;700;800;900&display=swap');
+    </style>
+  </head>
+  <body style="margin:0;padding:0;background:#ffffff;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:${brand.text};">
+    <div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+      <div style="text-align:center;padding:12px 0 20px;">
+        <img src="${LOGO_URL}" alt="Calmar" width="200" style="display:block;margin:0 auto;" />
+      </div>
+      <div style="background:#ffffff;padding:24px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,0.05);">
+        <h1 style="margin:0 0 16px;text-align:center;font-family:'Zalando Sans Expanded',sans-serif;font-size:26px;color:${brand.text};">${title}</h1>
+        ${contentHtml}
+      </div>
+      <div style="text-align:center;padding:24px 0 0;font-size:12px;opacity:0.7;">
+        <div>© 2026 Calmar SpA • Agua de Mar Premium e hidratacion avanzada</div>
+        <div>Chile</div>
+      </div>
+    </div>
+  </body>
+</html>
+`;
+
+export async function sendTestEmail(params: {
+  to: string;
+  subject?: string;
+  message?: string;
+}) {
+  const subject = params.subject || 'Prueba de correo SendGrid';
+  const message =
+    params.message ||
+    'Este es un correo de prueba para validar la configuracion de SendGrid.';
+
+  const content = `
+    <p style="margin:12px 0;line-height:1.6;">${message}</p>
+    <div style="background:${brand.muted};padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid ${brand.primary};">
+      <div><strong>Destino:</strong> ${params.to}</div>
+    </div>
+  `;
+
+  const html = buildEmailShell('Prueba de correo', content);
+
+  return sendEmail({
+    to: params.to,
+    subject,
+    html,
+  });
+}
+
+export async function sendB2BApprovedEmail(params: {
+  contactName: string;
+  contactEmail: string;
+  companyName: string;
+  creditLimit: number;
+  paymentTermsDays: number;
+}) {
+  const content = `
+    <p style="margin:12px 0;line-height:1.6;">Hola ${params.contactName},</p>
+    <p style="margin:12px 0;line-height:1.6;">
+      Tu empresa ${params.companyName} fue aprobada en el programa B2B de Calmar.
+    </p>
+    <div style="background:${brand.muted};padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid ${brand.primary};">
+      <div><strong>Credito disponible:</strong> $${params.creditLimit.toLocaleString('es-CL')}</div>
+      <div><strong>Terminos de pago:</strong> ${params.paymentTermsDays} dias</div>
+    </div>
+    <p style="margin:12px 0;line-height:1.6;">
+      Si tienes dudas, responde a este correo.
+    </p>
+  `;
+
+  const html = buildEmailShell('Postulacion B2B aprobada', content);
+
+  return sendEmail({
+    to: params.contactEmail,
+    subject: 'Tu postulacion B2B fue aprobada',
+    html,
+    replyTo: ADMIN_EMAIL,
+  });
+}
+
+export async function sendB2BRejectedEmail(params: {
+  contactName: string;
+  contactEmail: string;
+  companyName: string;
+}) {
+  const content = `
+    <p style="margin:12px 0;line-height:1.6;">Hola ${params.contactName},</p>
+    <p style="margin:12px 0;line-height:1.6;">
+      Lamentablemente tu postulacion de ${params.companyName} no fue aprobada en esta ocasion.
+      Si necesitas mas informacion, responde a este correo.
+    </p>
+  `;
+
+  const html = buildEmailShell('Postulacion B2B rechazada', content);
+
+  return sendEmail({
+    to: params.contactEmail,
+    subject: 'Tu postulacion B2B fue rechazada',
+    html,
+    replyTo: ADMIN_EMAIL,
+  });
+}
+
+export async function sendProspectAdminNotification(params: {
+  contactName: string;
+  email: string;
+  phone?: string | null;
+  type: string;
+  companyName?: string | null;
+  taxId?: string | null;
+  notes?: string | null;
+}) {
+  const content = `
+    <div style="background:${brand.muted};padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid ${brand.primary};">
+      <div><strong>Tipo:</strong> ${params.type}</div>
+      <div><strong>Contacto:</strong> ${params.contactName}</div>
+      <div><strong>Email:</strong> ${params.email}</div>
+      ${params.phone ? `<div><strong>Telefono:</strong> ${params.phone}</div>` : ''}
+      ${params.companyName ? `<div><strong>Empresa:</strong> ${params.companyName}</div>` : ''}
+      ${params.taxId ? `<div><strong>RUT:</strong> ${params.taxId}</div>` : ''}
+    </div>
+    ${params.notes ? `<p style="margin:12px 0;line-height:1.6;">Notas: ${params.notes}</p>` : ''}
+  `;
+
+  const html = buildEmailShell('Nuevo prospecto registrado', content);
+
+  return sendEmail({
+    to: ADMIN_EMAIL,
+    subject: 'Nuevo prospecto registrado',
+    html,
+    replyTo: params.email,
+  });
+}
+
+export async function sendRefundAdminNotification(params: {
+  referenceId: string;
+  reason?: string | null;
+  amountLabel?: string | null;
+}) {
+  const content = `
+    <div style="background:${brand.muted};padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid ${brand.primary};">
+      <div><strong>Referencia:</strong> ${params.referenceId}</div>
+      ${params.amountLabel ? `<div><strong>Monto:</strong> ${params.amountLabel}</div>` : ''}
+      ${params.reason ? `<div><strong>Motivo:</strong> ${params.reason}</div>` : ''}
+    </div>
+  `;
+
+  const html = buildEmailShell('Devolucion registrada', content);
+
+  return sendEmail({
+    to: ADMIN_EMAIL,
+    subject: 'Devolucion registrada',
+    html,
+  });
+}

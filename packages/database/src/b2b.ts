@@ -62,6 +62,19 @@ export class B2BService {
   }
 
   /**
+   * Get fixed prices for a B2B client
+   */
+  async getFixedPrices(clientId: string) {
+    const { data, error } = await this.supabase
+      .from('b2b_product_prices')
+      .select('product_id, fixed_price')
+      .eq('b2b_client_id', clientId)
+
+    if (error) throw error
+    return data || []
+  }
+
+  /**
    * Create a new API Key for a B2B client
    * Note: The actual full key should be returned only once here.
    * We store the prefix and the hash.

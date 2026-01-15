@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Zalando_Sans_Expanded, Montserrat } from "next/font/google";
+import { Inter, Zalando_Sans_Expanded } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Sidebar } from "@/components/sidebar";
@@ -11,10 +11,10 @@ const zalando = Zalando_Sans_Expanded({
   display: "swap",
 });
 
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: "200",
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${zalando.variable} ${montserrat.variable} antialiased bg-slate-50 min-h-screen flex font-sans`}>
+      <body className={`${zalando.variable} ${inter.variable} antialiased bg-slate-50 min-h-screen flex font-sans`}>
         <Sidebar />
 
         {/* Main Content */}

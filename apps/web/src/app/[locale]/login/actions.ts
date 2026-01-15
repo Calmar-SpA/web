@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { normalizeRut, isValidRut } from '@calmar/utils'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -32,7 +33,21 @@ export async function signup(formData: FormData) {
     password: formData.get('password') as string,
   }
 
-  const { error } = await supabase.auth.signUp(data)
+  const rutInput = String(formData.get('rut') || '')
+  const rut = normalizeRut(rutInput)
+
+  if (!rut || !isValidRut(rut)) {
+    redirect('/error')
+  }
+
+  const { error } = await supabase.auth.signUp({
+    ...data,
+    options: {
+      data: {
+        rut
+      }
+    }
+  })
 
   if (error) {
     redirect('/error')
