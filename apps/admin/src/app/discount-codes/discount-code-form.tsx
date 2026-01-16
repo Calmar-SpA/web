@@ -131,7 +131,7 @@ export function DiscountCodeForm({
       }
 
       toast.success("Código guardado correctamente")
-      if (isNew && result?.id) {
+      if (isNew && 'id' in result && result.id) {
         window.location.href = `/discount-codes/${result.id}`
       }
     } catch (error) {

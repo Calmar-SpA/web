@@ -259,7 +259,7 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
         email: formData.email,
       })
 
-      if (!result.success) {
+      if (!result.success || !result.discountCodeId || !result.code || typeof result.discountAmount !== 'number') {
         setAppliedDiscount(null)
         setDiscountError(result.error || t("discount.invalid"))
         return
