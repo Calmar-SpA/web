@@ -2,12 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import { ProductService } from '@calmar/database'
 import type { ProductWithDetails } from '@calmar/types'
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@calmar/ui'
-import { ChevronLeft, Save, Trash2 } from 'lucide-react'
+import { ChevronLeft, Save } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { updateProduct, deleteProduct } from '../../actions'
 import { ImageUploader } from '@/components/image-uploader'
 import { uploadProductImage } from '../../actions'
+import { DeleteProductButton } from '@/components/delete-product-button'
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -49,6 +50,9 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       is_active: formData.get('is_active') === 'on',
       is_featured: formData.get('is_featured') === 'on',
       weight_grams: parseInt(formData.get('weight_grams') as string),
+      height_cm: parseInt(formData.get('height_cm') as string),
+      width_cm: parseInt(formData.get('width_cm') as string),
+      length_cm: parseInt(formData.get('length_cm') as string),
       requires_refrigeration: formData.get('requires_refrigeration') === 'on',
       meta_title: formData.get('meta_title') as string || undefined,
       meta_description: formData.get('meta_description') as string || undefined,
@@ -167,6 +171,21 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Alto (cm) *</label>
+                <Input name="height_cm" type="number" defaultValue={resolvedProduct.height_cm || ''} required />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ancho (cm) *</label>
+                <Input name="width_cm" type="number" defaultValue={resolvedProduct.width_cm || ''} required />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Largo (cm) *</label>
+                <Input name="length_cm" type="number" defaultValue={resolvedProduct.length_cm || ''} required />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -228,20 +247,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
 
         {/* Acciones */}
         <div className="flex justify-between items-center pt-4">
-          <form action={handleDelete}>
-            <Button 
-              type="submit"
-              variant="outline"
-              className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 font-bold uppercase text-xs tracking-widest px-6 h-12 gap-2"
-              onClick={(e) => {
-                if (!confirm('¿Estás seguro de que quieres eliminar este producto? Esta acción no se puede deshacer.')) {
-                  e.preventDefault()
-                }
-              }}
-            >
-              <Trash2 className="h-4 w-4" /> Eliminar Producto
-            </Button>
-          </form>
+          <DeleteProductButton action={handleDelete} />
           
           <div className="flex gap-4">
             <Link href="/products">

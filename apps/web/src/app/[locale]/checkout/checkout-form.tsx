@@ -5,13 +5,12 @@ import { useCart } from "@/hooks/use-cart"
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, RutInput } from "@calmar/ui"
 import { ShoppingBag, ChevronLeft, CreditCard, Truck, Building2, Plus, Minus } from "lucide-react"
 import { Link } from "@/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { createOrderAndInitiatePayment } from "./actions"
 import { toast } from "sonner"
 import { PointsRedemption } from "@/components/checkout/points-redemption"
 import { ShippingOptions } from "@/components/checkout/shipping-options"
-import { AddressSelector } from "@/components/checkout/address-selector"
 import { useTranslations } from "next-intl"
 import { formatClp, getPriceBreakdown, isValidRut } from "@calmar/utils"
 
@@ -43,6 +42,8 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
     email: user?.email || "",
     rut: userProfile?.rut || "",
     address: "",
+    addressNumber: "",
+    addressExtra: "",
     comuna: "",
     region: "",
   })
@@ -50,8 +51,6 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
   const [pointsToRedeem, setPointsToRedeem] = useState(0)
   const [newsletterDiscountPercent, setNewsletterDiscountPercent] = useState<number | null>(initialNewsletterDiscount || null)
   const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null)
-  const [comunaCode, setComunaCode] = useState("") // Starken comuna code
-  const [cityCode, setCityCode] = useState("") // Starken city code for quotes
 
   const isB2BActive = Boolean(b2bClient?.is_active)
   const getUnitPrice = (item: any) => {
@@ -79,6 +78,19 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
     const weightGrams = item.product.weight_grams
     return sum + (weightGrams * item.quantity) / 1000
   }, 0)
+
+  const cartDimensions = useMemo(() => {
+    const totalVolumeCm3 = items.reduce((sum, item) => {
+      const height = Number(item.product.height_cm)
+      const width = Number(item.product.width_cm)
+      const length = Number(item.product.length_cm)
+      const volume = height * width * length
+      return sum + (volume * item.quantity)
+    }, 0)
+
+    const cubeSideCm = Math.max(1, Math.ceil(Math.cbrt(totalVolumeCm3)))
+    return { height: cubeSideCm, width: cubeSideCm, length: cubeSideCm }
+  }, [items])
 
   const checkDiscountForEmail = async (email: string) => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -115,6 +127,33 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
   const handleRedeem = (points: number) => {
     setPointsToRedeem(points)
   }
+
+  const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const region = e.target.value
+    setFormData((prev) => ({ ...prev, region }))
+    setSelectedShipping(null)
+  }
+
+  const handleComunaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const comuna = e.target.value
+    setFormData((prev) => ({ ...prev, comuna }))
+    setSelectedShipping(null)
+  }
+
+  useEffect(() => {
+    if (!formData.region) return
+    setSelectedShipping(null)
+  }, [
+    formData.address,
+    formData.addressNumber,
+    formData.addressExtra,
+    formData.comuna,
+    formData.region,
+    cartWeightKg,
+    cartDimensions.height,
+    cartDimensions.width,
+    cartDimensions.length,
+  ])
 
   const handleIncrement = (productId: string, currentQuantity: number) => {
     updateQuantity(productId, currentQuantity + 1)
@@ -236,37 +275,96 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
                 </p>
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{t("shipping.address")}</label>
-                <Input name="address" value={formData.address} onChange={handleInputChange} placeholder={t("shipping.addressPlaceholder")} required />
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Dirección
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="md:col-span-2">
+                    <Input
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      placeholder="Ej: Av. Providencia"
+                      required
+                    />
+                  </div>
+                  <Input
+                    name="addressNumber"
+                    value={formData.addressNumber}
+                    onChange={handleInputChange}
+                    placeholder="Número"
+                    required
+                  />
+                </div>
               </div>
-              
-              {/* Region and Comuna Selectors */}
-              <AddressSelector
-                selectedRegion={formData.region}
-                selectedComuna={formData.comuna}
-                selectedComunaCode={comunaCode}
-                onRegionChange={(regionId, regionName) => {
-                  setFormData(prev => ({ ...prev, region: regionName }))
-                  setComunaCode("") // Reset comuna when region changes
-                  setCityCode("") // Reset city code
-                  setSelectedShipping(null) // Reset shipping
-                }}
-                onComunaChange={(comunaName, code, starkenCityCode) => {
-                  setFormData(prev => ({ ...prev, comuna: comunaName }))
-                  setComunaCode(code)
-                  setCityCode(starkenCityCode) // Store city code for Starken quote API
-                  setSelectedShipping(null) // Reset shipping when comuna changes
-                }}
-                disabled={isSubmitting}
-              />
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Depto/Oficina
+                </label>
+                <Input
+                  name="addressExtra"
+                  value={formData.addressExtra}
+                  onChange={handleInputChange}
+                  placeholder="Opcional"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Región
+                </label>
+                <select
+                  value={formData.region}
+                  onChange={handleRegionChange}
+                  disabled={isSubmitting}
+                  className="w-full h-10 px-3 rounded-md border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-calmar-ocean focus:border-transparent disabled:opacity-50"
+                  required
+                >
+                  <option value="">Selecciona una región</option>
+                  {[
+                    "Arica y Parinacota",
+                    "Tarapacá",
+                    "Antofagasta",
+                    "Atacama",
+                    "Coquimbo",
+                    "Valparaíso",
+                    "Libertador Bernardo O'Higgins",
+                    "Maule",
+                    "Ñuble",
+                    "Biobío",
+                    "La Araucanía",
+                    "Los Ríos",
+                    "Los Lagos",
+                    "Aysén",
+                    "Magallanes",
+                    "Metropolitana",
+                  ].map((region) => (
+                    <option key={region} value={region}>
+                      {region}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Comuna
+                </label>
+                <Input
+                  name="comuna"
+                  value={formData.comuna}
+                  onChange={handleComunaChange}
+                  placeholder="Ej: Providencia"
+                  required
+                />
+              </div>
             </div>
 
-            {/* Shipping Options - shows when comuna is selected */}
+            {/* Shipping Options - shows when region is available */}
             <div className="mt-6">
               <ShippingOptions
-                cityCode={cityCode}
+                region={formData.region}
                 weightKg={cartWeightKg}
-                declaredValue={resolvedSubtotal}
+                dimensions={cartDimensions}
+                refreshKey={`${formData.address}|${formData.addressNumber}|${formData.addressExtra}|${formData.comuna}|${formData.region}`}
                 selectedOption={selectedShipping}
                 onSelectOption={setSelectedShipping}
                 disabled={isSubmitting}
@@ -434,7 +532,7 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
                   <span className="font-bold text-slate-900">
                     {shippingCost > 0 
                       ? `$${shippingCost.toLocaleString('es-CL')}` 
-                      : formData.comuna ? 'Calculando...' : 'Ingresa tu comuna'
+                      : formData.region ? 'Calculando...' : 'Ingresa tu región'
                     }
                   </span>
                 </div>

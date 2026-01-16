@@ -24,6 +24,9 @@ export interface Product {
   is_active: boolean;
   is_featured: boolean;
   weight_grams: number;
+  height_cm: number;
+  width_cm: number;
+  length_cm: number;
   requires_refrigeration: boolean;
   meta_title?: string;
   meta_description?: string;

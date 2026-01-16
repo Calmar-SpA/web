@@ -199,6 +199,7 @@ calmar-ecommerce/
 - **Carrito de compras** persistente con Zustand
 - **Checkout** completo con múltiples métodos de pago
 - **Integración con Flow** para pagos nacionales chilenos
+- **Cálculo de envío Blue Express**
 - **Gestión de inventario** con reservas automáticas
 - **Sistema de categorías** jerárquico
 
@@ -431,7 +432,7 @@ npm run supabase:migrate # Reset y aplicar migraciones
 | Tabla                    | Descripción                               |
 | ------------------------ | ----------------------------------------- |
 | `users`                  | Usuarios sincronizados con auth.users     |
-| `products`               | Catálogo de productos                     |
+| `products`               | Catálogo de productos con peso y dimensiones |
 | `product_variants`       | Variantes de productos (sabores, tamaños) |
 | `categories`             | Categorías de productos                   |
 | `inventory`              | Stock de productos                        |
@@ -482,7 +483,7 @@ npm run supabase:migrate # Reset y aplicar migraciones
 
 - [ ] Panel de administración completo
 - [ ] Sistema de recompensas canjeables
-- [ ] Integración con servicios de envío (Chilexpress, Starken)
+- [x] Integración con servicios de envío (Blue Express)
 - [ ] Sistema de cupones de descuento
 
 ### 🔮 Futuro (Roadmap)

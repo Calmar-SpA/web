@@ -14,18 +14,20 @@ interface ShippingOption {
 }
 
 interface ShippingOptionsProps {
-  cityCode: string // Starken city code for quotes
+  region: string
   weightKg: number
-  declaredValue: number
+  dimensions: { height: number; width: number; length: number }
+  refreshKey?: string
   selectedOption: ShippingOption | null
   onSelectOption: (option: ShippingOption) => void
   disabled?: boolean
 }
 
 export function ShippingOptions({
-  cityCode,
+  region,
   weightKg,
-  declaredValue,
+  dimensions,
+  refreshKey,
   selectedOption,
   onSelectOption,
   disabled = false,
@@ -35,7 +37,7 @@ export function ShippingOptions({
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!cityCode) {
+    if (!region) {
       setOptions([])
       return
     }
@@ -45,13 +47,13 @@ export function ShippingOptions({
       setError(null)
 
       try {
-        const response = await fetch('/api/shipping/starken/quote', {
+        const response = await fetch('/api/shipping/blue-express/quote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            cityCode: parseInt(cityCode, 10),
+            region,
             weightKg,
-            declaredValue,
+            dimensions,
           }),
         })
 
@@ -61,7 +63,17 @@ export function ShippingOptions({
           throw new Error(data.error || 'Error al cotizar')
         }
 
-        const shippingOptions = data.options || []
+        const shippingOption = {
+          code: `BLUE_EXPRESS_${data.size}_${data.zone}`,
+          name: 'Blue Express - Envío a domicilio',
+          price: data.price,
+          finalWeight: String(weightKg),
+          estimatedDays: data.estimatedDays || '3-5 días hábiles',
+          deliveryType: 'DOMICILIO',
+          serviceType: 'BLUE_EXPRESS',
+        }
+
+        const shippingOptions = [shippingOption]
         setOptions(shippingOptions)
         
         // Auto-select cheapest domicilio option if none selected
@@ -86,9 +98,9 @@ export function ShippingOptions({
     }
 
     fetchQuotes()
-  }, [cityCode, weightKg, declaredValue])
+  }, [region, weightKg, dimensions, refreshKey])
 
-  if (!cityCode) {
+  if (!region) {
     return null
   }
 

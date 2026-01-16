@@ -17,7 +17,7 @@ export default function NewProductPage() {
             <CardTitle>Información General</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Nombre del Producto</label>
                 <Input name="name" placeholder="Ej: Calmar Hidratante Limón" required />
@@ -33,7 +33,7 @@ export default function NewProductPage() {
               <Input name="short_description" placeholder="Bebida hidratante con agua de mar..." />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Precio Base (CLP)</label>
                 <Input name="base_price" type="number" placeholder="2500" required />
@@ -41,6 +41,25 @@ export default function NewProductPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Precio Costo (CLP)</label>
                 <Input name="cost_price" type="number" placeholder="1200" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Peso (gramos)</label>
+                <Input name="weight_grams" type="number" placeholder="500" required />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Alto (cm)</label>
+                <Input name="height_cm" type="number" placeholder="10" required />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Ancho (cm)</label>
+                <Input name="width_cm" type="number" placeholder="10" required />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Largo (cm)</label>
+                <Input name="length_cm" type="number" placeholder="10" required />
               </div>
               <div className="space-y-2 flex items-end">
                 <div className="flex items-center gap-2 pb-2">
