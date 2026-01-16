@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { sendOrderPaidAdminEmail, sendOrderPaidCustomerEmail } from '@/lib/mail'
 import { notifyLowInventoryIfNeeded } from '@/lib/inventory-alerts'
-import { normalizeRut, isValidRut } from '@calmar/utils'
+import { formatRut, normalizeRut, isValidRut } from '@calmar/utils'
 import { B2BService, LoyaltyService } from '@calmar/database'
 
 interface CheckoutData {
@@ -64,8 +64,11 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
   // 1. Get current user (if logged in)
   const { data: { user } } = await supabase.auth.getUser()
 
-  const inputRut = normalizeRut(data.customerInfo.rut)
-  let userRut: string | null = null
+  const inputRutNormalized = normalizeRut(data.customerInfo.rut)
+  const inputRutFormatted = inputRutNormalized ? formatRut(inputRutNormalized) : null
+  let userRutFormatted: string | null = null
+  let prospectRutNormalized: string | null = null
+  let prospectRutFormatted: string | null = null
   let didUpdateRut = false
 
   if (data.customerInfo.rut && !isValidRut(data.customerInfo.rut)) {
@@ -79,17 +82,25 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
       .eq('id', user.id)
       .single()
 
-    const storedRut = normalizeRut(profile?.rut)
+    const storedRutNormalized = normalizeRut(profile?.rut)
+    const storedRutFormatted = storedRutNormalized ? formatRut(storedRutNormalized) : null
 
-    if (!inputRut && !storedRut) {
+    if (storedRutFormatted && profile?.rut !== storedRutFormatted) {
+      await supabase
+        .from('users')
+        .update({ rut: storedRutFormatted })
+        .eq('id', user.id)
+    }
+
+    if (!inputRutNormalized && !storedRutNormalized) {
       throw new Error('Debes ingresar tu RUT para continuar')
     }
 
-    if (inputRut && inputRut !== storedRut) {
+    if (inputRutNormalized && inputRutNormalized !== storedRutNormalized) {
       const { data: existingUser } = await supabase
         .from('users')
         .select('id')
-        .eq('rut', inputRut)
+        .eq('rut', inputRutFormatted)
         .neq('id', user.id)
         .single()
 
@@ -99,29 +110,30 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
 
       const { error: updateError } = await supabase
         .from('users')
-        .update({ rut: inputRut })
+        .update({ rut: inputRutFormatted })
         .eq('id', user.id)
 
       if (updateError) {
         throw new Error('No se pudo guardar el RUT en tu perfil')
       }
 
-      userRut = inputRut
+      userRutFormatted = inputRutFormatted
       didUpdateRut = true
     } else {
-      userRut = storedRut
+      userRutFormatted = storedRutFormatted
     }
-  } else if (!inputRut) {
+  } else if (!inputRutNormalized) {
     throw new Error('Debes ingresar tu RUT para continuar')
   }
 
-  const prospectRut = userRut || inputRut
+  prospectRutNormalized = inputRutNormalized || (userRutFormatted ? normalizeRut(userRutFormatted) : null)
+  prospectRutFormatted = userRutFormatted || inputRutFormatted
   let prospectId: string | null = null
 
-  if (prospectRut) {
+  if (prospectRutNormalized) {
     const { data: prospect } = await supabase
       .rpc('get_or_create_prospect_for_order', {
-        rut_input: prospectRut,
+        rut_input: prospectRutNormalized,
         email_input: data.customerInfo.email,
         name_input: data.customerInfo.name,
         user_id_input: user?.id || null
@@ -227,7 +239,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
       status: data.paymentMethod === 'credit' ? 'paid' : 'pending_payment',
       shipping_address: {
         name: data.customerInfo.name,
-        rut: prospectRut,
+        rut: prospectRutFormatted,
         address: data.customerInfo.address,
         comuna: data.customerInfo.comuna,
         region: data.customerInfo.region,
@@ -235,7 +247,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
       },
       billing_address: {
         name: data.customerInfo.name,
-        rut: prospectRut,
+        rut: prospectRutFormatted,
         address: data.customerInfo.address,
         comuna: data.customerInfo.comuna,
         region: data.customerInfo.region,
@@ -349,40 +361,31 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
 
   // 7. Initiate Flow Payment (for non-credit orders)
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
-  let redirectUrl: string | null = null
   
-  try {
-    const flowPayment = await flow.createPayment({
-      commerceOrder: order.id,
-      subject: `Pedido #${order.id.slice(0, 8)} - Calmar`,
-      amount: finalAmount,
-      email: data.customerInfo.email,
-      urlConfirmation: `${baseUrl}/api/payments/flow/confirm`,
-      urlReturn: `${baseUrl}/api/payments/flow/result`,
+  // Total amount including shipping
+  const totalWithShipping = finalAmount + shippingCost
+  
+  const flowPayment = await flow.createPayment({
+    commerceOrder: order.id,
+    subject: `Pedido #${order.id.slice(0, 8)} - Calmar`,
+    amount: totalWithShipping,
+    email: data.customerInfo.email,
+    urlConfirmation: `${baseUrl}/api/payments/flow/confirm`,
+    urlReturn: `${baseUrl}/api/payments/flow/result`,
+  })
+
+  // 8. Record Flow payment
+  await supabase
+    .from('payments')
+    .insert({
+      order_id: order.id,
+      payment_method: 'flow',
+      payment_provider: 'flow',
+      amount: totalWithShipping,
+      status: 'pending',
+      provider_transaction_id: flowPayment.token,
     })
 
-    // 8. Update Order with Flow Token
-    await supabase
-      .from('payments')
-      .insert({
-        order_id: order.id,
-        payment_method: 'flow',
-        payment_provider: 'flow',
-        amount: finalAmount,
-        status: 'pending',
-        provider_transaction_id: flowPayment.token,
-      })
-
-    // Store redirect URL to use outside try-catch
-    redirectUrl = `${flowPayment.url}?token=${flowPayment.token}`
-
-  } catch (error: any) {
-    console.error('Flow Error:', error)
-    throw new Error('Error al iniciar el pago con Flow')
-  }
-
-  // 9. Redirect to Flow (outside try-catch to avoid NEXT_REDIRECT error)
-  if (redirectUrl) {
-    redirect(redirectUrl)
-  }
+  // 9. Redirect to Flow
+  redirect(`${flowPayment.url}?token=${flowPayment.token}`)
 }

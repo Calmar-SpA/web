@@ -210,6 +210,10 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
         shippingServiceName: selectedShipping?.name,
       })
     } catch (error: any) {
+      // Ignore NEXT_REDIRECT errors (these are expected when redirecting to Flow)
+      if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+        return
+      }
       console.error(error)
       toast.error(error.message || t("messages.error"))
       setIsSubmitting(false)
