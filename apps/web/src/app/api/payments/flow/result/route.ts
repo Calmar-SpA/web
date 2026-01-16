@@ -36,7 +36,19 @@ export async function POST(request: NextRequest) {
         .update({ status: 'paid' })
         .eq('id', status.commerceOrder)
       
-      return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout/success?orderId=${status.commerceOrder}`)
+      const { data: order } = await supabase
+        .from('orders')
+        .select('shipping_address')
+        .eq('id', status.commerceOrder)
+        .single()
+
+      const rutUpdated = Boolean((order?.shipping_address as any)?.rut_updated)
+      const successParams = new URLSearchParams({ orderId: status.commerceOrder })
+      if (rutUpdated) {
+        successParams.set('rutUpdated', '1')
+      }
+
+      return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout/success?${successParams.toString()}`)
     } else {
       return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout/error?orderId=${status.commerceOrder}`)
     }

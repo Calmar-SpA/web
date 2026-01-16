@@ -65,6 +65,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
 
   const inputRut = normalizeRut(data.customerInfo.rut)
   let userRut: string | null = null
+  let didUpdateRut = false
 
   if (data.customerInfo.rut && !isValidRut(data.customerInfo.rut)) {
     throw new Error('El RUT no es válido')
@@ -77,13 +78,13 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
       .eq('id', user.id)
       .single()
 
-    userRut = normalizeRut(profile?.rut)
+    const storedRut = normalizeRut(profile?.rut)
 
-    if (!userRut) {
-      if (!inputRut) {
-        throw new Error('Debes ingresar tu RUT para continuar')
-      }
+    if (!inputRut && !storedRut) {
+      throw new Error('Debes ingresar tu RUT para continuar')
+    }
 
+    if (inputRut && inputRut !== storedRut) {
       const { data: existingUser } = await supabase
         .from('users')
         .select('id')
@@ -105,6 +106,9 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
       }
 
       userRut = inputRut
+      didUpdateRut = true
+    } else {
+      userRut = storedRut
     }
   } else if (!inputRut) {
     throw new Error('Debes ingresar tu RUT para continuar')
@@ -228,6 +232,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
         address: data.customerInfo.address,
         comuna: data.customerInfo.comuna,
         region: data.customerInfo.region,
+        rut_updated: didUpdateRut,
       },
       billing_address: {
         name: data.customerInfo.name,
@@ -235,6 +240,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
         address: data.customerInfo.address,
         comuna: data.customerInfo.comuna,
         region: data.customerInfo.region,
+        rut_updated: didUpdateRut,
       },
       points_earned: 0, 
       points_redeemed: redeemedPoints,
@@ -338,7 +344,11 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
     await notifyLowInventoryIfNeeded(supabase, orderItems)
 
     // 4. Redirect to success page
-    redirect(`/checkout/success?orderId=${order.id}`)
+    const successParams = new URLSearchParams({ orderId: order.id })
+    if (didUpdateRut) {
+      successParams.set('rutUpdated', '1')
+    }
+    redirect(`/checkout/success?${successParams.toString()}`)
   }
 
   // 7. Initiate Flow Payment (for non-credit orders)

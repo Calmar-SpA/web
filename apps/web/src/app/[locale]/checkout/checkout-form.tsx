@@ -2,7 +2,7 @@
 "use client"
 
 import { useCart } from "@/hooks/use-cart"
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, RutInput } from "@calmar/ui"
+import { Button, Card, CardHeader, CardTitle, CardContent, Input } from "@calmar/ui"
 import { ShoppingBag, ChevronLeft, CreditCard, Truck, Building2, Plus, Minus } from "lucide-react"
 import { Link } from "@/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -12,7 +12,7 @@ import { toast } from "sonner"
 import { PointsRedemption } from "@/components/checkout/points-redemption"
 import { ShippingOptions } from "@/components/checkout/shipping-options"
 import { useTranslations } from "next-intl"
-import { formatClp, getPriceBreakdown, isValidRut } from "@calmar/utils"
+import { formatClp, formatRut, getPriceBreakdown, isValidRut } from "@calmar/utils"
 
 interface ShippingOption {
   code: string
@@ -36,6 +36,7 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
   const [isMounted, setIsMounted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'flow' | 'credit'>('flow')
+  const [rutTouched, setRutTouched] = useState(false)
   
   const [formData, setFormData] = useState({
     name: user?.user_metadata?.full_name || "",
@@ -123,6 +124,19 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
       checkDiscountForEmail(value)
     }
   }
+
+  const handleRutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatRut(e.target.value)
+    setFormData(prev => ({ ...prev, rut: formatted }))
+    if (formatted.length >= 3) {
+      setRutTouched(true)
+    }
+  }
+
+  const isRutRequired = !userProfile?.rut
+  const hasRutValue = Boolean(formData.rut)
+  const isRutValid = hasRutValue ? isValidRut(formData.rut) : !isRutRequired
+  const showRutError = rutTouched && !isRutValid
 
   const handleRedeem = (points: number) => {
     setPointsToRedeem(points)
@@ -262,14 +276,23 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{t("shipping.rut")}</label>
-                <RutInput
+                <Input
                   name="rut"
                   value={formData.rut}
-                  onChange={handleInputChange}
+                  onChange={handleRutChange}
+                  onBlur={() => setRutTouched(true)}
                   placeholder={t("shipping.rutPlaceholder")}
-                  required={!userProfile?.rut}
-                  disabled={!!userProfile?.rut}
+                  required={isRutRequired}
+                  disabled={isSubmitting}
+                  inputMode="text"
+                  autoComplete="off"
+                  aria-invalid={showRutError}
                 />
+                {showRutError && (
+                  <p className="text-xs text-red-600">
+                    El RUT no es válido.
+                  </p>
+                )}
                 <p className="text-xs text-slate-500">
                   Usa formato chileno (ej: 12.345.678-9).
                 </p>
@@ -551,7 +574,7 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
 
               <Button 
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || (isRutRequired && !isRutValid)}
                 className="w-full h-16 bg-slate-900 hover:bg-calmar-ocean text-white text-xl font-black shadow-xl shadow-slate-900/20 transition-all hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-50 disabled:translate-y-0"
               >
                 {isSubmitting ? t("buttons.processing") : paymentMethod === 'credit' ? t("buttons.payWithCredit") : t("buttons.payWithFlow")}

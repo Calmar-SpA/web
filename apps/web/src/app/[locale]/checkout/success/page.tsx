@@ -11,6 +11,7 @@ function CheckoutSuccessContent() {
   const { clearCart } = useCart()
   const searchParams = useSearchParams()
   const orderId = searchParams.get('orderId')
+  const rutUpdated = searchParams.get('rutUpdated') === '1'
 
   useEffect(() => {
     // Clear cart on successful checkout
@@ -32,6 +33,12 @@ function CheckoutSuccessContent() {
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 inline-block">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Número de Pedido</p>
             <p className="font-mono font-bold text-calmar-ocean">#{orderId.slice(0, 8)}</p>
+          </div>
+        )}
+        {rutUpdated && (
+          <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100 inline-block">
+            <p className="text-xs font-bold uppercase tracking-widest text-emerald-500 mb-1">RUT actualizado</p>
+            <p className="text-sm text-emerald-700">Tu RUT quedó guardado en tu perfil.</p>
           </div>
         )}
       </div>
