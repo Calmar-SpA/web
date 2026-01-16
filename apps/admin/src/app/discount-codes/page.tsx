@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { DiscountCodeService } from '@calmar/database'
+import { DiscountCodeService, DiscountCode } from '@calmar/database'
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@calmar/ui'
 import Link from 'next/link'
 
@@ -19,7 +19,7 @@ export default async function DiscountCodesPage() {
   const supabase = await createClient()
   const discountService = new DiscountCodeService(supabase)
 
-  let codes = []
+  let codes: DiscountCode[] = []
   let loadError: string | null = null
   try {
     codes = await discountService.getAllDiscountCodes()
