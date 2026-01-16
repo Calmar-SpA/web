@@ -182,7 +182,7 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
         return
       }
 
-      await createOrderAndInitiatePayment({
+      const result = await createOrderAndInitiatePayment({
         items,
         total: resolvedSubtotal,
         customerInfo: formData,
@@ -192,11 +192,16 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
         shippingServiceCode: selectedShipping?.code?.toString(),
         shippingServiceName: selectedShipping?.name,
       })
-    } catch (error: any) {
-      // Ignore NEXT_REDIRECT errors (these are expected when redirecting to Flow)
-      if (error?.digest?.startsWith('NEXT_REDIRECT')) {
-        return
+
+      if (result.success && result.redirectUrl) {
+        // Use window.location for external URLs (Flow) and internal navigation
+        // This is more reliable than Next.js redirect() for external domains
+        window.location.href = result.redirectUrl
+      } else if (result.error) {
+        toast.error(result.error)
+        setIsSubmitting(false)
       }
+    } catch (error: any) {
       console.error(error)
       toast.error(error.message || t("messages.error"))
       setIsSubmitting(false)

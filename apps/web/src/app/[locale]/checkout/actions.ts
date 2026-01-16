@@ -2,8 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { flow } from '@/lib/flow'
-import { redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
 import { sendOrderPaidAdminEmail, sendOrderPaidCustomerEmail } from '@/lib/mail'
 import { notifyLowInventoryIfNeeded } from '@/lib/inventory-alerts'
 import { formatRut, normalizeRut, isValidRut } from '@calmar/utils'
@@ -58,7 +56,14 @@ export async function checkNewsletterDiscount(email: string) {
   return data.discount_percentage
 }
 
-export async function createOrderAndInitiatePayment(data: CheckoutData) {
+interface PaymentResult {
+  success: boolean;
+  redirectUrl?: string;
+  orderId?: string;
+  error?: string;
+}
+
+export async function createOrderAndInitiatePayment(data: CheckoutData): Promise<PaymentResult> {
   const supabase = await createClient()
   
   // 1. Get current user (if logged in)
@@ -351,12 +356,16 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
 
     await notifyLowInventoryIfNeeded(supabase, orderItems)
 
-    // 4. Redirect to success page
+    // 4. Return success for redirect (client-side will handle navigation)
     const successParams = new URLSearchParams({ orderId: order.id })
     if (didUpdateRut) {
       successParams.set('rutUpdated', '1')
     }
-    redirect(`/checkout/success?${successParams.toString()}`)
+    return {
+      success: true,
+      redirectUrl: `/checkout/success?${successParams.toString()}`,
+      orderId: order.id,
+    }
   }
 
   // 7. Initiate Flow Payment (for non-credit orders)
@@ -386,6 +395,10 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
       provider_transaction_id: flowPayment.token,
     })
 
-  // 9. Redirect to Flow
-  redirect(`${flowPayment.url}?token=${flowPayment.token}`)
+  // 9. Return Flow payment URL for client-side redirect (more reliable for external URLs)
+  return {
+    success: true,
+    redirectUrl: `${flowPayment.url}?token=${flowPayment.token}`,
+    orderId: order.id,
+  }
 }
