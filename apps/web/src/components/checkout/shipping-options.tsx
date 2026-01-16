@@ -76,8 +76,9 @@ export function ShippingOptions({
         const shippingOptions = [shippingOption]
         setOptions(shippingOptions)
         
-        // Auto-select cheapest domicilio option if none selected
-        if (shippingOptions.length > 0 && !selectedOption) {
+        // Always auto-select the best option when options are loaded
+        // This ensures the summary always shows an up-to-date shipping cost
+        if (shippingOptions.length > 0) {
           // Prefer DOMICILIO delivery, fall back to any option
           const domicilioOptions = shippingOptions.filter((opt: ShippingOption) => 
             opt.deliveryType === 'DOMICILIO'

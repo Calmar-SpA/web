@@ -145,29 +145,12 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
   const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const region = e.target.value
     setFormData((prev) => ({ ...prev, region }))
-    setSelectedShipping(null)
   }
 
   const handleComunaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const comuna = e.target.value
     setFormData((prev) => ({ ...prev, comuna }))
-    setSelectedShipping(null)
   }
-
-  useEffect(() => {
-    if (!formData.region) return
-    setSelectedShipping(null)
-  }, [
-    formData.address,
-    formData.addressNumber,
-    formData.addressExtra,
-    formData.comuna,
-    formData.region,
-    cartWeightKg,
-    cartDimensions.height,
-    cartDimensions.width,
-    cartDimensions.length,
-  ])
 
   const handleIncrement = (productId: string, currentQuantity: number) => {
     updateQuantity(productId, currentQuantity + 1)
