@@ -3,11 +3,11 @@
 
 import { useCart } from "@/hooks/use-cart"
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from "@calmar/ui"
-import { ShoppingBag, ChevronLeft, CreditCard, Truck, Building2, Plus, Minus } from "lucide-react"
+import { ShoppingBag, ChevronLeft, CreditCard, Truck, Building2, Plus, Minus, Tag } from "lucide-react"
 import { Link } from "@/navigation"
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
-import { createOrderAndInitiatePayment } from "./actions"
+import { createOrderAndInitiatePayment, validateDiscountCode } from "./actions"
 import { toast } from "sonner"
 import { PointsRedemption } from "@/components/checkout/points-redemption"
 import { ShippingOptions } from "@/components/checkout/shipping-options"
@@ -24,7 +24,16 @@ interface ShippingOption {
 
 interface CheckoutFormProps {
   user: any
-  userProfile?: { rut?: string | null; full_name?: string | null } | null
+  userProfile?: {
+    rut?: string | null
+    full_name?: string | null
+    shipping_fee_exempt?: boolean | null
+    address?: string | null
+    address_number?: string | null
+    address_extra?: string | null
+    comuna?: string | null
+    region?: string | null
+  } | null
   b2bClient: any
   b2bPriceMap?: Record<string, number>
   initialNewsletterDiscount?: number | null
@@ -39,21 +48,26 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
   const [rutTouched, setRutTouched] = useState(false)
   
   const [formData, setFormData] = useState({
-    name: user?.user_metadata?.full_name || "",
+    name: userProfile?.full_name || user?.user_metadata?.full_name || "",
     email: user?.email || "",
     rut: userProfile?.rut || "",
-    address: "",
-    addressNumber: "",
-    addressExtra: "",
-    comuna: "",
-    region: "",
+    address: userProfile?.address || "",
+    addressNumber: userProfile?.address_number || "",
+    addressExtra: userProfile?.address_extra || "",
+    comuna: userProfile?.comuna || "",
+    region: userProfile?.region || "",
   })
 
   const [pointsToRedeem, setPointsToRedeem] = useState(0)
   const [newsletterDiscountPercent, setNewsletterDiscountPercent] = useState<number | null>(initialNewsletterDiscount || null)
   const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null)
+  const [discountCodeInput, setDiscountCodeInput] = useState("")
+  const [appliedDiscount, setAppliedDiscount] = useState<{ id: string; code: string; amount: number } | null>(null)
+  const [discountError, setDiscountError] = useState("")
+  const [isApplyingDiscount, setIsApplyingDiscount] = useState(false)
 
   const isB2BActive = Boolean(b2bClient?.is_active)
+  const isShippingExempt = Boolean(userProfile?.shipping_fee_exempt)
   const getUnitPrice = (item: any) => {
     if (isB2BActive) {
       const b2bPrice = b2bPriceMap?.[item.product.id]
@@ -92,6 +106,17 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
     const cubeSideCm = Math.max(1, Math.ceil(Math.cbrt(totalVolumeCm3)))
     return { height: cubeSideCm, width: cubeSideCm, length: cubeSideCm }
   }, [items])
+
+  useEffect(() => {
+    if (!isShippingExempt) return
+    setSelectedShipping({
+      code: "EXENTO_ENVIO",
+      name: "Envío exento",
+      price: 0,
+      finalWeight: String(cartWeightKg),
+      estimatedDays: "Exento",
+    })
+  }, [isShippingExempt, cartWeightKg])
 
   const checkDiscountForEmail = async (email: string) => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -191,6 +216,9 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
         shippingCost: selectedShipping?.price || 0,
         shippingServiceCode: selectedShipping?.code?.toString(),
         shippingServiceName: selectedShipping?.name,
+        discountCodeId: appliedDiscount?.id || null,
+        discountAmount: appliedDiscount?.amount || 0,
+        discountCode: appliedDiscount?.code || null,
       })
 
       if (result.success && result.redirectUrl) {
@@ -210,14 +238,63 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
     }
   }
 
+  const handleApplyDiscount = async () => {
+    if (!discountCodeInput.trim()) {
+      setDiscountError(t("discount.invalid"))
+      return
+    }
+
+    setIsApplyingDiscount(true)
+    setDiscountError("")
+    try {
+      const itemsForDiscount = items.map(item => ({
+        productId: item.product.id,
+        subtotal: getUnitPrice(item) * item.quantity,
+      }))
+
+      const result = await validateDiscountCode({
+        code: discountCodeInput,
+        cartTotal: resolvedSubtotal - appliedNewsletterDiscount,
+        items: itemsForDiscount,
+        email: formData.email,
+      })
+
+      if (!result.success) {
+        setAppliedDiscount(null)
+        setDiscountError(result.error || t("discount.invalid"))
+        return
+      }
+
+      setAppliedDiscount({
+        id: result.discountCodeId,
+        code: result.code,
+        amount: result.discountAmount,
+      })
+      setDiscountCodeInput(result.code)
+      setDiscountError("")
+    } catch (error) {
+      console.error(error)
+      setDiscountError(t("discount.invalid"))
+    } finally {
+      setIsApplyingDiscount(false)
+    }
+  }
+
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null)
+    setDiscountCodeInput("")
+    setDiscountError("")
+  }
+
   // Newsletter Discount (not applied to B2B fixed pricing)
   const appliedNewsletterDiscount = (!isB2BActive && newsletterDiscountPercent && newsletterDiscountPercent > 0)
     ? Math.floor(resolvedSubtotal * (newsletterDiscountPercent / 100))
     : 0
 
+  const appliedDiscountAmount = appliedDiscount?.amount || 0
   const shippingCost = selectedShipping?.price || 0
-  const subtotalAfterDiscounts = resolvedSubtotal - appliedNewsletterDiscount
-  const finalTotal = subtotalAfterDiscounts - pointsToRedeem + shippingCost
+  const subtotalAfterDiscounts = Math.max(0, resolvedSubtotal - appliedNewsletterDiscount - appliedDiscountAmount)
+  const finalTotal = Math.max(0, subtotalAfterDiscounts - pointsToRedeem + shippingCost)
   const { net: subtotalNet, iva: subtotalIva } = getPriceBreakdown(resolvedSubtotal)
   const { net: finalNet, iva: finalIva } = getPriceBreakdown(finalTotal)
 
@@ -377,15 +454,21 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
 
             {/* Shipping Options - shows when region is available */}
             <div className="mt-6">
-              <ShippingOptions
-                region={formData.region}
-                weightKg={cartWeightKg}
-                dimensions={cartDimensions}
-                refreshKey={`${formData.address}|${formData.addressNumber}|${formData.addressExtra}|${formData.comuna}|${formData.region}`}
-                selectedOption={selectedShipping}
-                onSelectOption={setSelectedShipping}
-                disabled={isSubmitting}
-              />
+              {isShippingExempt ? (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm">
+                  Este usuario tiene envío exento. No se cobrará despacho.
+                </div>
+              ) : (
+                <ShippingOptions
+                  region={formData.region}
+                  weightKg={cartWeightKg}
+                  dimensions={cartDimensions}
+                  refreshKey={`${formData.address}|${formData.addressNumber}|${formData.addressExtra}|${formData.comuna}|${formData.region}`}
+                  selectedOption={selectedShipping}
+                  onSelectOption={setSelectedShipping}
+                  disabled={isSubmitting}
+                />
+              )}
             </div>
           </section>
 
@@ -504,6 +587,44 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
               <div className="space-y-3 pt-6 border-t border-slate-100">
                 <PointsRedemption cartTotal={subtotalAfterDiscounts} onRedeem={handleRedeem} disabled={isSubmitting} />
 
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-bold uppercase text-slate-600">
+                    <Tag className="w-4 h-4 text-calmar-ocean" />
+                    {t("discount.title")}
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      placeholder={t("discount.placeholder")}
+                      value={discountCodeInput}
+                      onChange={(e) => setDiscountCodeInput(e.target.value.toUpperCase())}
+                      disabled={isApplyingDiscount}
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleApplyDiscount}
+                      disabled={isApplyingDiscount}
+                      className="bg-slate-900 hover:bg-calmar-ocean text-white font-black uppercase text-xs tracking-widest h-11"
+                    >
+                      {isApplyingDiscount ? t("buttons.processing") : t("discount.apply")}
+                    </Button>
+                  </div>
+                  {discountError && (
+                    <p className="text-xs text-red-600 font-bold">{discountError}</p>
+                  )}
+                  {appliedDiscount && (
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-xs font-bold text-emerald-800">
+                      <span>{t("discount.applied")} {appliedDiscount.code}</span>
+                      <button
+                        type="button"
+                        onClick={handleRemoveDiscount}
+                        className="text-emerald-700 hover:text-emerald-900 underline"
+                      >
+                        {t("discount.remove")}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <div className="mt-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500 font-medium">{t("summary.subtotal")}</span>
@@ -528,6 +649,13 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
                     <span>-${appliedNewsletterDiscount.toLocaleString('es-CL')}</span>
                   </div>
                 )}
+
+                {appliedDiscountAmount > 0 && appliedDiscount && (
+                  <div className="flex justify-between text-sm text-emerald-700 font-black uppercase tracking-tighter">
+                    <span>{t("discount.title")}</span>
+                    <span>-{appliedDiscountAmount.toLocaleString('es-CL')}</span>
+                  </div>
+                )}
                 
                 {!isB2BActive && appliedNewsletterDiscount === 0 && !newsletterDiscountPercent && (
                   <div className="bg-calmar-mint/10 px-3 py-2 rounded-lg border border-calmar-mint/30">
@@ -547,9 +675,11 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500 font-medium">{t("summary.shipping")}</span>
                   <span className="font-bold text-slate-900">
-                    {shippingCost > 0 
-                      ? `$${shippingCost.toLocaleString('es-CL')}` 
-                      : formData.region ? 'Calculando...' : 'Ingresa tu región'
+                    {isShippingExempt
+                      ? 'Gratis'
+                      : shippingCost > 0 
+                        ? `$${shippingCost.toLocaleString('es-CL')}` 
+                        : formData.region ? 'Calculando...' : 'Ingresa tu región'
                     }
                   </span>
                 </div>
@@ -571,7 +701,13 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
                 disabled={isSubmitting || (isRutRequired && !isRutValid)}
                 className="w-full h-16 bg-slate-900 hover:bg-calmar-ocean text-white text-xl font-black shadow-xl shadow-slate-900/20 transition-all hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-50 disabled:translate-y-0"
               >
-                {isSubmitting ? t("buttons.processing") : paymentMethod === 'credit' ? t("buttons.payWithCredit") : t("buttons.payWithFlow")}
+                {isSubmitting
+                  ? t("buttons.processing")
+                  : finalTotal === 0
+                    ? t("buttons.completeOrder")
+                    : paymentMethod === 'credit'
+                      ? t("buttons.payWithCredit")
+                      : t("buttons.payWithFlow")}
               </Button>
               
               <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest">

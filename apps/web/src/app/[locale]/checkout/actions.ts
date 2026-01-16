@@ -5,7 +5,7 @@ import { flow } from '@/lib/flow'
 import { sendOrderPaidAdminEmail, sendOrderPaidCustomerEmail } from '@/lib/mail'
 import { notifyLowInventoryIfNeeded } from '@/lib/inventory-alerts'
 import { formatRut, normalizeRut, isValidRut } from '@calmar/utils'
-import { B2BService, LoyaltyService } from '@calmar/database'
+import { B2BService, DiscountCodeService, LoyaltyService } from '@calmar/database'
 
 interface CheckoutData {
   items: any[];
@@ -14,6 +14,8 @@ interface CheckoutData {
     email: string;
     rut?: string;
     address: string;
+    addressNumber?: string;
+    addressExtra?: string;
     comuna: string;
     region: string;
   };
@@ -23,6 +25,9 @@ interface CheckoutData {
   shippingCost?: number;
   shippingServiceCode?: string;
   shippingServiceName?: string;
+  discountCodeId?: string | null;
+  discountAmount?: number;
+  discountCode?: string | null;
 }
 
 export async function checkNewsletterDiscount(email: string) {
@@ -56,6 +61,37 @@ export async function checkNewsletterDiscount(email: string) {
   return data.discount_percentage
 }
 
+export async function validateDiscountCode(params: {
+  code: string
+  cartTotal: number
+  items: Array<{ productId: string; subtotal: number }>
+  email?: string
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  let isShippingExempt = false
+  const discountService = new DiscountCodeService(supabase)
+
+  const result = await discountService.validateDiscountCode({
+    code: params.code,
+    userId: user?.id || null,
+    email: params.email,
+    cartTotal: params.cartTotal,
+    items: params.items,
+  })
+
+  if (!result.isValid || !result.discountCode || !result.discountAmount) {
+    return { success: false, error: result.error }
+  }
+
+  return {
+    success: true,
+    discountCodeId: result.discountCode.id,
+    code: result.discountCode.code,
+    discountAmount: result.discountAmount,
+  }
+}
+
 interface PaymentResult {
   success: boolean;
   redirectUrl?: string;
@@ -68,6 +104,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
   
   // 1. Get current user (if logged in)
   const { data: { user } } = await supabase.auth.getUser()
+  let isShippingExempt = false
 
   const inputRutNormalized = normalizeRut(data.customerInfo.rut)
   const inputRutFormatted = inputRutNormalized ? formatRut(inputRutNormalized) : null
@@ -83,10 +120,11 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
   if (user) {
     const { data: profile } = await supabase
       .from('users')
-      .select('id, rut')
+      .select('id, rut, shipping_fee_exempt')
       .eq('id', user.id)
       .single()
 
+    isShippingExempt = Boolean(profile?.shipping_fee_exempt)
     const storedRutNormalized = normalizeRut(profile?.rut)
     const storedRutFormatted = storedRutNormalized ? formatRut(storedRutNormalized) : null
 
@@ -149,6 +187,8 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
 
   let baseTotal = data.items.reduce((sum, item) => sum + (item.quantity * item.product.base_price), 0)
   let newsletterDiscountAmount = 0
+  let discountCodeAmount = 0
+  let discountCodeId: string | null = null
   let redeemedPoints = 0
 
   // 1.5 Handle Newsletter Discount (Only if NOT B2B as per user request)
@@ -156,9 +196,10 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
 
   // 2. Handle B2B Discount
   let b2bPriceMap = new Map<string, number>()
+  let b2bClient: any = null
   if (user) {
     const b2bService = new B2BService(supabase)
-    const b2bClient = await b2bService.getClientByUserId(user.id)
+    b2bClient = await b2bService.getClientByUserId(user.id)
     
     if (b2bClient?.is_active) {
       const { data: b2bPrices, error: b2bPricesError } = await supabase
@@ -188,12 +229,36 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
       newsletterDiscountAmount = Math.floor(baseTotal * (Number(newsletterDiscountPercent) / 100))
       baseTotal -= newsletterDiscountAmount
     }
-    // Handle Credit Limit Check if payment method is 'credit'
-    if (data.paymentMethod === 'credit') {
-      if (!b2bClient?.is_active || Number(b2bClient.credit_limit) < baseTotal) {
-        throw new Error('Crédito insuficiente o cuenta B2B no activa')
+  }
+
+  if (data.discountCode) {
+    const discountService = new DiscountCodeService(supabase)
+    const itemsForDiscount = data.items.map(item => {
+      const fixedPrice = b2bPriceMap.get(item.product.id)
+      const unitPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
+        ? fixedPrice
+        : item.product.base_price
+      return {
+        productId: item.product.id,
+        subtotal: unitPrice * item.quantity,
       }
+    })
+
+    const validation = await discountService.validateDiscountCode({
+      code: data.discountCode,
+      userId: user?.id || null,
+      email: data.customerInfo.email,
+      cartTotal: baseTotal,
+      items: itemsForDiscount,
+    })
+
+    if (!validation.isValid || !validation.discountCode) {
+      throw new Error(validation.error || 'Código de descuento no válido')
     }
+
+    discountCodeAmount = validation.discountAmount || 0
+    discountCodeId = validation.discountCode.id
+    baseTotal = Math.max(0, baseTotal - discountCodeAmount)
   }
 
   let finalAmount = baseTotal
@@ -227,7 +292,17 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
   const taxAmount = 0
   
   // Use shipping cost from Chilexpress quote
-  const shippingCost = data.shippingCost || 0
+  const shippingCost = isShippingExempt ? 0 : (data.shippingCost || 0)
+  
+  // Total amount including shipping
+  const totalWithShipping = finalAmount + shippingCost
+
+  // 3.5 Handle Credit Limit Check if payment method is 'credit'
+  if (data.paymentMethod === 'credit') {
+    if (!b2bClient?.is_active || Number(b2bClient.credit_limit) < totalWithShipping) {
+      throw new Error('Crédito insuficiente o cuenta B2B no activa')
+    }
+  }
   
   const { data: order, error: orderError } = await supabase
     .from('orders')
@@ -239,13 +314,16 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
       subtotal: subtotal,
       tax_amount: taxAmount,
       shipping_cost: shippingCost,
-      discount_amount: newsletterDiscountAmount,
-      total_amount: finalAmount + shippingCost,
-      status: data.paymentMethod === 'credit' ? 'paid' : 'pending_payment',
+      discount_amount: newsletterDiscountAmount + discountCodeAmount,
+      discount_code_id: discountCodeId,
+      total_amount: totalWithShipping,
+      status: data.paymentMethod === 'credit' || totalWithShipping === 0 ? 'paid' : 'pending_payment',
       shipping_address: {
         name: data.customerInfo.name,
         rut: prospectRutFormatted,
         address: data.customerInfo.address,
+        address_number: data.customerInfo.addressNumber,
+        address_extra: data.customerInfo.addressExtra,
         comuna: data.customerInfo.comuna,
         region: data.customerInfo.region,
         rut_updated: didUpdateRut,
@@ -254,6 +332,8 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
         name: data.customerInfo.name,
         rut: prospectRutFormatted,
         address: data.customerInfo.address,
+        address_number: data.customerInfo.addressNumber,
+        address_extra: data.customerInfo.addressExtra,
         comuna: data.customerInfo.comuna,
         region: data.customerInfo.region,
         rut_updated: didUpdateRut,
@@ -269,13 +349,41 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
     throw new Error('Error al crear el pedido')
   }
 
-  // 4. Record points redemption if applicable
+  if (user) {
+    const { error: updateProfileError } = await supabase
+      .from('users')
+      .update({
+        address: data.customerInfo.address,
+        address_number: data.customerInfo.addressNumber || null,
+        address_extra: data.customerInfo.addressExtra || null,
+        comuna: data.customerInfo.comuna,
+        region: data.customerInfo.region,
+      })
+      .eq('id', user.id)
+
+    if (updateProfileError) {
+      console.error('Profile update error:', updateProfileError)
+    }
+  }
+
+  // 4. Record discount usage
+  if (discountCodeId && discountCodeAmount > 0) {
+    const discountService = new DiscountCodeService(supabase)
+    await discountService.applyDiscountCode({
+      discountCodeId,
+      orderId: order.id,
+      userId: user?.id || null,
+      discountApplied: discountCodeAmount,
+    })
+  }
+
+  // 5. Record points redemption if applicable
   if (user && redeemedPoints > 0) {
     const loyaltyService = new LoyaltyService(supabase)
     await loyaltyService.redeemPoints(user.id, order.id, redeemedPoints)
   }
 
-  // 5. Create Order Items
+  // 6. Create Order Items
   const orderItems = data.items.map(item => {
     const fixedPrice = b2bPriceMap.get(item.product.id)
     const unitPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
@@ -301,7 +409,63 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
     console.error('Items Error:', itemsError)
   }
 
-  // 6. Handle Payment Redirection
+  // 7. Handle Payment Redirection
+  if (totalWithShipping === 0) {
+    await supabase
+      .from('payments')
+      .insert({
+        order_id: order.id,
+        payment_method: 'transfer',
+        payment_provider: 'free',
+        amount: totalWithShipping,
+        status: 'completed',
+      })
+
+    if (user && totalWithShipping > 0) {
+      const loyaltyService = new LoyaltyService(supabase)
+      await loyaltyService.awardPoints(user.id, order.id, totalWithShipping)
+    }
+
+    const shippingSummary = `${data.customerInfo.address}, ${data.customerInfo.comuna}, ${data.customerInfo.region}`
+    const emailItems = orderItems.map(item => ({
+      name: item.product_name,
+      variantName: item.variant_name,
+      quantity: item.quantity,
+      subtotal: item.subtotal,
+    }))
+
+    await sendOrderPaidCustomerEmail({
+      email: data.customerInfo.email,
+      customerName: data.customerInfo.name,
+      orderNumber: order.order_number,
+      orderId: order.id,
+      orderStatusLabel: 'pagado',
+      totalAmount: Number(order.total_amount),
+      items: emailItems,
+    })
+
+    await sendOrderPaidAdminEmail({
+      orderNumber: order.order_number,
+      customerName: data.customerInfo.name,
+      customerEmail: data.customerInfo.email,
+      totalAmount: Number(order.total_amount),
+      paymentMethod: 'Pedido $0',
+      shippingSummary,
+    })
+
+    await notifyLowInventoryIfNeeded(supabase, orderItems)
+
+    const successParams = new URLSearchParams({ orderId: order.id })
+    if (didUpdateRut) {
+      successParams.set('rutUpdated', '1')
+    }
+    return {
+      success: true,
+      redirectUrl: `/checkout/success?${successParams.toString()}`,
+      orderId: order.id,
+    }
+  }
+
   if (data.paymentMethod === 'credit') {
     // 1. Deduct from credit limit
     const b2bService = new B2BService(supabase)
@@ -309,7 +473,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
     
     await supabase
       .from('b2b_clients')
-      .update({ credit_limit: Number(b2bClient.credit_limit) - finalAmount })
+      .update({ credit_limit: Number(b2bClient.credit_limit) - totalWithShipping })
       .eq('id', b2bClient.id)
 
     // 2. Record payment
@@ -319,13 +483,13 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
         order_id: order.id,
         payment_method: 'transfer', // Using 'transfer' as proxy for internal credit for now
         payment_provider: 'internal_credit',
-        amount: finalAmount,
+        amount: totalWithShipping,
         status: 'completed',
       })
 
     // 3. Award points even for credit orders
     const loyaltyService = new LoyaltyService(supabase)
-    await loyaltyService.awardPoints(user!.id, order.id, finalAmount)
+    await loyaltyService.awardPoints(user!.id, order.id, totalWithShipping)
 
     const shippingSummary = `${data.customerInfo.address}, ${data.customerInfo.comuna}, ${data.customerInfo.region}`
     const emailItems = orderItems.map(item => ({
@@ -368,11 +532,8 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
     }
   }
 
-  // 7. Initiate Flow Payment (for non-credit orders)
+  // 8. Initiate Flow Payment (for non-credit orders)
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
-  
-  // Total amount including shipping
-  const totalWithShipping = finalAmount + shippingCost
   
   const flowPayment = await flow.createPayment({
     commerceOrder: order.id,
@@ -383,7 +544,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
     urlReturn: `${baseUrl}/api/payments/flow/result`,
   })
 
-  // 8. Record Flow payment
+  // 9. Record Flow payment
   await supabase
     .from('payments')
     .insert({
@@ -395,7 +556,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
       provider_transaction_id: flowPayment.token,
     })
 
-  // 9. Return Flow payment URL for client-side redirect (more reliable for external URLs)
+  // 10. Return Flow payment URL for client-side redirect (more reliable for external URLs)
   return {
     success: true,
     redirectUrl: `${flowPayment.url}?token=${flowPayment.token}`,

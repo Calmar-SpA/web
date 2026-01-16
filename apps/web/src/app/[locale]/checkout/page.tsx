@@ -21,7 +21,7 @@ export default async function CheckoutPage() {
   const { data: profile } = user
     ? await supabase
         .from('users')
-        .select('rut, full_name')
+        .select('rut, full_name, shipping_fee_exempt, address, address_number, address_extra, comuna, region')
         .eq('id', user.id)
         .single()
     : { data: null }

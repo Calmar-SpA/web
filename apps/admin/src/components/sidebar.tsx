@@ -13,7 +13,8 @@ import {
   Menu,
   X,
   UsersRound,
-  Mail
+  Mail,
+  Tag
 } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
@@ -26,6 +27,7 @@ export function Sidebar() {
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "text-calmar-mint" },
     { href: "/orders", label: "Pedidos", icon: ShoppingCart, color: "text-calmar-ocean" },
     { href: "/products", label: "Productos", icon: Package, color: "text-calmar-primary" },
+    { href: "/discount-codes", label: "Códigos", icon: Tag, color: "text-calmar-mint" },
     { href: "/crm", label: "CRM", icon: UsersRound, color: "text-calmar-accent" },
     { href: "/media", label: "Media", icon: Film, color: "text-calmar-accent" },
     { href: "/b2b", label: "B2B", icon: Building2, color: "text-calmar-primary-light" },

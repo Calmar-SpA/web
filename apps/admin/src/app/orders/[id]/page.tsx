@@ -118,15 +118,19 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                   return (
                     <div key={item.id} className="p-6 flex gap-4">
                     <div className="w-16 h-16 bg-slate-50 rounded-lg flex-shrink-0 flex items-center justify-center p-2">
-                      <img 
-                        src="C:/Users/felip/.gemini/antigravity/brain/04bc3b89-36f7-4e81-9e30-2d86782a2e82/uploaded_image_0_1767715376929.png" 
-                        alt={item.products.name}
-                        className="object-contain w-full h-full"
-                      />
+                      {item.products?.image_url ? (
+                        <img 
+                          src={item.products.image_url}
+                          alt={item.products?.name || 'Producto'}
+                          className="object-contain w-full h-full"
+                        />
+                      ) : (
+                        <Package className="w-6 h-6 text-slate-300" />
+                      )}
                     </div>
                     <div className="flex-1 flex items-center justify-between gap-4">
                       <div>
-                        <h4 className="font-bold">{item.products.name}</h4>
+                        <h4 className="font-bold">{item.products?.name || item.product_name || 'Producto'}</h4>
                         <p className="text-xs text-slate-500">
                           Cantidad: {item.quantity} • Unitario: ${formatClp(item.unit_price)}
                         </p>
@@ -163,8 +167,24 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dirección</p>
-                <p className="text-sm font-medium">{order.shipping_address}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nombre</p>
+                <p className="text-sm font-medium">{order.shipping_address?.name || "-"}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">RUT</p>
+                <p className="text-sm font-medium">{order.shipping_address?.rut || "-"}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Direccion</p>
+                <p className="text-sm font-medium">{order.shipping_address?.address || "-"}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Comuna</p>
+                <p className="text-sm font-medium">{order.shipping_address?.comuna || "-"}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Region</p>
+                <p className="text-sm font-medium">{order.shipping_address?.region || "-"}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contacto</p>

@@ -198,6 +198,7 @@ calmar-ecommerce/
 - **Catálogo de productos** con variantes (tamaños, sabores)
 - **Carrito de compras** persistente con Zustand
 - **Checkout** completo con múltiples métodos de pago
+- **Códigos de descuento** con reglas de uso y validación
 - **Integración con Flow** para pagos nacionales chilenos
 - **Cálculo de envío Blue Express**
 - **Gestión de inventario** con reservas automáticas
@@ -211,6 +212,7 @@ calmar-ecommerce/
 - **Perfil de usuario** con historial de pedidos
 - **Identificación por RUT** para vincular compras con CRM
 - **Gestión de direcciones** de envío y facturación
+- **Exención de pago de envíos** por usuario desde admin
 
 ### 🏢 Programa B2B (Business to Business)
 
@@ -292,6 +294,7 @@ Panel de administración para gestión interna.
 
 - Gestión de productos
 - Gestión de pedidos
+- Gestión de códigos de descuento
 - Gestión de usuarios y clientes B2B
 - CRM de prospectos y movimientos
 - Reportes y métricas
@@ -307,6 +310,7 @@ Servicios para interacción con Supabase:
 - `ProductService` - CRUD de productos
 - `OrderService` - Gestión de pedidos
 - `LoyaltyService` - Sistema de puntos
+- `DiscountCodeService` - Gestión y validación de códigos
 - `B2BService` - Gestión de clientes B2B
 
 ### `@calmar/ui`
@@ -432,7 +436,7 @@ npm run supabase:migrate # Reset y aplicar migraciones
 
 | Tabla                    | Descripción                               |
 | ------------------------ | ----------------------------------------- |
-| `users`                  | Usuarios sincronizados con auth.users     |
+| `users`                  | Usuarios sincronizados con auth.users (incluye dirección y `shipping_fee_exempt`) |
 | `products`               | Catálogo de productos con peso y dimensiones |
 | `product_variants`       | Variantes de productos (sabores, tamaños) |
 | `categories`             | Categorías de productos                   |
@@ -447,6 +451,10 @@ npm run supabase:migrate # Reset y aplicar migraciones
 | `shipments`              | Información de envíos                     |
 | `loyalty_points`         | Transacciones de puntos                   |
 | `rewards`                | Recompensas canjeables                    |
+| `discount_codes`         | Códigos de descuento                      |
+| `discount_code_products` | Restricciones por producto                |
+| `discount_code_users`    | Restricciones por usuario                 |
+| `discount_code_usages`   | Registro de usos de códigos               |
 | `b2b_clients`            | Clientes empresariales                    |
 | `b2b_product_prices`     | Precios fijos por producto (B2B)          |
 | `b2b_api_keys`           | API Keys para integraciones B2B           |
@@ -479,13 +487,13 @@ npm run supabase:migrate # Reset y aplicar migraciones
 - [x] Diseño responsive y moderno
 - [x] Animaciones con Framer Motion
 - [x] Notificaciones por email transaccionales
+- [x] Sistema de cupones de descuento
 
 ### 🔄 En Desarrollo
 
 - [ ] Panel de administración completo
 - [ ] Sistema de recompensas canjeables
 - [x] Integración con servicios de envío (Blue Express)
-- [ ] Sistema de cupones de descuento
 
 ### 🔮 Futuro (Roadmap)
 

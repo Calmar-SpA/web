@@ -81,10 +81,19 @@
       "calmarPoints": "Puntos Calmar",
       "quantity": "{qty} unid."
     },
+    "discount": {
+      "title": "Código de Descuento",
+      "placeholder": "Ingresa tu código",
+      "apply": "Aplicar",
+      "applied": "Código aplicado",
+      "remove": "Quitar",
+      "invalid": "Código no válido"
+    },
     "buttons": {
       "processing": "Procesando...",
       "payWithCredit": "Pagar con crédito",
-      "payWithFlow": "Pagar con Flow"
+      "payWithFlow": "Pagar con Flow",
+      "completeOrder": "Confirmar pedido"
     },
     "messages": {
       "creditApproval": "Orden sujeta a aprobación de crédito",

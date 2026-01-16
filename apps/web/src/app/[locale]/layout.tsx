@@ -4,8 +4,6 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { locales } from '@/i18n/config';
 import { Footer } from "@/components/layout/footer";
-import { ComingSoonPage } from "@/components/coming-soon";
-import { hasAccess } from "@/actions/access-code";
 import { WhatsAppButton } from "@/components/ui/whatsapp-button";
 import { VersionChecker } from "@/components/version-checker";
 
@@ -26,21 +24,7 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
   
   const messages = await getMessages();
-  const accessGranted = await hasAccess();
 
-  // If no access, show coming soon page
-  if (!accessGranted) {
-    return (
-      <NextIntlClientProvider messages={messages}>
-        <ComingSoonPage />
-        <WhatsAppButton />
-        <VersionChecker />
-        <Toaster />
-      </NextIntlClientProvider>
-    );
-  }
-
-  // Normal site for users with access
   return (
     <NextIntlClientProvider messages={messages}>
       <Header />

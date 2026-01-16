@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { UserProfile, UserRole, updateUserRole } from './actions'
+import { UserProfile, UserRole, updateUserRole, updateUserShippingFeeExempt } from './actions'
 import { Shield, ShoppingBag, Building2, Loader2, Check } from 'lucide-react'
 
 interface UsersTableProps {
@@ -31,18 +31,36 @@ const roleConfig: Record<UserRole, { label: string; icon: typeof Shield; color: 
 }
 
 export function UsersTable({ users, currentUserId }: UsersTableProps) {
-  const [updatingUser, setUpdatingUser] = useState<string | null>(null)
+  const [updatingRoleUser, setUpdatingRoleUser] = useState<string | null>(null)
+  const [updatingShippingUser, setUpdatingShippingUser] = useState<string | null>(null)
   const [successUser, setSuccessUser] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
-    setUpdatingUser(userId)
+    setUpdatingRoleUser(userId)
     setError(null)
     
     const result = await updateUserRole(userId, newRole)
     
-    setUpdatingUser(null)
+    setUpdatingRoleUser(null)
     
+    if (result.error) {
+      setError(result.error)
+      setTimeout(() => setError(null), 3000)
+    } else {
+      setSuccessUser(userId)
+      setTimeout(() => setSuccessUser(null), 2000)
+    }
+  }
+
+  const handleShippingExemptChange = async (userId: string, nextValue: boolean) => {
+    setUpdatingShippingUser(userId)
+    setError(null)
+
+    const result = await updateUserShippingFeeExempt(userId, nextValue)
+
+    setUpdatingShippingUser(null)
+
     if (result.error) {
       setError(result.error)
       setTimeout(() => setError(null), 3000)
@@ -83,13 +101,15 @@ export function UsersTable({ users, currentUserId }: UsersTableProps) {
               <th className="py-4 px-4">Usuario</th>
               <th className="py-4 px-4">Rol</th>
               <th className="py-4 px-4">Puntos</th>
+              <th className="py-4 px-4">Envío gratis</th>
               <th className="py-4 px-4">Registrado</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {users.map((user) => {
               const isCurrentUser = user.id === currentUserId
-              const isUpdating = updatingUser === user.id
+              const isUpdatingRole = updatingRoleUser === user.id
+              const isUpdatingShipping = updatingShippingUser === user.id
               const showSuccess = successUser === user.id
               
               return (
@@ -107,7 +127,7 @@ export function UsersTable({ users, currentUserId }: UsersTableProps) {
                   </td>
                   <td className="py-4 px-4">
                     <div className="relative">
-                      {isUpdating ? (
+                      {isUpdatingRole ? (
                         <div className="flex items-center gap-2 text-slate-400">
                           <Loader2 className="h-4 w-4 animate-spin" />
                           <span className="text-xs">Guardando...</span>
@@ -142,6 +162,27 @@ export function UsersTable({ users, currentUserId }: UsersTableProps) {
                     <span className="font-mono text-slate-600">
                       {user.points_balance.toLocaleString('es-CL')}
                     </span>
+                  </td>
+                  <td className="py-4 px-4">
+                    {isUpdatingShipping ? (
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-xs">Actualizando...</span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleShippingExemptChange(user.id, !user.shipping_fee_exempt)}
+                        className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
+                          user.shipping_fee_exempt
+                            ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                        title="Toggle exención de pago de envío"
+                      >
+                        {user.shipping_fee_exempt ? 'Exento' : 'Paga'}
+                      </button>
+                    )}
                   </td>
                   <td className="py-4 px-4 text-slate-500">
                     {formatDate(user.created_at)}

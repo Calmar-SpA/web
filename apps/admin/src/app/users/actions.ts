@@ -12,6 +12,7 @@ export interface UserProfile {
   phone: string | null
   role: UserRole
   points_balance: number
+  shipping_fee_exempt: boolean
   created_at: string
   updated_at: string
 }
@@ -93,6 +94,43 @@ export async function updateUserRole(
   if (error) {
     console.error('Error updating user role:', error)
     return { success: false, error: 'Error al actualizar el rol: ' + error.message }
+  }
+
+  revalidatePath('/users')
+  return { success: true }
+}
+
+export async function updateUserShippingFeeExempt(
+  userId: string,
+  shippingFeeExempt: boolean
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'No autorizado' }
+  }
+
+  // Verificar rol admin del usuario actual
+  const { data: currentUserProfile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (currentUserProfile?.role !== 'admin') {
+    return { success: false, error: 'No tienes permisos para cambiar esta configuración' }
+  }
+
+  const { error } = await supabase
+    .from('users')
+    .update({ shipping_fee_exempt: shippingFeeExempt })
+    .eq('id', userId)
+
+  if (error) {
+    console.error('Error updating shipping fee exempt:', error)
+    return { success: false, error: 'Error al actualizar la exención de envío: ' + error.message }
   }
 
   revalidatePath('/users')

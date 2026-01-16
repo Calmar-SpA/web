@@ -81,10 +81,19 @@
       "calmarPoints": "Calmar Points",
       "quantity": "{qty} units"
     },
+    "discount": {
+      "title": "Discount Code",
+      "placeholder": "Enter your code",
+      "apply": "Apply",
+      "applied": "Code applied",
+      "remove": "Remove",
+      "invalid": "Invalid code"
+    },
     "buttons": {
       "processing": "Processing...",
       "payWithCredit": "Pay with credit",
-      "payWithFlow": "Pay with Flow"
+      "payWithFlow": "Pay with Flow",
+      "completeOrder": "Place order"
     },
     "messages": {
       "creditApproval": "Order subject to credit approval",
