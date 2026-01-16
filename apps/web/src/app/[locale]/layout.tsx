@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/footer";
 import { ComingSoonPage } from "@/components/coming-soon";
 import { hasAccess } from "@/actions/access-code";
 import { WhatsAppButton } from "@/components/ui/whatsapp-button";
+import { VersionChecker } from "@/components/version-checker";
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -33,6 +34,7 @@ export default async function LocaleLayout({
       <NextIntlClientProvider messages={messages}>
         <ComingSoonPage />
         <WhatsAppButton />
+        <VersionChecker />
         <Toaster />
       </NextIntlClientProvider>
     );
@@ -46,6 +48,7 @@ export default async function LocaleLayout({
         {children}
       </div>
       <WhatsAppButton />
+      <VersionChecker />
       <Toaster />
       <Footer />
     </NextIntlClientProvider>

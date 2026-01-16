@@ -3,6 +3,7 @@ import { flow } from '@/lib/flow'
 import { createClient } from '@/lib/supabase/server'
 import { sendOrderPaidAdminEmail, sendOrderPaidCustomerEmail } from '@/lib/mail'
 import { notifyLowInventoryIfNeeded } from '@/lib/inventory-alerts'
+import { LoyaltyService } from '@calmar/database'
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
@@ -38,7 +39,6 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (order?.user_id) {
-        const { LoyaltyService } = await import('@calmar/database')
         const loyaltyService = new LoyaltyService(supabase)
         await loyaltyService.awardPoints(order.user_id, status.commerceOrder, Number(order.total_amount))
       }

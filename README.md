@@ -255,6 +255,7 @@ calmar-ecommerce/
 - **Robots.txt** configurado
 - **Meta tags** optimizados por página
 - **Generación estática** de páginas donde sea posible
+- **Aviso de nueva versión** con botón para actualizar la web
 
 ### 📰 Marketing
 

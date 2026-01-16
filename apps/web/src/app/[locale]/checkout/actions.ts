@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { sendOrderPaidAdminEmail, sendOrderPaidCustomerEmail } from '@/lib/mail'
 import { notifyLowInventoryIfNeeded } from '@/lib/inventory-alerts'
 import { normalizeRut, isValidRut } from '@calmar/utils'
+import { B2BService, LoyaltyService } from '@calmar/database'
 
 interface CheckoutData {
   items: any[];
@@ -139,7 +140,6 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
   // 2. Handle B2B Discount
   let b2bPriceMap = new Map<string, number>()
   if (user) {
-    const { B2BService } = await import('@calmar/database')
     const b2bService = new B2BService(supabase)
     const b2bClient = await b2bService.getClientByUserId(user.id)
     
@@ -183,7 +183,6 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
 
   // 3. Handle Loyalty Points Redemption
   if (user && data.pointsToRedeem && data.pointsToRedeem > 0) {
-    const { LoyaltyService } = await import('@calmar/database')
     const loyaltyService = new LoyaltyService(supabase)
     const userBalance = await loyaltyService.getUserBalance(user.id)
 
@@ -255,7 +254,6 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
 
   // 4. Record points redemption if applicable
   if (user && redeemedPoints > 0) {
-    const { LoyaltyService } = await import('@calmar/database')
     const loyaltyService = new LoyaltyService(supabase)
     await loyaltyService.redeemPoints(user.id, order.id, redeemedPoints)
   }
@@ -289,7 +287,6 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
   // 6. Handle Payment Redirection
   if (data.paymentMethod === 'credit') {
     // 1. Deduct from credit limit
-    const { B2BService } = await import('@calmar/database')
     const b2bService = new B2BService(supabase)
     const b2bClient = await b2bService.getClientByUserId(user!.id)
     
@@ -310,7 +307,6 @@ export async function createOrderAndInitiatePayment(data: CheckoutData) {
       })
 
     // 3. Award points even for credit orders
-    const { LoyaltyService } = await import('@calmar/database')
     const loyaltyService = new LoyaltyService(supabase)
     await loyaltyService.awardPoints(user!.id, order.id, finalAmount)
 

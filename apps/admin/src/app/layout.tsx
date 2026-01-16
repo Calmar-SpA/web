@@ -3,6 +3,7 @@ import { Inter, Zalando_Sans_Expanded } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Sidebar } from "@/components/sidebar";
+import { VersionChecker } from "@/components/version-checker";
 
 const zalando = Zalando_Sans_Expanded({
   variable: "--font-zalando",
@@ -53,6 +54,7 @@ export default function RootLayout({
             {children}
           </div>
         </main>
+        <VersionChecker />
         <Toaster position="top-right" />
       </body>
     </html>
