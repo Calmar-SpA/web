@@ -196,7 +196,9 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
       if (result.success && result.redirectUrl) {
         // Use window.location for external URLs (Flow) and internal navigation
         // This is more reliable than Next.js redirect() for external domains
+        console.log('[Checkout] Redirecting to:', result.redirectUrl)
         window.location.href = result.redirectUrl
+        return // Don't set isSubmitting to false, page is redirecting
       } else if (result.error) {
         toast.error(result.error)
         setIsSubmitting(false)

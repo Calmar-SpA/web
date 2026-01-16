@@ -5,6 +5,11 @@ import { sendOrderPaidAdminEmail, sendOrderPaidCustomerEmail } from '@/lib/mail'
 import { notifyLowInventoryIfNeeded } from '@/lib/inventory-alerts'
 import { LoyaltyService } from '@calmar/database'
 
+// GET handler for URL verification (Flow/Transbank checks this endpoint is accessible)
+export async function GET() {
+  return new Response('OK', { status: 200 })
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const token = formData.get('token') as string
