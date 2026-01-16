@@ -3,11 +3,11 @@
 
 import { useCart } from "@/hooks/use-cart"
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from "@calmar/ui"
-import { ShoppingBag, ChevronLeft, CreditCard, Truck, Building2, Plus, Minus, Tag } from "lucide-react"
+import { ShoppingBag, ChevronLeft, CreditCard, Truck, Building2, Plus, Minus, Tag, User, LogIn, Eye, EyeOff } from "lucide-react"
 import { Link } from "@/navigation"
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
-import { createOrderAndInitiatePayment, validateDiscountCode } from "./actions"
+import { createOrderAndInitiatePayment, validateDiscountCode, checkoutLogin } from "./actions"
 import { toast } from "sonner"
 import { PointsRedemption } from "@/components/checkout/points-redemption"
 import { ShippingOptions } from "@/components/checkout/shipping-options"
@@ -65,6 +65,14 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
   const [appliedDiscount, setAppliedDiscount] = useState<{ id: string; code: string; amount: number } | null>(null)
   const [discountError, setDiscountError] = useState("")
   const [isApplyingDiscount, setIsApplyingDiscount] = useState(false)
+  
+  // Login states
+  const [showLoginForm, setShowLoginForm] = useState(false)
+  const [loginEmail, setLoginEmail] = useState("")
+  const [loginPassword, setLoginPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [loginError, setLoginError] = useState("")
 
   const isB2BActive = Boolean(b2bClient?.is_active)
   const isShippingExempt = Boolean(userProfile?.shipping_fee_exempt)
@@ -286,6 +294,27 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
     setDiscountError("")
   }
 
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoggingIn(true)
+    setLoginError("")
+    
+    try {
+      const result = await checkoutLogin(loginEmail, loginPassword)
+      
+      if (result.success) {
+        // Reload page to get user data
+        window.location.reload()
+      } else {
+        setLoginError(result.error || t("login.errorGeneric"))
+      }
+    } catch (error) {
+      setLoginError(t("login.errorGeneric"))
+    } finally {
+      setIsLoggingIn(false)
+    }
+  }
+
   // Newsletter Discount (not applied to B2B fixed pricing)
   const appliedNewsletterDiscount = (!isB2BActive && newsletterDiscountPercent && newsletterDiscountPercent > 0)
     ? Math.floor(resolvedSubtotal * (newsletterDiscountPercent / 100))
@@ -328,6 +357,82 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         <div className="lg:col-span-7 space-y-8">
+          {/* Login Section - Only show when user is not authenticated */}
+          {!user && (
+            <section className="space-y-4">
+              <div 
+                onClick={() => setShowLoginForm(!showLoginForm)}
+                className="flex items-center justify-between p-4 bg-gradient-to-r from-calmar-ocean/5 to-calmar-mint/5 border border-calmar-ocean/20 rounded-xl cursor-pointer hover:border-calmar-ocean/40 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-calmar-ocean/10 flex items-center justify-center text-calmar-ocean group-hover:bg-calmar-ocean group-hover:text-white transition-colors">
+                    <User className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900">{t("login.title")}</p>
+                    <p className="text-xs text-slate-500">{t("login.description")}</p>
+                  </div>
+                </div>
+                <LogIn className={`w-5 h-5 text-calmar-ocean transition-transform ${showLoginForm ? 'rotate-90' : ''}`} />
+              </div>
+              
+              {showLoginForm && (
+                <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-4 animate-in slide-in-from-top-2 duration-200">
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                        {t("login.email")}
+                      </label>
+                      <Input
+                        type="email"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        placeholder="tu@email.com"
+                        disabled={isLoggingIn}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                        {t("login.password")}
+                      </label>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          placeholder="••••••••"
+                          disabled={isLoggingIn}
+                          className="pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    {loginError && (
+                      <p className="text-xs text-red-600 font-bold">{loginError}</p>
+                    )}
+                    <Button
+                      type="button"
+                      onClick={handleLogin}
+                      disabled={isLoggingIn || !loginEmail || !loginPassword}
+                      className="w-full bg-calmar-ocean hover:bg-calmar-ocean-dark text-white font-bold h-11"
+                    >
+                      {isLoggingIn ? t("login.loading") : t("login.button")}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-slate-400 text-center">
+                    {t("login.continueAsGuest")}
+                  </p>
+                </div>
+              )}
+            </section>
+          )}
+
           <section className="space-y-6">
             <div className="flex items-center gap-2 border-b pb-4 border-slate-100">
               <div className="w-8 h-8 rounded-full bg-calmar-ocean/10 flex items-center justify-center text-calmar-ocean">

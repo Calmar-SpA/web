@@ -115,6 +115,16 @@
       "errorInvalid": "Enter a valid amount",
       "errorInsufficient": "You only have {max} points available",
       "errorExceeds": "You cannot redeem more points than the cart total"
+    },
+    "login": {
+      "title": "Already have an account?",
+      "description": "Sign in to load your saved information",
+      "email": "Email",
+      "password": "Password",
+      "button": "Sign in",
+      "loading": "Signing in...",
+      "continueAsGuest": "Or continue as guest by filling the form below",
+      "errorGeneric": "Invalid email or password"
     }
   },
   "Account": {

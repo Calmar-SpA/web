@@ -1,9 +1,10 @@
 "use client"
 
 import { Link, usePathname } from "@/navigation"
-import { Button } from "@calmar/ui"
+import { Button, Sheet, SheetContent, SheetTitle, SheetTrigger } from "@calmar/ui"
 import { useTranslations } from "next-intl"
 import dynamic from 'next/dynamic'
+import { useState } from "react"
 
 const LanguageSwitcher = dynamic(() => import("./language-switcher").then(mod => ({ default: mod.LanguageSwitcher })), {
   ssr: false,
@@ -20,6 +21,7 @@ import Image from "next/image"
 export function Header() {
   const pathname = usePathname()
   const t = useTranslations("Navigation")
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
   const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
   
@@ -71,14 +73,59 @@ export function Header() {
           </Link>
           <CartDrawer />
           
-          {/* Mobile Menu Button - Placeholder */}
-          <Button variant="ghost" className="md:hidden p-2">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          </Button>
+          {/* Mobile Menu */}
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" className="md:hidden p-2" aria-label="Abrir menú">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-full sm:max-w-md flex flex-col p-0">
+              <div className="p-6 border-b flex items-center justify-between">
+                <SheetTitle className="text-base font-bold">Menú</SheetTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full hover:bg-slate-100 h-8 w-8 transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  aria-label="Cerrar menú"
+                >
+                  <div className="relative w-4 h-4">
+                    <div className="absolute top-1/2 left-0 w-full h-[2px] bg-slate-900 rotate-45 transform -translate-y-1/2 rounded-full" />
+                    <div className="absolute top-1/2 left-0 w-full h-[2px] bg-slate-900 -rotate-45 transform -translate-y-1/2 rounded-full" />
+                  </div>
+                </Button>
+              </div>
+              <nav className="p-6 flex flex-col gap-4">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="text-lg font-bold text-foreground/90 hover:text-primary transition-colors"
+                    style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </nav>
+              <div className="px-6 pb-6">
+                <div className="h-px w-full bg-slate-100 mb-4" />
+                <Link
+                  href="/account"
+                  className="text-base font-bold text-foreground/80 hover:text-primary transition-colors"
+                  style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {t("account").charAt(0).toUpperCase() + t("account").slice(1).toLowerCase()}
+                </Link>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>

@@ -115,6 +115,16 @@
       "errorInvalid": "Ingresa una cantidad válida",
       "errorInsufficient": "Solo tienes {max} puntos disponibles",
       "errorExceeds": "No puedes canjear más puntos que el total de la compra"
+    },
+    "login": {
+      "title": "¿Ya tienes cuenta?",
+      "description": "Inicia sesión para cargar tus datos guardados",
+      "email": "Email",
+      "password": "Contraseña",
+      "button": "Iniciar sesión",
+      "loading": "Ingresando...",
+      "continueAsGuest": "O continúa como invitado completando el formulario de abajo",
+      "errorGeneric": "Email o contraseña incorrectos"
     }
   },
   "Account": {
