@@ -9,7 +9,7 @@ interface ProductListProps {
 }
 
 export function ProductList({ products }: ProductListProps) {
-  const { addItem } = useCart()
+  const { addItem, setIsOpen } = useCart()
 
   return (
     <div className="flex flex-wrap justify-center gap-8">
@@ -17,7 +17,10 @@ export function ProductList({ products }: ProductListProps) {
         <div key={product.id} className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(25%-1.5rem)] min-w-[280px] max-w-[350px]">
           <ProductCard 
             product={product}
-            onAdd={() => addItem(product)}
+            onAdd={() => {
+              addItem(product)
+              setIsOpen(true)
+            }}
           />
         </div>
       ))}
