@@ -45,28 +45,35 @@ export default function ProspectDetailPage() {
       const prospectData = await crmService.getProspectById(prospectId)
       setProspect(prospectData)
     } catch (error: any) {
-      console.error('Error loading prospect:', error)
+      console.error('Error loading prospect:', error?.message || error)
       toast.error('Error al cargar el prospecto')
       setIsLoading(false)
       return
     }
 
+    // Cargar datos relacionados de forma independiente para que si uno falla, los otros no se pierdan
     try {
-      const [interactionsData, movementsData, ordersData] = await Promise.all([
-        crmService.getProspectInteractions(prospectId),
-        crmService.getMovements({ prospect_id: prospectId }),
-        crmService.getProspectOrders(prospectId)
-      ])
-      
+      const interactionsData = await crmService.getProspectInteractions(prospectId)
       setInteractions(interactionsData || [])
+    } catch (error: any) {
+      console.error('Error loading interactions:', error?.message || error)
+    }
+
+    try {
+      const movementsData = await crmService.getMovements({ prospect_id: prospectId })
       setMovements(movementsData || [])
+    } catch (error: any) {
+      console.error('Error loading movements:', error?.message || error)
+    }
+
+    try {
+      const ordersData = await crmService.getProspectOrders(prospectId)
       setOrders(ordersData || [])
     } catch (error: any) {
-      console.error('Error loading related data:', error)
-      toast.error('Algunos datos no se pudieron cargar')
-    } finally {
-      setIsLoading(false)
+      console.error('Error loading orders:', error?.message || error)
     }
+
+    setIsLoading(false)
   }
 
   useEffect(() => {

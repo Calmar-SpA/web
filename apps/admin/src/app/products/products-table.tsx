@@ -11,9 +11,10 @@ import { ImageIcon } from 'lucide-react'
 
 interface ProductsTableProps {
   products: ProductWithDetails[]
+  stockTotals: Record<string, number>
 }
 
-export function ProductsTable({ products }: ProductsTableProps) {
+export function ProductsTable({ products, stockTotals }: ProductsTableProps) {
   const [selectedProduct, setSelectedProduct] = useState<{
     id: string
     sku: string
@@ -95,11 +96,11 @@ export function ProductsTable({ products }: ProductsTableProps) {
                 </td>
                 <td className="py-4 px-4">
                   <div className={`inline-flex items-center px-2.5 py-0.5 rounded-md font-black text-sm border-2 ${
-                    (product.inventory?.[0]?.quantity ?? 0) < 10 
+                    (stockTotals[product.id] ?? 0) < 10 
                       ? 'bg-orange-50 text-orange-700 border-orange-200' 
                       : 'bg-slate-50 text-slate-900 border-slate-200'
                   }`}>
-                    {product.inventory?.[0]?.quantity ?? 0}
+                    {stockTotals[product.id] ?? 0}
                   </div>
                 </td>
                 <td className="py-4 px-4">

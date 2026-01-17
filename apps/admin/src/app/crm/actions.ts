@@ -95,6 +95,8 @@ export async function createMovement(data: {
   due_date?: string | null
   delivery_date?: string | null
   notes?: string
+  sample_recipient_name?: string | null
+  sample_event_context?: string | null
 }) {
   const supabase = await createClient()
   const crmService = new CRMService(supabase)

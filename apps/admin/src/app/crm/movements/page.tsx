@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { CRMService } from '@calmar/database'
-import { Search, Plus, Package, DollarSign, Calendar, AlertCircle, CheckCircle } from 'lucide-react'
+import { Search, Plus, Package, DollarSign, Calendar, AlertCircle, CheckCircle, UserX } from 'lucide-react'
 import { Input, Button } from '@calmar/ui'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -49,7 +49,7 @@ export default function MovementsPage() {
       const data = await crmService.getMovements(filters)
       setMovements(data || [])
     } catch (error: any) {
-      console.error('Error loading movements:', error)
+      console.error('Error loading movements:', error?.message || error)
       toast.error('Error al cargar movimientos')
     } finally {
       setIsLoading(false)
@@ -68,7 +68,9 @@ export default function MovementsPage() {
         m.prospect?.contact_name?.toLowerCase().includes(search) ||
         m.prospect?.company_name?.toLowerCase().includes(search) ||
         m.b2b_client?.company_name?.toLowerCase().includes(search) ||
-        m.customer?.email?.toLowerCase().includes(search)
+        m.customer?.email?.toLowerCase().includes(search) ||
+        m.sample_recipient_name?.toLowerCase().includes(search) ||
+        m.sample_event_context?.toLowerCase().includes(search)
       )
     }
     return true
@@ -211,6 +213,17 @@ export default function MovementsPage() {
                         <span className="flex items-center gap-1">
                           <Package className="w-4 h-4" />
                           {movement.customer.email}
+                        </span>
+                      )}
+                      {/* Anonymous sample recipient */}
+                      {movement.movement_type === 'sample' && 
+                       !movement.prospect && 
+                       !movement.b2b_client && 
+                       !movement.customer && 
+                       (movement.sample_recipient_name || movement.sample_event_context) && (
+                        <span className="flex items-center gap-1 text-amber-600">
+                          <UserX className="w-4 h-4" />
+                          {movement.sample_recipient_name || movement.sample_event_context}
                         </span>
                       )}
                     </div>

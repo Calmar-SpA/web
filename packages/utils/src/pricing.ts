@@ -13,6 +13,11 @@ export const getIvaFromGross = (gross: number, taxRate = DEFAULT_TAX_RATE) => {
   return Math.max(0, Math.round(normalized - net))
 }
 
+export const getGrossFromNet = (net: number, taxRate = DEFAULT_TAX_RATE) => {
+  const normalized = normalizeAmount(net)
+  return Math.round(normalized * (1 + taxRate))
+}
+
 export const getPriceBreakdown = (gross: number, taxRate = DEFAULT_TAX_RATE) => {
   const normalized = normalizeAmount(gross)
   const net = getNetFromGross(normalized, taxRate)

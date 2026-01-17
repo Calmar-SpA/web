@@ -6,7 +6,7 @@ import { X, Edit3, DollarSign, Calendar, Search } from 'lucide-react'
 import { updateB2BClient } from './actions'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { formatClp, getPriceBreakdown } from '@calmar/utils'
+import { formatClp, getGrossFromNet, getPriceBreakdown } from '@calmar/utils'
 
 interface EditModalProps {
   client: {
@@ -175,6 +175,10 @@ export function EditModal({
                   return product.name.toLowerCase().includes(query) || product.sku.toLowerCase().includes(query)
                 }).map(product => {
                   const { net, iva } = getPriceBreakdown(Number(product.base_price))
+                  const netOverride = Number(priceOverrides[product.id])
+                  const hasOverride = Number.isFinite(netOverride) && netOverride > 0
+                  const grossOverride = hasOverride ? getGrossFromNet(netOverride) : 0
+                  const ivaOverride = hasOverride ? Math.max(0, grossOverride - netOverride) : 0
                   return (
                     <div key={product.id} className="flex flex-col gap-2 rounded-lg bg-white p-3 shadow-sm border border-slate-100">
                       <div className="flex items-start justify-between gap-2">
@@ -194,7 +198,7 @@ export function EditModal({
                       <Input
                         type="number"
                         min="0"
-                        placeholder="Precio B2B (CLP)"
+                        placeholder="Precio B2B Neto (CLP)"
                         value={priceOverrides[product.id] ?? ''}
                         onChange={(e) => handlePriceChange(product.id, e.target.value)}
                         className="h-10"
@@ -208,6 +212,11 @@ export function EditModal({
                         Base
                       </Button>
                     </div>
+                    <p className="text-[11px] text-slate-500">
+                      {hasOverride
+                        ? `Neto: $${formatClp(netOverride)} · IVA (19%): $${formatClp(ivaOverride)} · Total: $${formatClp(grossOverride)}`
+                        : 'Ingresa un neto para ver IVA y total.'}
+                    </p>
                     </div>
                   )
                 })}

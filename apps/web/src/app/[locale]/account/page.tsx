@@ -6,6 +6,7 @@ import { ShoppingBag, Building2 } from 'lucide-react'
 import { Button } from '@calmar/ui'
 import { ApiKeyManager } from '@/components/account/api-key-manager'
 import { getTranslations } from 'next-intl/server'
+import { formatRut } from '@calmar/utils'
 
 export default async function AccountPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
@@ -89,7 +90,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
               </div>
               <div>
                 <label className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">{t("taxId")}</label>
-                <p className="font-bold">{b2bClient.tax_id}</p>
+                <p className="font-bold">{formatRut(b2bClient.tax_id)}</p>
               </div>
               <div>
                 <label className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">{t("b2bPricing")}</label>

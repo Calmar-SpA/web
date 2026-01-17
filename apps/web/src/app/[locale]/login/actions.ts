@@ -27,30 +27,40 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
+  const locale = String(formData.get('locale') || '').trim()
+  const loginPath = locale ? `/${locale}/login` : '/login'
 
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
   }
 
+  const fullNameInput = String(formData.get('full_name') || '').trim()
+  const fullNameParts = fullNameInput.split(/\s+/).filter(Boolean)
+
+  if (fullNameParts.length < 2) {
+    redirect(`${loginPath}?signup_error=full_name`)
+  }
+
   const rutInput = String(formData.get('rut') || '')
   const rut = normalizeRut(rutInput)
 
   if (!rut || !isValidRut(rut)) {
-    redirect('/error')
+    redirect(`${loginPath}?signup_error=rut`)
   }
 
   const { error } = await supabase.auth.signUp({
     ...data,
     options: {
       data: {
-        rut
+        rut,
+        full_name: fullNameInput
       }
     }
   })
 
   if (error) {
-    redirect('/error')
+    redirect(`${loginPath}?signup_error=generic`)
   }
 
   revalidatePath('/', 'layout')

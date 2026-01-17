@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ProductService, CRMService } from '@calmar/database'
 import { createMovement } from '../../actions'
 import { Button, Input } from '@calmar/ui'
-import { ArrowLeft, Plus, X, Save } from 'lucide-react'
+import { ArrowLeft, Plus, X, Save, Users, Building2, UserX, Link2 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
@@ -17,6 +17,30 @@ interface MovementItem {
   unit_price: number
   product_name?: string
   variant_name?: string
+}
+
+interface Prospect {
+  id: string
+  contact_name: string
+  company_name?: string
+  email: string
+  type: 'b2b' | 'b2c'
+  stage?: string
+  converted_to_client_id?: string | null
+  converted_to_type?: 'b2b' | 'b2c' | null
+}
+
+interface B2BClient {
+  id: string
+  company_name: string
+  contact_name: string
+  status: string
+}
+
+// Track linked records for automatic association
+interface LinkedRecords {
+  linkedB2BClientId: string | null
+  linkedProspectId: string | null
 }
 
 export default function NewMovementPage() {
@@ -35,7 +59,20 @@ function NewMovementContent() {
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [products, setProducts] = useState<any[]>([])
+  const [prospects, setProspects] = useState<Prospect[]>([])
+  const [b2bClients, setB2bClients] = useState<B2BClient[]>([])
   const [isLoadingProducts, setIsLoadingProducts] = useState(true)
+  const [isLoadingClients, setIsLoadingClients] = useState(true)
+  
+  // For samples without client association
+  const [isAnonymousSample, setIsAnonymousSample] = useState(false)
+  
+  // Track automatic linking between prospect and B2B client
+  const [linkedRecords, setLinkedRecords] = useState<LinkedRecords>({
+    linkedB2BClientId: null,
+    linkedProspectId: null
+  })
+  
   const [formData, setFormData] = useState({
     movement_type: defaultType as 'sample' | 'consignment' | 'sale_invoice' | 'sale_credit',
     prospect_id: prospectId || '',
@@ -43,7 +80,10 @@ function NewMovementContent() {
     customer_user_id: '',
     due_date: '',
     delivery_date: '',
-    notes: ''
+    notes: '',
+    // New fields for anonymous samples
+    sample_recipient_name: '',
+    sample_event_context: ''
   })
   const [items, setItems] = useState<MovementItem[]>([])
   const [selectedProduct, setSelectedProduct] = useState<string>('')
@@ -53,7 +93,7 @@ function NewMovementContent() {
 
   useEffect(() => {
     loadProducts()
-    loadProspects()
+    loadClientsAndProspects()
   }, [])
 
   const loadProducts = async () => {
@@ -72,20 +112,95 @@ function NewMovementContent() {
     }
   }
 
-  const loadProspects = async () => {
+  const loadClientsAndProspects = async () => {
+    setIsLoadingClients(true)
     const supabase = createClient()
-    const crmService = new CRMService(supabase)
     
     try {
-      // Load prospects if prospect_id is provided
+      // Load all prospects with conversion info
+      const { data: prospectsData } = await supabase
+        .from('prospects')
+        .select('id, contact_name, company_name, email, type, stage, converted_to_client_id, converted_to_type')
+        .order('created_at', { ascending: false })
+      
+      setProspects(prospectsData || [])
+      
+      // Load approved B2B clients
+      const { data: b2bData } = await supabase
+        .from('b2b_clients')
+        .select('id, company_name, contact_name, status')
+        .eq('status', 'approved')
+        .order('company_name', { ascending: true })
+      
+      setB2bClients(b2bData || [])
+      
+      // If prospect_id is provided, set it and check for linked B2B
       if (prospectId) {
-        const prospect = await crmService.getProspectById(prospectId)
+        const prospect = prospectsData?.find((p: Prospect) => p.id === prospectId)
         if (prospect) {
-          setFormData(prev => ({ ...prev, prospect_id: prospectId }))
+          handleProspectSelection(prospectId, prospect, b2bData || [])
         }
       }
     } catch (error) {
-      console.error('Error loading prospect:', error)
+      console.error('Error loading clients:', error)
+      toast.error('Error al cargar prospectos/clientes')
+    } finally {
+      setIsLoadingClients(false)
+    }
+  }
+
+  // Handle prospect selection with automatic B2B linking
+  const handleProspectSelection = (prospectId: string, prospect?: Prospect, clientsList?: B2BClient[]) => {
+    const selectedProspect = prospect || prospects.find(p => p.id === prospectId)
+    const clients = clientsList || b2bClients
+    
+    if (!selectedProspect) {
+      setFormData(prev => ({ ...prev, prospect_id: prospectId, b2b_client_id: '' }))
+      setLinkedRecords({ linkedB2BClientId: null, linkedProspectId: null })
+      return
+    }
+
+    // Check if prospect is converted to B2B
+    if (selectedProspect.converted_to_client_id && selectedProspect.converted_to_type === 'b2b') {
+      const linkedB2B = clients.find(c => c.id === selectedProspect.converted_to_client_id)
+      if (linkedB2B) {
+        setFormData(prev => ({ 
+          ...prev, 
+          prospect_id: prospectId, 
+          b2b_client_id: linkedB2B.id 
+        }))
+        setLinkedRecords({ linkedB2BClientId: linkedB2B.id, linkedProspectId: null })
+        return
+      }
+    }
+
+    setFormData(prev => ({ ...prev, prospect_id: prospectId, b2b_client_id: '' }))
+    setLinkedRecords({ linkedB2BClientId: null, linkedProspectId: null })
+  }
+
+  // Handle B2B client selection with automatic prospect linking
+  const handleB2BClientSelection = (clientId: string) => {
+    if (!clientId) {
+      setFormData(prev => ({ ...prev, b2b_client_id: '', prospect_id: '' }))
+      setLinkedRecords({ linkedB2BClientId: null, linkedProspectId: null })
+      return
+    }
+
+    // Check if there's a prospect linked to this B2B client
+    const linkedProspect = prospects.find(
+      p => p.converted_to_client_id === clientId && p.converted_to_type === 'b2b'
+    )
+
+    if (linkedProspect) {
+      setFormData(prev => ({ 
+        ...prev, 
+        b2b_client_id: clientId, 
+        prospect_id: linkedProspect.id 
+      }))
+      setLinkedRecords({ linkedB2BClientId: null, linkedProspectId: linkedProspect.id })
+    } else {
+      setFormData(prev => ({ ...prev, b2b_client_id: clientId, prospect_id: '' }))
+      setLinkedRecords({ linkedB2BClientId: null, linkedProspectId: null })
     }
   }
 
@@ -101,7 +216,8 @@ function NewMovementContent() {
     if (!product) return
 
     const variant = product.variants?.find((v: any) => v.id === selectedVariant)
-    const unitPrice = itemPrice > 0 ? itemPrice : Number(product.base_price)
+    // Allow $0 price for samples - only use base_price as default when adding product
+    const unitPrice = itemPrice
 
     const newItem: MovementItem = {
       product_id: selectedProduct,
@@ -128,13 +244,32 @@ function NewMovementContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    console.log('handleSubmit called', { formData, items, isAnonymousSample })
+    
     if (items.length === 0) {
+      console.log('Validation failed: no items')
       toast.error('Agrega al menos un producto')
       return
     }
 
+    // For non-sample movements, require client association
     if (formData.movement_type !== 'sample' && !formData.prospect_id && !formData.b2b_client_id && !formData.customer_user_id) {
+      console.log('Validation failed: no client for non-sample')
       toast.error('Selecciona un prospecto, cliente B2B o cliente')
+      return
+    }
+
+    // For samples, if not anonymous, require client OR mark as anonymous
+    if (formData.movement_type === 'sample' && !isAnonymousSample && !formData.prospect_id && !formData.b2b_client_id) {
+      console.log('Validation failed: sample needs client or anonymous flag')
+      toast.error('Selecciona un prospecto/cliente o marca como muestra sin cliente')
+      return
+    }
+
+    // For anonymous samples, require at least recipient name or context
+    if (formData.movement_type === 'sample' && isAnonymousSample && !formData.sample_recipient_name && !formData.sample_event_context) {
+      console.log('Validation failed: anonymous sample needs recipient or context')
+      toast.error('Indica el nombre del receptor o el contexto/evento')
       return
     }
 
@@ -143,8 +278,8 @@ function NewMovementContent() {
     try {
       await createMovement({
         movement_type: formData.movement_type,
-        prospect_id: formData.prospect_id || null,
-        b2b_client_id: formData.b2b_client_id || null,
+        prospect_id: isAnonymousSample ? null : (formData.prospect_id || null),
+        b2b_client_id: isAnonymousSample ? null : (formData.b2b_client_id || null),
         customer_user_id: formData.customer_user_id || null,
         items: items.map(item => ({
           product_id: item.product_id,
@@ -155,7 +290,9 @@ function NewMovementContent() {
         total_amount: totalAmount,
         due_date: formData.due_date || null,
         delivery_date: formData.delivery_date || null,
-        notes: formData.notes || undefined
+        notes: formData.notes || undefined,
+        sample_recipient_name: isAnonymousSample ? (formData.sample_recipient_name || null) : null,
+        sample_event_context: isAnonymousSample ? (formData.sample_event_context || null) : null
       })
       
       toast.success('Movimiento creado exitosamente')
@@ -198,7 +335,13 @@ function NewMovementContent() {
               <button
                 key={type}
                 type="button"
-                onClick={() => setFormData({ ...formData, movement_type: type })}
+                onClick={() => {
+                  setFormData({ ...formData, movement_type: type })
+                  // Reset anonymous sample state when changing movement type
+                  if (type !== 'sample') {
+                    setIsAnonymousSample(false)
+                  }
+                }}
                 className={`p-4 rounded-xl border-2 transition-all text-sm font-black uppercase tracking-wider ${
                   formData.movement_type === type
                     ? 'border-calmar-ocean bg-calmar-ocean/5'
@@ -214,37 +357,180 @@ function NewMovementContent() {
         </div>
 
         {/* Client Selection */}
-        {(formData.movement_type !== 'sample') && (
-          <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
-            <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-4">
-              Cliente / Prospecto
-            </label>
-            <div className="space-y-4">
+        <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
+          <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-4">
+            Cliente / Prospecto
+          </label>
+          
+          {/* Option for anonymous sample (only for sample type) */}
+          {formData.movement_type === 'sample' && (
+            <div className="mb-4">
+              <label className="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-calmar-ocean/50 group"
+                style={{
+                  borderColor: isAnonymousSample ? '#1d504b' : '#e2e8f0',
+                  backgroundColor: isAnonymousSample ? 'rgba(29, 80, 75, 0.05)' : 'transparent'
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isAnonymousSample}
+                  onChange={(e) => {
+                    setIsAnonymousSample(e.target.checked)
+                    if (e.target.checked) {
+                      setFormData(prev => ({ ...prev, prospect_id: '', b2b_client_id: '' }))
+                    } else {
+                      setFormData(prev => ({ ...prev, sample_recipient_name: '', sample_event_context: '' }))
+                    }
+                  }}
+                  className="w-5 h-5 rounded border-2 border-slate-300 text-calmar-ocean focus:ring-calmar-ocean"
+                />
+                <div className="flex items-center gap-2">
+                  <UserX className="w-5 h-5 text-slate-500" />
+                  <div>
+                    <span className="font-bold text-sm text-slate-900">Muestra sin cliente asociado</span>
+                    <p className="text-xs text-slate-500">Para entregas en ferias, eventos, demostraciones, etc.</p>
+                  </div>
+                </div>
+              </label>
+            </div>
+          )}
+
+          {/* Anonymous sample fields */}
+          {formData.movement_type === 'sample' && isAnonymousSample && (
+            <div className="space-y-4 p-4 bg-amber-50 rounded-xl border-2 border-amber-200">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                  Prospecto ID (opcional)
+                  Nombre del receptor (opcional)
                 </label>
                 <Input
-                  value={formData.prospect_id}
-                  onChange={(e) => setFormData({ ...formData, prospect_id: e.target.value })}
-                  placeholder="UUID del prospecto"
+                  value={formData.sample_recipient_name}
+                  onChange={(e) => setFormData({ ...formData, sample_recipient_name: e.target.value })}
+                  placeholder="Ej: Juan Pérez"
                   className="h-10"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                  Cliente B2B ID (opcional)
+                  Contexto / Evento
                 </label>
                 <Input
-                  value={formData.b2b_client_id}
-                  onChange={(e) => setFormData({ ...formData, b2b_client_id: e.target.value })}
-                  placeholder="UUID del cliente B2B"
+                  value={formData.sample_event_context}
+                  onChange={(e) => setFormData({ ...formData, sample_event_context: e.target.value })}
+                  placeholder="Ej: Feria Gastronómica 2026, Evento empresarial..."
                   className="h-10"
                 />
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Client/Prospect selectors (hidden when anonymous sample) */}
+          {!(formData.movement_type === 'sample' && isAnonymousSample) && (
+            <div className="space-y-4">
+              {isLoadingClients ? (
+                <div className="py-4 text-center">
+                  <div className="animate-spin h-6 w-6 border-2 border-calmar-ocean border-t-transparent rounded-full mx-auto"></div>
+                  <p className="text-xs text-slate-500 mt-2">Cargando clientes...</p>
+                </div>
+              ) : (
+                <>
+                  {/* Automatic linking indicator */}
+                  {(linkedRecords.linkedB2BClientId || linkedRecords.linkedProspectId) && (
+                    <div className="flex items-center gap-2 p-3 bg-emerald-50 border-2 border-emerald-200 rounded-xl">
+                      <Link2 className="w-4 h-4 text-emerald-600" />
+                      <span className="text-xs font-bold text-emerald-700">
+                        {linkedRecords.linkedB2BClientId 
+                          ? `Vinculado automáticamente con: ${b2bClients.find(c => c.id === linkedRecords.linkedB2BClientId)?.company_name || 'Cliente B2B'}`
+                          : `Vinculado automáticamente con prospecto: ${prospects.find(p => p.id === linkedRecords.linkedProspectId)?.contact_name || 'Prospecto'}`
+                        }
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Prospect Selector */}
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                      <Users className="w-4 h-4" />
+                      Prospecto
+                    </label>
+                    <select
+                      value={formData.prospect_id}
+                      onChange={(e) => handleProspectSelection(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-2 focus:border-calmar-ocean focus:outline-none text-sm ${
+                        linkedRecords.linkedProspectId 
+                          ? 'border-emerald-300 bg-emerald-50' 
+                          : 'border-slate-200'
+                      }`}
+                    >
+                      <option value="">Seleccionar prospecto...</option>
+                      {prospects.map(prospect => (
+                        <option key={prospect.id} value={prospect.id}>
+                          {prospect.contact_name} {prospect.company_name ? `(${prospect.company_name})` : ''} - {prospect.type.toUpperCase()}
+                          {prospect.converted_to_type === 'b2b' ? ' ✓ B2B' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    {prospects.length === 0 && (
+                      <p className="text-xs text-slate-500 mt-1">No hay prospectos disponibles</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 h-px bg-slate-200"></div>
+                    <span className="text-xs font-bold text-slate-400 uppercase">o</span>
+                    <div className="flex-1 h-px bg-slate-200"></div>
+                  </div>
+
+                  {/* B2B Client Selector */}
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                      <Building2 className="w-4 h-4" />
+                      Cliente B2B
+                    </label>
+                    <select
+                      value={formData.b2b_client_id}
+                      onChange={(e) => handleB2BClientSelection(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-2 focus:border-calmar-ocean focus:outline-none text-sm ${
+                        linkedRecords.linkedB2BClientId 
+                          ? 'border-emerald-300 bg-emerald-50' 
+                          : 'border-slate-200'
+                      }`}
+                    >
+                      <option value="">Seleccionar cliente B2B...</option>
+                      {b2bClients.map(client => {
+                        const hasLinkedProspect = prospects.some(
+                          p => p.converted_to_client_id === client.id && p.converted_to_type === 'b2b'
+                        )
+                        return (
+                          <option key={client.id} value={client.id}>
+                            {client.company_name} ({client.contact_name})
+                            {hasLinkedProspect ? ' ✓ Prospecto' : ''}
+                          </option>
+                        )
+                      })}
+                    </select>
+                    {b2bClients.length === 0 && (
+                      <p className="text-xs text-slate-500 mt-1">No hay clientes B2B aprobados</p>
+                    )}
+                  </div>
+
+                  {/* Clear selection button */}
+                  {(formData.prospect_id || formData.b2b_client_id) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, prospect_id: '', b2b_client_id: '' })
+                        setLinkedRecords({ linkedB2BClientId: null, linkedProspectId: null })
+                      }}
+                      className="text-xs text-red-600 hover:text-red-700 font-bold uppercase tracking-wider"
+                    >
+                      × Limpiar selección
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Products */}
         <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">

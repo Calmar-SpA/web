@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { CRMService } from '@calmar/database'
-import { ArrowLeft, DollarSign, Calendar, Package, AlertCircle, CheckCircle, Plus } from 'lucide-react'
+import { ArrowLeft, DollarSign, Calendar, Package, AlertCircle, CheckCircle, Plus, UserX } from 'lucide-react'
 import { Button, Input } from '@calmar/ui'
 import Link from 'next/link'
 import { updateMovementStatus, registerPayment, returnConsignment, convertConsignmentToSale } from '../../actions'
@@ -185,7 +185,7 @@ export default function MovementDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Client Info */}
           <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
-            <h2 className="text-lg font-black uppercase tracking-tight mb-4">Cliente</h2>
+            <h2 className="text-lg font-black uppercase tracking-tight mb-4">Cliente / Receptor</h2>
             {movement.prospect && (
               <div>
                 <p className="font-bold text-slate-900">{movement.prospect.contact_name}</p>
@@ -206,6 +206,39 @@ export default function MovementDetailPage() {
                 <p className="font-bold text-slate-900">{movement.customer.full_name || movement.customer.email}</p>
                 <p className="text-sm text-slate-600">{movement.customer.email}</p>
               </div>
+            )}
+            {/* Anonymous sample recipient */}
+            {movement.movement_type === 'sample' && 
+             !movement.prospect && 
+             !movement.b2b_client && 
+             !movement.customer && 
+             (movement.sample_recipient_name || movement.sample_event_context) && (
+              <div className="p-4 bg-amber-50 rounded-xl border-2 border-amber-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserX className="w-4 h-4 text-amber-600" />
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-700">
+                    Muestra sin cliente asociado
+                  </span>
+                </div>
+                {movement.sample_recipient_name && (
+                  <p className="font-bold text-slate-900">
+                    Receptor: {movement.sample_recipient_name}
+                  </p>
+                )}
+                {movement.sample_event_context && (
+                  <p className="text-sm text-slate-600 mt-1">
+                    Contexto: {movement.sample_event_context}
+                  </p>
+                )}
+              </div>
+            )}
+            {/* No client assigned */}
+            {!movement.prospect && 
+             !movement.b2b_client && 
+             !movement.customer && 
+             !movement.sample_recipient_name && 
+             !movement.sample_event_context && (
+              <p className="text-sm text-slate-400 italic">Sin cliente asignado</p>
             )}
           </div>
 

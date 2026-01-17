@@ -2,19 +2,21 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { 
-  Package, 
-  ShoppingCart, 
-  LayoutDashboard, 
-  LogOut, 
-  Users, 
+import {
+  Package,
+  ShoppingCart,
+  LayoutDashboard,
+  LogOut,
+  Users,
   Film,
   Building2,
   Menu,
   X,
   UsersRound,
   Mail,
-  Tag
+  Tag,
+  Boxes,
+  Truck
 } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
@@ -27,6 +29,8 @@ export function Sidebar() {
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "text-calmar-mint" },
     { href: "/orders", label: "Pedidos", icon: ShoppingCart, color: "text-calmar-ocean" },
     { href: "/products", label: "Productos", icon: Package, color: "text-calmar-primary" },
+    { href: "/inventory", label: "Inventario", icon: Boxes, color: "text-calmar-primary-light" },
+    { href: "/suppliers", label: "Proveedores", icon: Truck, color: "text-calmar-mint" },
     { href: "/discount-codes", label: "Códigos", icon: Tag, color: "text-calmar-mint" },
     { href: "/crm", label: "CRM", icon: UsersRound, color: "text-calmar-accent" },
     { href: "/media", label: "Media", icon: Film, color: "text-calmar-accent" },
@@ -74,7 +78,7 @@ export function Sidebar() {
           <p className="text-xs font-semibold text-emerald-200/70 tracking-wide mt-2">Admin Panel</p>
         </div>
         
-        <nav className="flex-1 px-4 space-y-2">
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon
             const active = isActive(item.href)

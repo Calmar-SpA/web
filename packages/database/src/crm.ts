@@ -35,6 +35,9 @@ export interface ProductMovementData {
   due_date?: string | null
   delivery_date?: string | null
   notes?: string
+  // Fields for anonymous samples (events, fairs, etc.)
+  sample_recipient_name?: string | null
+  sample_event_context?: string | null
 }
 
 export interface MovementPaymentData {
@@ -229,7 +232,7 @@ export class CRMService {
         *,
         prospect:prospects(id, contact_name, company_name, email),
         b2b_client:b2b_clients(id, company_name, contact_name),
-        customer:users(id, email, full_name)
+        customer:users!customer_user_id(id, email, full_name)
       `)
       .order('created_at', { ascending: false })
 
@@ -274,7 +277,7 @@ export class CRMService {
         *,
         prospect:prospects(*),
         b2b_client:b2b_clients(*),
-        customer:users(*),
+        customer:users!customer_user_id(*),
         payments:movement_payments(*)
       `)
       .eq('id', id)
@@ -398,7 +401,7 @@ export class CRMService {
         *,
         prospect:prospects(*),
         b2b_client:b2b_clients(*),
-        customer:users(*),
+        customer:users!customer_user_id(*),
         payments:movement_payments(*)
       `)
       .in('movement_type', ['sale_credit', 'consignment'])

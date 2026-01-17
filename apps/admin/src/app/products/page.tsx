@@ -17,8 +17,23 @@ export default async function ProductsPage() {
   const productService = new ProductService(supabase)
   
   let products: ProductWithDetails[] = []
+  let stockTotals: Record<string, number> = {}
+  
   try {
     products = await productService.getProducts()
+    
+    // Obtener stock actual desde inventory (refleja entradas - salidas por movimientos)
+    const { data: inventoryData } = await supabase
+      .from('inventory')
+      .select('product_id, quantity')
+    
+    if (inventoryData) {
+      stockTotals = inventoryData.reduce((acc, entry) => {
+        // Sum quantities for products with multiple variants
+        acc[entry.product_id] = (acc[entry.product_id] || 0) + (entry.quantity || 0)
+        return acc
+      }, {} as Record<string, number>)
+    }
   } catch (error) {
     console.error('Error fetching products:', error)
   }
@@ -43,7 +58,7 @@ export default async function ProductsPage() {
           <CardDescription>Total: {products.length} productos registrados</CardDescription>
         </CardHeader>
         <CardContent>
-          <ProductsTable products={products} />
+          <ProductsTable products={products} stockTotals={stockTotals} />
         </CardContent>
       </Card>
     </div>

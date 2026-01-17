@@ -5,10 +5,26 @@ import { Input, RutInput } from '@calmar/ui'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import Image from 'next/image'
 
-export default async function LoginPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function LoginPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ locale: string }>
+  searchParams?: Promise<{ signup_error?: string }>
+}) {
   const { locale } = await params
+  const resolvedSearchParams = await searchParams
   setRequestLocale(locale)
   const t = await getTranslations('Login')
+  const signupError = resolvedSearchParams?.signup_error
+  const signupErrorMessage = (() => {
+    if (signupError === 'full_name') return t('fullNameRequired')
+    if (signupError === 'rut') return t('rutInvalid')
+    if (signupError === 'generic') return t('signupErrorGeneric')
+    return null
+  })()
+  const isFullNameError = signupError === 'full_name'
+  const isRutError = signupError === 'rut'
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--background)] relative overflow-hidden">
@@ -31,19 +47,42 @@ export default async function LoginPage({ params }: { params: Promise<{ locale: 
         </CardHeader>
         <CardContent className="grid gap-4">
           <form className="grid gap-4">
+            <input type="hidden" name="locale" value={locale} />
             <div className="grid gap-2">
               <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('email')}</label>
               <Input id="email" name="email" type="email" placeholder="hola@ejemplo.cl" required />
             </div>
             <div className="grid gap-2">
+              <label htmlFor="full_name" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('fullName')}</label>
+              <Input
+                id="full_name"
+                name="full_name"
+                type="text"
+                placeholder={t('fullNamePlaceholder')}
+                autoComplete="name"
+                aria-invalid={isFullNameError}
+                className={isFullNameError ? "border-red-500 focus-visible:ring-red-500/20" : undefined}
+              />
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t('fullNameHint')}</p>
+            </div>
+            <div className="grid gap-2">
               <label htmlFor="rut" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('rut')}</label>
-              <RutInput id="rut" name="rut" placeholder={t('rutPlaceholder')} />
+              <RutInput
+                id="rut"
+                name="rut"
+                placeholder={t('rutPlaceholder')}
+                aria-invalid={isRutError}
+                className={isRutError ? "border-red-500 focus-visible:ring-red-500/20" : undefined}
+              />
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t('rutHint')}</p>
             </div>
             <div className="grid gap-2">
               <label htmlFor="password" throws-error="true" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('password')}</label>
               <Input id="password" name="password" type="password" required />
             </div>
+            {signupErrorMessage && (
+              <p className="text-xs font-semibold text-red-500">{signupErrorMessage}</p>
+            )}
             <div className="grid grid-cols-2 gap-4 pt-4">
               <Button formAction={login} className="bg-slate-900 text-white font-bold uppercase text-xs tracking-widest">
                 {t('signIn')}

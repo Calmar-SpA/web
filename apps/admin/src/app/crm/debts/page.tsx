@@ -47,7 +47,7 @@ export default function DebtsPage() {
         overdue_count: overdue.length
       })
     } catch (error: any) {
-      console.error('Error loading debts:', error)
+      console.error('Error loading debts:', error?.message || error)
       toast.error('Error al cargar deudas')
     } finally {
       setIsLoading(false)

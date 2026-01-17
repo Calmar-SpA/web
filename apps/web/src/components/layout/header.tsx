@@ -1,10 +1,12 @@
 "use client"
 
 import { Link, usePathname } from "@/navigation"
-import { Button, Sheet, SheetContent, SheetTitle, SheetTrigger } from "@calmar/ui"
+import { Button, Input, RutInput, Sheet, SheetContent, SheetTitle, SheetTrigger } from "@calmar/ui"
 import { useTranslations } from "next-intl"
 import dynamic from 'next/dynamic'
-import { useState } from "react"
+import { useActionState, useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { completeProfile, type CompleteProfileState } from "@/actions/complete-profile"
 
 const LanguageSwitcher = dynamic(() => import("./language-switcher").then(mod => ({ default: mod.LanguageSwitcher })), {
   ssr: false,
@@ -21,7 +23,16 @@ import Image from "next/image"
 export function Header() {
   const pathname = usePathname()
   const t = useTranslations("Navigation")
+  const profileT = useTranslations("ProfileCompletion")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [userName, setUserName] = useState<string | null>(null)
+  const [userRut, setUserRut] = useState<string | null>(null)
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const [profileState, profileAction, isProfilePending] = useActionState<CompleteProfileState, FormData>(
+    completeProfile,
+    { success: false }
+  )
   
   const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
   
@@ -31,9 +42,75 @@ export function Header() {
     { name: capitalize(t("contact")), href: "/contact" },
   ]
 
+  useEffect(() => {
+    let isMounted = true
+    const supabase = createClient()
+
+    const loadUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!isMounted) return
+
+      if (!user?.email) {
+        setUserEmail(null)
+        setUserName(null)
+        setUserRut(null)
+        setIsProfileModalOpen(false)
+        return
+      }
+
+      setUserEmail(user.email)
+
+      const { data: profile } = await supabase
+        .from('users')
+        .select('full_name, rut')
+        .eq('id', user.id)
+        .single()
+
+      if (isMounted) {
+        setUserName(profile?.full_name ?? null)
+        setUserRut(profile?.rut ?? null)
+        const needsProfile = !profile?.full_name || !profile?.rut
+        setIsProfileModalOpen(needsProfile)
+      }
+    }
+
+    loadUser()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!profileState?.success) return
+    setUserName(profileState.full_name ?? null)
+    setUserRut(profileState.rut ?? null)
+    setIsProfileModalOpen(false)
+  }, [profileState])
+
+  const displayName = userName || userEmail || ""
+  const initials = displayName
+    .split(" ")
+    .filter(Boolean)
+    .map(part => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase()
+  const hasUser = Boolean(userEmail)
+
+  const profileErrorMessage = (() => {
+    if (!profileState?.error) return null
+    if (profileState.error === 'full_name') return profileT("errorFullName")
+    if (profileState.error === 'rut') return profileT("errorRut")
+    if (profileState.error === 'rut_exists') return profileT("errorRutExists")
+    if (profileState.error === 'session') return profileT("errorSession")
+    return profileT("errorGeneric")
+  })()
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-primary/10 bg-background/80 backdrop-blur-md">
-      <div className="w-[90%] max-w-7xl mx-auto h-20 flex items-center justify-between">
+    <>
+      <header className="sticky top-0 z-40 w-full border-b border-primary/10 bg-background/80 backdrop-blur-md">
+        <div className="w-[90%] max-w-7xl mx-auto h-20 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image 
@@ -66,11 +143,27 @@ export function Header() {
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
           
-          <Link href="/account" className="hidden sm:block">
-            <Button variant="ghost" className="text-base font-bold hover:text-primary" style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}>
-              {t("account").charAt(0).toUpperCase() + t("account").slice(1).toLowerCase()}
-            </Button>
-          </Link>
+          {hasUser ? (
+            <Link href="/account" className="hidden sm:flex items-center gap-3 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors">
+              <div className="w-8 h-8 rounded-full bg-calmar-primary/10 flex items-center justify-center text-calmar-primary text-xs font-bold">
+                {initials || "U"}
+              </div>
+              <div className="leading-tight">
+                <span className="block text-xs font-bold text-foreground">
+                  {displayName}
+                </span>
+                <span className="block text-[11px] text-foreground/60">
+                  {userEmail}
+                </span>
+              </div>
+            </Link>
+          ) : (
+            <Link href="/account" className="hidden sm:block">
+              <Button variant="ghost" className="text-base font-bold hover:text-primary" style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}>
+                {t("account").charAt(0).toUpperCase() + t("account").slice(1).toLowerCase()}
+              </Button>
+            </Link>
+          )}
           <CartDrawer />
           
           {/* Mobile Menu */}
@@ -115,19 +208,92 @@ export function Header() {
               </nav>
               <div className="px-6 pb-6">
                 <div className="h-px w-full bg-slate-100 mb-4" />
-                <Link
-                  href="/account"
-                  className="text-base font-bold text-foreground/80 hover:text-primary transition-colors"
-                  style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {t("account").charAt(0).toUpperCase() + t("account").slice(1).toLowerCase()}
-                </Link>
+                {hasUser ? (
+                  <Link
+                    href="/account"
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:border-slate-300 transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <div className="w-9 h-9 rounded-full bg-calmar-primary/10 flex items-center justify-center text-calmar-primary text-xs font-bold">
+                      {initials || "U"}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="block text-sm font-bold text-foreground truncate">
+                        {displayName}
+                      </span>
+                      <span className="block text-xs text-foreground/60 truncate">
+                        {userEmail}
+                      </span>
+                    </div>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/account"
+                    className="text-base font-bold text-foreground/80 hover:text-primary transition-colors"
+                    style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {t("account").charAt(0).toUpperCase() + t("account").slice(1).toLowerCase()}
+                  </Link>
+                )}
               </div>
             </SheetContent>
           </Sheet>
         </div>
-      </div>
-    </header>
+        </div>
+      </header>
+
+      {isProfileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 p-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="space-y-2">
+              <h2 className="text-xl font-black text-slate-900">{profileT("title")}</h2>
+              <p className="text-sm text-slate-500">{profileT("description")}</p>
+            </div>
+            <form action={profileAction} className="mt-6 grid gap-4">
+              <div className="grid gap-2">
+                <label htmlFor="profile-full-name" className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  {profileT("fullName")}
+                </label>
+                <Input
+                  id="profile-full-name"
+                  name="full_name"
+                  type="text"
+                  autoComplete="name"
+                  placeholder={profileT("fullNamePlaceholder")}
+                  defaultValue={userName ?? ""}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="profile-rut" className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  {profileT("rut")}
+                </label>
+                <RutInput
+                  id="profile-rut"
+                  name="rut"
+                  placeholder={profileT("rutPlaceholder")}
+                  defaultValue={userRut ?? ""}
+                  required
+                />
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                  {profileT("rutHelp")}
+                </p>
+              </div>
+              {profileErrorMessage && (
+                <p className="text-xs font-semibold text-red-500">{profileErrorMessage}</p>
+              )}
+              <Button
+                type="submit"
+                disabled={isProfilePending}
+                className="w-full bg-slate-900 text-white font-bold uppercase text-xs tracking-widest"
+              >
+                {isProfilePending ? profileT("saving") : profileT("save")}
+              </Button>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

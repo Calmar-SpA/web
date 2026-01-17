@@ -201,7 +201,8 @@ calmar-ecommerce/
 - **Códigos de descuento** con reglas de uso y validación
 - **Integración con Flow** para pagos nacionales chilenos
 - **Cálculo de envío Blue Express**
-- **Gestión de inventario** con reservas automáticas
+- **Gestión de inventario** con reservas automáticas y descuentos por pagos
+- **Registro de ingresos de stock** con costo neto, IVA, factura, fechas y estado de pago
 - **Sistema de categorías** jerárquico
 
 ### 👤 Gestión de Usuarios
@@ -217,7 +218,7 @@ calmar-ecommerce/
 ### 🏢 Programa B2B (Business to Business)
 
 - **Postulación de empresas** al programa B2B
-- **Precios fijos por producto** para clientes B2B
+- **Precios netos por producto** para clientes B2B con desglose de IVA y total
 - **Crédito directo** con límites configurables
 - **Generación de API Keys** para integraciones
 - **Términos de pago** configurables (30 días, etc.)
@@ -456,8 +457,12 @@ npm run supabase:migrate # Reset y aplicar migraciones
 | `discount_code_users`    | Restricciones por usuario                 |
 | `discount_code_usages`   | Registro de usos de códigos               |
 | `b2b_clients`            | Clientes empresariales                    |
-| `b2b_product_prices`     | Precios fijos por producto (B2B)          |
+| `b2b_product_prices`     | Precios netos por producto (B2B)          |
 | `b2b_api_keys`           | API Keys para integraciones B2B           |
+| `suppliers`              | Proveedores para ingresos de stock        |
+| `stock_entries`          | Entradas de stock con trazabilidad y facturación (fechas incluidas) |
+| `stock_entry_history`    | Historial de cambios de inventario por ingreso        |
+| `supplier_items`         | Productos/servicios por proveedor con costo neto      |
 | `contact_messages`       | Mensajes del formulario de contacto       |
 | `newsletter_subscribers` | Suscriptores al boletín                   |
 
