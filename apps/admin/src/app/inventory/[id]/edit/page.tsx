@@ -147,7 +147,7 @@ export default async function EditInventoryEntryPage({ params }: { params: Promi
           <CardTitle>Historial de cambios</CardTitle>
         </CardHeader>
         <CardContent>
-          {history.length === 0 ? (
+          {(history ?? []).length === 0 ? (
             <p className="text-sm text-slate-500">Aún no hay cambios registrados.</p>
           ) : (
             <div className="overflow-x-auto">
@@ -164,7 +164,7 @@ export default async function EditInventoryEntryPage({ params }: { params: Promi
                   </tr>
                 </thead>
                 <tbody>
-                  {history.map((item: any) => (
+                  {(history ?? []).map((item: any) => (
                     <tr key={item.id} className="border-b border-slate-100">
                       <td className="py-3 pr-4 text-xs text-slate-500">
                         {formatDateTime(item.changed_at)}
