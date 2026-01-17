@@ -26,7 +26,6 @@ export async function createSupplier(formData: FormData) {
   if (error) throw error
 
   revalidatePath('/suppliers')
-  return { success: true }
 }
 
 export async function toggleSupplierStatus(supplierId: string, currentIsActive: boolean) {
@@ -40,7 +39,6 @@ export async function toggleSupplierStatus(supplierId: string, currentIsActive: 
   if (error) throw error
 
   revalidatePath('/suppliers')
-  return { success: true }
 }
 
 export async function updateSupplier(supplierId: string, formData: FormData) {
