@@ -15,7 +15,7 @@ export default async function AddInventoryEntryPage() {
     supabase.from('suppliers').select('id, name, is_active').eq('is_active', true).order('name', { ascending: true })
   ])
 
-  const productMap = new Map(products.map((product: any) => [product.id, product.name]))
+  const productMap = new Map((products ?? []).map((product: any) => [product.id, product.name]))
 
   return (
     <div className="p-6 md:p-8 space-y-8">
@@ -44,7 +44,7 @@ export default async function AddInventoryEntryPage() {
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm"
               >
                 <option value="">Selecciona un producto</option>
-                {products.map((product: any) => (
+                {(products ?? []).map((product: any) => (
                   <option key={product.id} value={product.id}>
                     {product.name} {product.sku ? `(${product.sku})` : ''}
                   </option>
@@ -59,7 +59,7 @@ export default async function AddInventoryEntryPage() {
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm"
               >
                 <option value="">Sin variante</option>
-                {variants.map((variant: any) => (
+                {(variants ?? []).map((variant: any) => (
                   <option key={variant.id} value={variant.id}>
                     {productMap.get(variant.product_id) || 'Producto'} · {variant.name || variant.sku}
                   </option>
@@ -81,13 +81,13 @@ export default async function AddInventoryEntryPage() {
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm"
               >
                 <option value="">Selecciona un proveedor</option>
-                {suppliers.map((supplier: any) => (
+                {(suppliers ?? []).map((supplier: any) => (
                   <option key={supplier.id} value={supplier.id}>
                     {supplier.name}
                   </option>
                 ))}
               </select>
-              {suppliers.length === 0 && (
+              {(suppliers ?? []).length === 0 && (
                 <p className="text-xs text-slate-500">
                   No hay proveedores activos. Crea uno en la sección Proveedores.
                 </p>
