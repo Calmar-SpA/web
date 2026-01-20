@@ -357,7 +357,7 @@ function NewMovementContent() {
                       value={formData.prospect_id}
                       onChange={(e) => handleProspectSelection(e.target.value)}
                       className={`w-full px-3 py-2 rounded-lg border-2 focus:border-calmar-ocean focus:outline-none text-sm ${
-                        linkedRecords.linkedProspectId 
+                        formData.prospect_id 
                           ? 'border-emerald-300 bg-emerald-50' 
                           : 'border-slate-200'
                       }`}
