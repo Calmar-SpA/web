@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { createSupplierItem, updateSupplier, duplicateSupplierItem, deleteSupplierItem } from '../actions'
 import { SuccessToast } from './success-toast'
+import { SupplierForm } from '../supplier-form'
 
 const formatDate = (value?: string | null) => {
   if (!value) return '-'
@@ -46,39 +47,29 @@ export default async function SupplierDetailPage({ params }: { params: Promise<{
           <CardTitle>Editar proveedor</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={updateSupplier.bind(null, supplier.id)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nombre *</label>
-              <Input name="name" defaultValue={supplier.name} required />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Contacto</label>
-              <Input name="contact_name" defaultValue={supplier.contact_name || ''} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>
-              <Input name="contact_email" type="email" defaultValue={supplier.contact_email || ''} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Teléfono</label>
-              <Input name="contact_phone" defaultValue={supplier.contact_phone || ''} />
-            </div>
-            <div className="md:col-span-2 space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Notas</label>
-              <textarea
-                name="notes"
-                defaultValue={supplier.notes || ''}
-                className="w-full min-h-[120px] p-4 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-calmar-ocean/20 transition-all text-sm"
-                placeholder="Observaciones del proveedor..."
+          <details className="group">
+            <summary className="cursor-pointer list-none">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-500">
+                  Mostrar edición
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-open:hidden">
+                  Editar
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hidden group-open:inline">
+                  Ocultar
+                </span>
+              </div>
+            </summary>
+            <div className="pt-6">
+              <SupplierForm
+                action={updateSupplier.bind(null, supplier.id)}
+                submitLabel="Guardar cambios"
+                defaultValues={supplier}
+                footerNote={`Creado: ${formatDate(supplier.created_at)}`}
               />
             </div>
-            <div className="md:col-span-2 flex items-center justify-between">
-              <p className="text-xs text-slate-500">Creado: {formatDate(supplier.created_at)}</p>
-              <Button className="bg-[#1d504b] hover:bg-[#153f3b] text-white font-black uppercase text-xs tracking-widest px-6 shadow-lg">
-                Guardar cambios
-              </Button>
-            </div>
-          </form>
+          </details>
         </CardContent>
       </Card>
 

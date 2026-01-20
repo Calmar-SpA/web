@@ -34,12 +34,12 @@ interface CheckoutFormProps {
     comuna?: string | null
     region?: string | null
   } | null
-  b2bClient: any
+  b2bProspect: any
   b2bPriceMap?: Record<string, number>
   initialNewsletterDiscount?: number | null
 }
 
-export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initialNewsletterDiscount }: CheckoutFormProps) {
+export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, initialNewsletterDiscount }: CheckoutFormProps) {
   const t = useTranslations("Checkout")
   const { items, updateQuantity, removeItem } = useCart()
   const [isMounted, setIsMounted] = useState(false)
@@ -74,7 +74,7 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
   const [isLoggingIn, setIsLoggingIn] = useState(false)
   const [loginError, setLoginError] = useState("")
 
-  const isB2BActive = Boolean(b2bClient?.is_active)
+  const isB2BActive = Boolean(b2bProspect?.is_b2b_active)
   const isShippingExempt = Boolean(userProfile?.shipping_fee_exempt)
   const getUnitPrice = (item: any) => {
     if (isB2BActive) {
@@ -595,14 +595,14 @@ export function CheckoutForm({ user, userProfile, b2bClient, b2bPriceMap, initia
                 <div className={`w-4 h-4 rounded-full border-4 ${paymentMethod === 'flow' ? 'border-calmar-ocean' : 'border-slate-300'}`} />
               </label>
 
-              {b2bClient?.is_active && (
+              {b2bProspect?.is_b2b_active && (
                 <label className={`relative flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'credit' ? 'border-calmar-ocean bg-calmar-ocean/5 ring-1 ring-calmar-ocean' : 'border-slate-200'}`}>
                   <input type="radio" name="payment" value="credit" checked={paymentMethod === 'credit'} onChange={() => setPaymentMethod('credit')} className="hidden" />
                   <div className="flex-1">
                     <p className="font-bold flex items-center gap-2">
                       {t("payment.credit")} <Building2 className="h-3 w-3" />
                     </p>
-                    <p className="text-xs text-slate-500">{t("payment.creditAvailable", { amount: Number(b2bClient.credit_limit).toLocaleString('es-CL') })}</p>
+                    <p className="text-xs text-slate-500">{t("payment.creditAvailable", { amount: Number(b2bProspect.credit_limit).toLocaleString('es-CL') })}</p>
                   </div>
                   <div className={`w-4 h-4 rounded-full border-4 ${paymentMethod === 'credit' ? 'border-calmar-ocean' : 'border-slate-300'}`} />
                 </label>

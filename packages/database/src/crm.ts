@@ -3,12 +3,24 @@ import { SupabaseClient } from '@supabase/supabase-js'
 export interface ProspectData {
   type: 'b2b' | 'b2c'
   stage?: 'contact' | 'interested' | 'sample_sent' | 'negotiation' | 'converted' | 'lost'
+  user_id?: string | null
   company_name?: string
   contact_name: string
+  contact_role?: string
   email: string
   phone?: string
   tax_id?: string
+  address?: string
+  city?: string
+  comuna?: string
+  business_activity?: string
+  requesting_rut?: string
+  shipping_address?: string
   notes?: string
+  credit_limit?: number
+  payment_terms_days?: number
+  is_b2b_active?: boolean
+  b2b_approved_at?: string | null
 }
 
 export interface ProspectInteractionData {
@@ -16,6 +28,11 @@ export interface ProspectInteractionData {
   interaction_type: 'call' | 'email' | 'meeting' | 'note' | 'sample_sent' | 'quote_sent' | 'other'
   subject?: string
   notes: string
+}
+
+export interface ProspectProductPriceInput {
+  product_id: string
+  fixed_price: number
 }
 
 export interface ProductMovementItem {
@@ -28,7 +45,6 @@ export interface ProductMovementItem {
 export interface ProductMovementData {
   movement_type: 'sample' | 'consignment' | 'sale_invoice' | 'sale_credit'
   prospect_id?: string | null
-  b2b_client_id?: string | null
   customer_user_id?: string | null
   items: ProductMovementItem[]
   total_amount: number
@@ -50,6 +66,20 @@ export interface MovementPaymentData {
 
 export class CRMService {
   constructor(private supabase: SupabaseClient) {}
+
+  /**
+   * Get prospect linked to a user account
+   */
+  async getProspectByUserId(userId: string) {
+    const { data, error } = await this.supabase
+      .from('prospects')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (error) throw error
+    return data
+  }
 
   /**
    * Get all prospects with optional filters
@@ -92,6 +122,20 @@ export class CRMService {
       .select('*')
       .eq('id', id)
       .single()
+
+    if (error) throw error
+    return data
+  }
+
+  /**
+   * Get a single prospect by user ID
+   */
+  async getProspectByUserId(userId: string) {
+    const { data, error } = await this.supabase
+      .from('prospects')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
 
     if (error) throw error
     return data
@@ -142,6 +186,83 @@ export class CRMService {
 
     if (error) throw error
     return data
+  }
+
+  /**
+   * Approve prospect as B2B client
+   */
+  async approveProspectAsB2B(
+    id: string,
+    data: { credit_limit: number; payment_terms_days?: number }
+  ) {
+    const { data: prospect, error } = await this.supabase
+      .from('prospects')
+      .update({
+        is_b2b_active: true,
+        b2b_approved_at: new Date().toISOString(),
+        credit_limit: data.credit_limit,
+        payment_terms_days: data.payment_terms_days || 30,
+        stage: 'converted',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return prospect
+  }
+
+  /**
+   * Get fixed prices for a prospect
+   */
+  async getProspectProductPrices(prospectId: string) {
+    const { data, error } = await this.supabase
+      .from('prospect_product_prices')
+      .select('product_id, fixed_price')
+      .eq('prospect_id', prospectId)
+
+    if (error) throw error
+    return data || []
+  }
+
+  /**
+   * Sync fixed prices for a prospect
+   */
+  async syncProspectProductPrices(prospectId: string, prices: ProspectProductPriceInput[]) {
+    const normalized = (prices || [])
+      .map(price => ({
+        prospect_id: prospectId,
+        product_id: price.product_id,
+        fixed_price: Number(price.fixed_price)
+      }))
+      .filter(price => price.product_id && Number.isFinite(price.fixed_price) && price.fixed_price >= 0)
+
+    if (normalized.length === 0) {
+      const { error } = await this.supabase
+        .from('prospect_product_prices')
+        .delete()
+        .eq('prospect_id', prospectId)
+
+      if (error) throw error
+      return
+    }
+
+    const productIds = normalized.map(price => `"${price.product_id}"`).join(',')
+
+    const { error: deleteError } = await this.supabase
+      .from('prospect_product_prices')
+      .delete()
+      .eq('prospect_id', prospectId)
+      .not('product_id', 'in', `(${productIds})`)
+
+    if (deleteError) throw deleteError
+
+    const { error: upsertError } = await this.supabase
+      .from('prospect_product_prices')
+      .upsert(normalized, { onConflict: 'prospect_id,product_id' })
+
+    if (upsertError) throw upsertError
   }
 
   /**
@@ -222,7 +343,6 @@ export class CRMService {
     movement_type?: string
     status?: string
     prospect_id?: string
-    b2b_client_id?: string
     customer_user_id?: string
     overdue_only?: boolean
   }) {
@@ -231,7 +351,6 @@ export class CRMService {
       .select(`
         *,
         prospect:prospects(id, contact_name, company_name, email),
-        b2b_client:b2b_clients(id, company_name, contact_name),
         customer:users!customer_user_id(id, email, full_name)
       `)
       .order('created_at', { ascending: false })
@@ -246,10 +365,6 @@ export class CRMService {
 
     if (filters?.prospect_id) {
       query = query.eq('prospect_id', filters.prospect_id)
-    }
-
-    if (filters?.b2b_client_id) {
-      query = query.eq('b2b_client_id', filters.b2b_client_id)
     }
 
     if (filters?.customer_user_id) {
@@ -276,7 +391,6 @@ export class CRMService {
       .select(`
         *,
         prospect:prospects(*),
-        b2b_client:b2b_clients(*),
         customer:users!customer_user_id(*),
         payments:movement_payments(*)
       `)
@@ -392,7 +506,6 @@ export class CRMService {
    * Get debts (movements with pending payments)
    */
   async getDebts(filters?: {
-    b2b_client_id?: string
     overdue_only?: boolean
   }) {
     let query = this.supabase
@@ -400,16 +513,11 @@ export class CRMService {
       .select(`
         *,
         prospect:prospects(*),
-        b2b_client:b2b_clients(*),
         customer:users!customer_user_id(*),
         payments:movement_payments(*)
       `)
       .in('movement_type', ['sale_credit', 'consignment'])
       .in('status', ['delivered', 'sold', 'partial_paid', 'overdue'])
-
-    if (filters?.b2b_client_id) {
-      query = query.eq('b2b_client_id', filters.b2b_client_id)
-    }
 
     if (filters?.overdue_only) {
       query = query
@@ -521,5 +629,85 @@ export class CRMService {
     })
 
     return stats
+  }
+
+  /**
+   * Approve prospect as B2B client
+   */
+  async approveProspectAsB2B(
+    prospectId: string,
+    data: { creditLimit: number; paymentTermsDays?: number }
+  ) {
+    const { data: prospect, error } = await this.supabase
+      .from('prospects')
+      .update({
+        is_b2b_active: true,
+        credit_limit: data.creditLimit,
+        payment_terms_days: data.paymentTermsDays || 30,
+        b2b_approved_at: new Date().toISOString(),
+        stage: 'converted',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', prospectId)
+      .select('*')
+      .single()
+
+    if (error) throw error
+    return prospect
+  }
+
+  /**
+   * Get fixed prices for a prospect
+   */
+  async getProspectProductPrices(prospectId: string) {
+    const { data, error } = await this.supabase
+      .from('prospect_product_prices')
+      .select('product_id, fixed_price')
+      .eq('prospect_id', prospectId)
+
+    if (error) throw error
+    return data || []
+  }
+
+  /**
+   * Sync fixed prices for a prospect
+   */
+  async syncProspectProductPrices(
+    prospectId: string,
+    fixedPrices: Array<{ productId: string; fixedPrice: number }>
+  ) {
+    const normalized = fixedPrices
+      .map(price => ({
+        prospect_id: prospectId,
+        product_id: price.productId,
+        fixed_price: Number(price.fixedPrice)
+      }))
+      .filter(price => price.product_id && Number.isFinite(price.fixed_price) && price.fixed_price > 0)
+
+    if (normalized.length === 0) {
+      const { error } = await this.supabase
+        .from('prospect_product_prices')
+        .delete()
+        .eq('prospect_id', prospectId)
+
+      if (error) throw error
+      return
+    }
+
+    const productIds = normalized.map(price => `"${price.product_id}"`).join(',')
+
+    const { error: deleteError } = await this.supabase
+      .from('prospect_product_prices')
+      .delete()
+      .eq('prospect_id', prospectId)
+      .not('product_id', 'in', `(${productIds})`)
+
+    if (deleteError) throw deleteError
+
+    const { error: upsertError } = await this.supabase
+      .from('prospect_product_prices')
+      .upsert(normalized, { onConflict: 'prospect_id,product_id' })
+
+    if (upsertError) throw upsertError
   }
 }

@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { CRMService } from '@calmar/database'
-import { Search, Plus, Building2, User, Mail, Phone } from 'lucide-react'
+import { Search, Plus, Building2, User, Mail, Phone, LayoutGrid, List, Trash2 } from 'lucide-react'
 import { Input } from '@calmar/ui'
 import Link from 'next/link'
-import { updateProspectStage } from '../actions'
+import { updateProspectStage, deleteProspect } from '../actions'
 import { toast } from 'sonner'
 
 const STAGES = [
@@ -23,6 +23,7 @@ export default function ProspectsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'b2b' | 'b2c'>('all')
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
   const [draggedProspect, setDraggedProspect] = useState<string | null>(null)
   const [ordersByProspect, setOrdersByProspect] = useState<Record<string, { count: number; lastDate?: string; total: number }>>({})
 
@@ -113,6 +114,21 @@ export default function ProspectsPage() {
     }
   }
 
+  const handleDelete = async (prospectId: string, name: string) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar al prospecto "${name}"? Esta acción no se puede deshacer.`)) {
+      return
+    }
+
+    try {
+      await deleteProspect(prospectId)
+      await loadProspects()
+      toast.success('Prospecto eliminado correctamente')
+    } catch (error: any) {
+      console.error('Error deleting prospect:', error)
+      toast.error('Error al eliminar el prospecto. Es posible que tenga pedidos o actividad asociada.')
+    }
+  }
+
   const filteredProspects = prospects.filter(p => {
     if (searchTerm) {
       const search = searchTerm.toLowerCase()
@@ -186,33 +202,60 @@ export default function ProspectsPage() {
             </button>
           ))}
         </div>
+
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-xl">
+          <button
+            onClick={() => setViewMode('kanban')}
+            className={`p-2 rounded-lg transition-all ${
+              viewMode === 'kanban'
+                ? 'bg-white text-calmar-ocean shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+            title="Vista Kanban"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-2 rounded-lg transition-all ${
+              viewMode === 'list'
+                ? 'bg-white text-calmar-ocean shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+            title="Vista de Lista"
+          >
+            <List className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Kanban Board */}
+      {/* Kanban Board / List View */}
       {isLoading ? (
         <div className="py-20 text-center">
           <div className="animate-spin h-8 w-8 border-4 border-calmar-ocean border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Cargando Prospectos...</p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 overflow-x-auto pb-4">
+      ) : viewMode === 'kanban' ? (
+        <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-6 min-h-[600px] -mx-4 px-4 md:mx-0 md:px-0">
           {prospectsByStage.map((stage) => (
             <div
               key={stage.id}
-              className="flex flex-col min-w-[280px]"
+              className="flex flex-col min-w-[320px] max-w-[320px] flex-shrink-0"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, stage.id)}
             >
-              <div className={`${stage.color} p-4 rounded-t-xl border-2 border-slate-200`}>
-                <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
-                  {stage.label}
-                </h3>
-                <p className="text-xs text-slate-600 mt-1 font-bold">
-                  {stage.prospects.length} prospectos
-                </p>
+              <div className={`${stage.color} p-4 rounded-t-2xl border-2 border-slate-200 shadow-sm`}>
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
+                    {stage.label}
+                  </h3>
+                  <span className="bg-white/50 px-2 py-0.5 rounded-full text-[10px] font-black text-slate-600">
+                    {stage.prospects.length}
+                  </span>
+                </div>
               </div>
               
-              <div className="flex-1 bg-slate-50 border-2 border-t-0 border-slate-200 rounded-b-xl p-3 space-y-3 min-h-[400px]">
+              <div className="flex-1 bg-slate-50/50 border-2 border-t-0 border-slate-200 rounded-b-2xl p-3 space-y-4 min-h-[500px]">
                 {stage.prospects.map((prospect) => (
                   <ProspectCard
                     key={prospect.id}
@@ -220,16 +263,110 @@ export default function ProspectsPage() {
                     onDragStart={handleDragStart}
                     isDragging={draggedProspect === prospect.id}
                     orderSummary={ordersByProspect[prospect.id]}
+                    onDelete={() => handleDelete(prospect.id, prospect.contact_name)}
                   />
                 ))}
                 {stage.prospects.length === 0 && (
-                  <div className="text-center py-8 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                  <div className="text-center py-12 text-slate-300 text-[10px] font-black uppercase tracking-[0.2em] border-2 border-dashed border-slate-200 rounded-xl">
                     Sin prospectos
                   </div>
                 )}
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Prospecto</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Etapa</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Contacto</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Última Actividad</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredProspects.map((prospect) => (
+                  <tr key={prospect.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <Link href={`/crm/prospects/${prospect.id}`} className="block">
+                        <div className="font-black text-sm text-slate-900 group-hover:text-calmar-ocean transition-colors">
+                          {prospect.contact_name}
+                        </div>
+                        {prospect.company_name && (
+                          <div className="text-xs text-slate-500 font-bold flex items-center gap-1 mt-0.5">
+                            <Building2 className="w-3 h-3" />
+                            {prospect.company_name}
+                          </div>
+                        )}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        STAGES.find(s => s.id === prospect.stage)?.color || 'bg-slate-100'
+                      } border border-black/5`}>
+                        {STAGES.find(s => s.id === prospect.stage)?.label || prospect.stage}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs text-slate-600">
+                          <Mail className="w-3 h-3 text-slate-400" />
+                          {prospect.email}
+                        </div>
+                        {prospect.phone && (
+                          <div className="flex items-center gap-2 text-xs text-slate-600">
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            {prospect.phone}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${
+                        prospect.type === 'b2b' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
+                      }`}>
+                        {prospect.type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-xs text-slate-500 font-bold">
+                        {ordersByProspect[prospect.id]?.lastDate 
+                          ? new Date(ordersByProspect[prospect.id].lastDate!).toLocaleDateString('es-CL')
+                          : 'Sin actividad'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-3">
+                        <Link 
+                          href={`/crm/prospects/${prospect.id}`}
+                          className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-calmar-ocean transition-colors"
+                        >
+                          Ver Detalle
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(prospect.id, prospect.contact_name)}
+                          className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                          title="Eliminar Prospecto"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {filteredProspects.length === 0 && (
+            <div className="text-center py-20">
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No se encontraron prospectos</p>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -240,75 +377,91 @@ function ProspectCard({
   prospect, 
   onDragStart, 
   isDragging,
-  orderSummary
+  orderSummary,
+  onDelete
 }: { 
   prospect: any
   onDragStart: (e: React.DragEvent, id: string) => void
   isDragging: boolean
   orderSummary?: { count: number; lastDate?: string; total: number }
+  onDelete: () => void
 }) {
   return (
-    <Link href={`/crm/prospects/${prospect.id}`}>
-      <div
-        draggable
-        onDragStart={(e) => onDragStart(e, prospect.id)}
-        className={`
-          bg-white p-4 rounded-xl border-2 border-slate-200 
-          hover:border-calmar-ocean transition-all cursor-move
-          shadow-sm hover:shadow-md
-          ${isDragging ? 'opacity-50' : ''}
-        `}
-      >
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <h4 className="font-black text-sm text-slate-900 mb-1">
-              {prospect.contact_name}
-            </h4>
-            {prospect.company_name && (
-              <div className="flex items-center gap-1 text-xs text-slate-600 mb-1">
-                <Building2 className="w-3 h-3" />
-                <span className="font-bold">{prospect.company_name}</span>
+    <div className="relative group/card">
+      <Link href={`/crm/prospects/${prospect.id}`}>
+        <div
+          draggable
+          onDragStart={(e) => onDragStart(e, prospect.id)}
+          className={`
+            bg-white p-4 rounded-xl border-2 border-slate-200 
+            hover:border-calmar-ocean transition-all cursor-move
+            shadow-sm hover:shadow-md
+            ${isDragging ? 'opacity-50' : ''}
+          `}
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1">
+              <h4 className="font-black text-sm text-slate-900 mb-1">
+                {prospect.contact_name}
+              </h4>
+              {prospect.company_name && (
+                <div className="flex items-center gap-1 text-xs text-slate-600 mb-1">
+                  <Building2 className="w-3 h-3" />
+                  <span className="font-bold">{prospect.company_name}</span>
+                </div>
+              )}
+            </div>
+            <div className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${
+              prospect.type === 'b2b' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+            }`}>
+              {prospect.type}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-xs text-slate-600">
+              <Mail className="w-3 h-3" />
+              <span className="truncate">{prospect.email}</span>
+            </div>
+            {prospect.tax_id && (
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                <span className="font-black uppercase tracking-wider text-[10px] text-slate-500">RUT</span>
+                <span>{prospect.tax_id}</span>
+              </div>
+            )}
+            {prospect.phone && (
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                <Phone className="w-3 h-3" />
+                <span>{prospect.phone}</span>
               </div>
             )}
           </div>
-          <div className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${
-            prospect.type === 'b2b' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-          }`}>
-            {prospect.type}
-          </div>
-        </div>
 
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-xs text-slate-600">
-            <Mail className="w-3 h-3" />
-            <span className="truncate">{prospect.email}</span>
-          </div>
-          {prospect.tax_id && (
-            <div className="flex items-center gap-2 text-xs text-slate-600">
-              <span className="font-black uppercase tracking-wider text-[10px] text-slate-500">RUT</span>
-              <span>{prospect.tax_id}</span>
-            </div>
-          )}
-          {prospect.phone && (
-            <div className="flex items-center gap-2 text-xs text-slate-600">
-              <Phone className="w-3 h-3" />
-              <span>{prospect.phone}</span>
-            </div>
+          {(orderSummary?.count || prospect.notes) && (
+            <p className="text-xs text-slate-500 mt-3 line-clamp-2 pr-8">
+              {orderSummary?.count
+                ? `Compras web: ${orderSummary.count} • Total: $${orderSummary.total.toLocaleString('es-CL')}${
+                    orderSummary.lastDate
+                      ? ` • Última: ${new Date(orderSummary.lastDate).toLocaleDateString('es-CL')}`
+                      : ''
+                  }`
+                : prospect.notes}
+            </p>
           )}
         </div>
-
-        {(orderSummary?.count || prospect.notes) && (
-          <p className="text-xs text-slate-500 mt-3 line-clamp-2">
-            {orderSummary?.count
-              ? `Compras web: ${orderSummary.count} • Total: $${orderSummary.total.toLocaleString('es-CL')}${
-                  orderSummary.lastDate
-                    ? ` • Última: ${new Date(orderSummary.lastDate).toLocaleDateString('es-CL')}`
-                    : ''
-                }`
-              : prospect.notes}
-          </p>
-        )}
-      </div>
-    </Link>
+      </Link>
+      
+      <button
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          onDelete()
+        }}
+        className="absolute bottom-3 right-3 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all z-10"
+        title="Eliminar Prospecto"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </div>
   )
 }

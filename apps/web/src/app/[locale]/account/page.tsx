@@ -4,7 +4,6 @@ import { LoyaltyCard } from '@/components/account/loyalty-card'
 import { Link } from '@/navigation'
 import { ShoppingBag, Building2 } from 'lucide-react'
 import { Button } from '@calmar/ui'
-import { ApiKeyManager } from '@/components/account/api-key-manager'
 import { getTranslations } from 'next-intl/server'
 import { formatRut } from '@calmar/utils'
 
@@ -20,8 +19,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
   }
 
   let profile = null
-  let b2bClient = null
-  let apiKeys: any[] = []
+  let b2bProspect = null
 
   try {
     // Fetch points from our users table
@@ -37,21 +35,17 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
       console.error('Error fetching user profile:', profileError)
     }
 
-    try {
-      const { B2BService } = await import('@calmar/database')
-      const b2bService = new B2BService(supabase)
-      b2bClient = await b2bService.getClientByUserId(user.id)
-      
-      if (b2bClient?.is_active) {
-        try {
-          apiKeys = await b2bService.getApiKeys(b2bClient.id)
-        } catch (apiKeyError) {
-          console.error('Error fetching API keys:', apiKeyError)
-          apiKeys = [] // Ensure apiKeys is an empty array on error
-        }
-      }
-    } catch (b2bError) {
-      console.error('Error fetching B2B data:', b2bError)
+    const { data: prospectData, error: prospectError } = await supabase
+      .from('prospects')
+      .select('id, company_name, tax_id, credit_limit, is_b2b_active')
+      .eq('user_id', user.id)
+      .eq('type', 'b2b')
+      .maybeSingle()
+
+    if (!prospectError) {
+      b2bProspect = prospectData
+    } else {
+      console.error('Error fetching B2B prospect:', prospectError)
     }
   } catch (error) {
     console.error('Error fetching account data:', error)
@@ -65,7 +59,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
             <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">{t("title")}</h1>
             <p className="text-slate-600 mt-2">{t("greeting", { name: profile?.full_name || user.email })}</p>
           </div>
-          {profile?.role === 'b2b' && (
+          {(profile?.role === 'b2b' || b2bProspect?.is_b2b_active) && (
             <div className="bg-calmar-ocean text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-calmar-ocean/20 self-start sm:self-auto">
               {t("b2bBadge")}
             </div>
@@ -75,7 +69,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
 
       <LoyaltyCard balance={profile?.points_balance || 0} />
 
-      {b2bClient ? (
+      {b2bProspect ? (
         <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-calmar-ocean/30 via-transparent to-calmar-primary/20 opacity-60"></div>
           <div className="absolute top-0 right-0 p-8 opacity-10">
@@ -86,11 +80,11 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">{t("companyName")}</label>
-                <p className="font-bold">{b2bClient.company_name}</p>
+                <p className="font-bold">{b2bProspect.company_name}</p>
               </div>
               <div>
                 <label className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">{t("taxId")}</label>
-                <p className="font-bold">{formatRut(b2bClient.tax_id)}</p>
+                <p className="font-bold">{formatRut(b2bProspect.tax_id)}</p>
               </div>
               <div>
                 <label className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">{t("b2bPricing")}</label>
@@ -98,10 +92,10 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
               </div>
               <div>
                 <label className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">{t("availableCredit")}</label>
-                <p className="text-2xl font-black text-white">${Number(b2bClient.credit_limit).toLocaleString('es-CL')}</p>
+                <p className="text-2xl font-black text-white">${Number(b2bProspect.credit_limit).toLocaleString('es-CL')}</p>
               </div>
             </div>
-            {!b2bClient.is_active && (
+            {!b2bProspect.is_b2b_active && (
               <div className="mt-6 bg-amber-500/20 border border-amber-500/50 rounded-lg p-3 text-amber-200 text-xs font-medium">
                 {t("pendingReview")}
               </div>
@@ -120,15 +114,6 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
               {t("applyNow")}
             </Button>
           </Link>
-        </div>
-      )}
-
-      {b2bClient?.is_active && (
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-          <ApiKeyManager 
-            clientId={b2bClient.id} 
-            existingKeys={apiKeys} 
-          />
         </div>
       )}
 

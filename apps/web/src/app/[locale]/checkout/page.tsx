@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server"
-import { B2BService } from "@calmar/database"
 import { CheckoutForm } from "./checkout-form"
 import { checkNewsletterDiscount } from "./actions"
 
@@ -7,9 +6,21 @@ export default async function CheckoutPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  const b2bService = new B2BService(supabase)
-  const b2bClient = user ? await b2bService.getClientByUserId(user.id) : null
-  const b2bPrices = b2bClient?.is_active ? await b2bService.getFixedPrices(b2bClient.id) : []
+  const { data: b2bProspect } = user
+    ? await supabase
+        .from('prospects')
+        .select('id, company_name, tax_id, credit_limit, is_b2b_active, payment_terms_days')
+        .eq('user_id', user.id)
+        .eq('type', 'b2b')
+        .maybeSingle()
+    : { data: null }
+
+  const b2bPrices = b2bProspect?.is_b2b_active
+    ? await supabase
+        .from('prospect_product_prices')
+        .select('product_id, fixed_price')
+        .eq('prospect_id', b2bProspect.id)
+    : []
   const b2bPriceMap = b2bPrices.reduce<Record<string, number>>((acc, price) => {
     acc[price.product_id] = Number(price.fixed_price)
     return acc
@@ -30,7 +41,7 @@ export default async function CheckoutPage() {
     <CheckoutForm
       user={user}
       userProfile={profile}
-      b2bClient={b2bClient}
+      b2bProspect={b2bProspect}
       b2bPriceMap={b2bPriceMap}
       initialNewsletterDiscount={newsletterDiscount}
     />

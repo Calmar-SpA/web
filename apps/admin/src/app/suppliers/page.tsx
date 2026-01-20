@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@calmar/ui'
+import { Card, CardContent, CardHeader, CardTitle } from '@calmar/ui'
 import { createSupplier } from './actions'
 import { SupplierCard } from './supplier-card'
+import { SupplierForm } from './supplier-form'
 
 export default async function SuppliersPage() {
   const supabase = await createClient()
@@ -32,37 +33,7 @@ export default async function SuppliersPage() {
           <CardTitle>Nuevo proveedor</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={createSupplier} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nombre *</label>
-              <Input name="name" required />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Contacto</label>
-              <Input name="contact_name" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>
-              <Input name="contact_email" type="email" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Teléfono</label>
-              <Input name="contact_phone" />
-            </div>
-            <div className="md:col-span-2 space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Notas</label>
-              <textarea
-                name="notes"
-                className="w-full min-h-[120px] p-4 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-calmar-ocean/20 transition-all text-sm"
-                placeholder="Observaciones del proveedor..."
-              />
-            </div>
-            <div className="md:col-span-2 flex justify-end">
-              <Button className="bg-[#1d504b] hover:bg-[#153f3b] text-white font-black uppercase text-xs tracking-widest px-6 shadow-lg">
-                Guardar proveedor
-              </Button>
-            </div>
-          </form>
+          <SupplierForm action={createSupplier} submitLabel="Guardar proveedor" />
         </CardContent>
       </Card>
 

@@ -2,35 +2,34 @@
 
 import { useEffect, useState } from 'react'
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@calmar/ui'
-import { X, Edit3, DollarSign, Calendar, Search } from 'lucide-react'
-import { updateB2BClient } from './actions'
+import { X, ShieldCheck, DollarSign, Calendar, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { formatClp, getGrossFromNet, getPriceBreakdown } from '@calmar/utils'
+import { approveProspectAsB2B } from '../actions'
+import { formatClp, getPriceBreakdown } from '@calmar/utils'
 
-interface EditModalProps {
-  client: {
-    id: string
-    company_name: string
-    credit_limit: number
-    payment_terms_days: number
-  }
+interface ApproveB2BModalProps {
+  prospectId: string
+  companyName: string
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
 }
 
-export function EditModal({
-  client,
+type FixedPriceInput = { productId: string; fixedPrice: number }
+
+export function ApproveB2BModal({
+  prospectId,
+  companyName,
   isOpen,
   onClose,
   onSuccess
-}: EditModalProps) {
+}: ApproveB2BModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoadingProducts, setIsLoadingProducts] = useState(false)
   const [formData, setFormData] = useState({
-    credit_limit: client.credit_limit,
-    payment_terms_days: client.payment_terms_days
+    creditLimit: 1000000,
+    paymentTermsDays: 30
   })
   const [products, setProducts] = useState<{ id: string; name: string; sku: string; base_price: number }[]>([])
   const [priceOverrides, setPriceOverrides] = useState<Record<string, string>>({})
@@ -42,21 +41,17 @@ export function EditModal({
     const loadProducts = async () => {
       setIsLoadingProducts(true)
       const supabase = createClient()
-      const [{ data: productsData, error: productsError }, { data: pricesData, error: pricesError }] = await Promise.all([
-        supabase.from('products').select('id, name, sku, base_price').order('name', { ascending: true }),
-        supabase.from('b2b_product_prices').select('product_id, fixed_price').eq('b2b_client_id', client.id)
-      ])
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, sku, base_price')
+        .order('name', { ascending: true })
 
-      if (productsError || pricesError) {
-        console.error('Error loading products:', productsError || pricesError)
+      if (error) {
+        console.error('Error loading products:', error)
         toast.error('No se pudieron cargar los productos')
       } else {
-        setProducts(productsData || [])
-        const overrides: Record<string, string> = {}
-        ;(pricesData || []).forEach(price => {
-          overrides[price.product_id] = String(price.fixed_price)
-        })
-        setPriceOverrides(overrides)
+        setProducts(data || [])
+        setPriceOverrides({})
         setSearchTerm('')
       }
 
@@ -64,7 +59,7 @@ export function EditModal({
     }
 
     loadProducts()
-  }, [isOpen, client.id])
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -82,18 +77,18 @@ export function EditModal({
     setIsSubmitting(true)
 
     try {
-      const fixedPrices = Object.entries(priceOverrides)
+      const fixedPrices: FixedPriceInput[] = Object.entries(priceOverrides)
         .map(([productId, value]) => ({ productId, fixedPrice: Number(value) }))
-        .filter(price => Number.isFinite(price.fixedPrice) && price.fixedPrice > 0)
+        .filter(price => Number.isFinite(price.fixedPrice) && price.fixedPrice >= 0)
 
-      const result = await updateB2BClient(client.id, formData, fixedPrices)
+      const result = await approveProspectAsB2B(prospectId, formData, fixedPrices)
       if (result.success) {
-        toast.success('Cambios guardados con éxito')
+        toast.success('Prospecto aprobado como B2B')
         onSuccess()
         onClose()
       }
     } catch (error) {
-      toast.error('Error al guardar los cambios')
+      toast.error('Error al aprobar el prospecto')
       console.error(error)
     } finally {
       setIsSubmitting(false)
@@ -101,12 +96,12 @@ export function EditModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <Card className="w-full max-w-md max-h-[70vh] shadow-2xl border-none flex flex-col">
-        <CardHeader className="bg-slate-900 text-white rounded-t-xl flex flex-row items-center justify-between py-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-[2px]">
+      <Card className="w-full max-w-md max-h-[70vh] overflow-hidden rounded-2xl border-none bg-white text-slate-900 shadow-2xl flex flex-col">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 bg-slate-900 px-5 py-4 text-white sm:px-6">
           <div className="flex items-center gap-3">
-            <Edit3 className="h-6 w-6 text-calmar-mint" />
-            <CardTitle className="text-xl uppercase tracking-tight">Editar B2B</CardTitle>
+            <ShieldCheck className="h-6 w-6 text-calmar-mint" />
+            <CardTitle className="text-xl uppercase tracking-tight">Aprobar B2B</CardTitle>
           </div>
           <Button
             variant="ghost"
@@ -118,9 +113,9 @@ export function EditModal({
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent className="p-6 overflow-y-auto flex-1">
+        <CardContent className="bg-white p-5 sm:p-6 overflow-y-auto flex-1">
           <p className="text-sm text-slate-500 mb-6">
-            Actualiza las condiciones comerciales para <strong className="text-slate-900">{client.company_name}</strong>.
+            Configura las condiciones comerciales para <strong className="text-slate-900">{companyName}</strong>.
           </p>
           
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -128,13 +123,13 @@ export function EditModal({
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Línea de Crédito (CLP)</label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input 
+                <Input
                   type="number"
-                  name="credit_limit" 
-                  value={formData.credit_limit}
+                  name="creditLimit"
+                  value={formData.creditLimit}
                   onChange={handleChange}
-                  className="pl-10" 
-                  required 
+                  className="bg-white pl-10"
+                  required
                   min="0"
                 />
               </div>
@@ -144,13 +139,13 @@ export function EditModal({
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Días de Pago</label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input 
+                <Input
                   type="number"
-                  name="payment_terms_days" 
-                  value={formData.payment_terms_days}
+                  name="paymentTermsDays"
+                  value={formData.paymentTermsDays}
                   onChange={handleChange}
-                  className="pl-10" 
-                  required 
+                  className="bg-white pl-10"
+                  required
                   min="0"
                 />
               </div>
@@ -175,10 +170,6 @@ export function EditModal({
                   return product.name.toLowerCase().includes(query) || product.sku.toLowerCase().includes(query)
                 }).map(product => {
                   const { net, iva } = getPriceBreakdown(Number(product.base_price))
-                  const netOverride = Number(priceOverrides[product.id])
-                  const hasOverride = Number.isFinite(netOverride) && netOverride > 0
-                  const grossOverride = hasOverride ? getGrossFromNet(netOverride) : 0
-                  const ivaOverride = hasOverride ? Math.max(0, grossOverride - netOverride) : 0
                   return (
                     <div key={product.id} className="flex flex-col gap-2 rounded-lg bg-white p-3 shadow-sm border border-slate-100">
                       <div className="flex items-start justify-between gap-2">
@@ -194,29 +185,24 @@ export function EditModal({
                           </p>
                         </div>
                       </div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="Precio B2B Neto (CLP)"
-                        value={priceOverrides[product.id] ?? ''}
-                        onChange={(e) => handlePriceChange(product.id, e.target.value)}
-                        className="h-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-10 text-[10px] uppercase font-bold tracking-widest"
-                        onClick={() => handlePriceChange(product.id, '')}
-                      >
-                        Base
-                      </Button>
-                    </div>
-                    <p className="text-[11px] text-slate-500">
-                      {hasOverride
-                        ? `Neto: $${formatClp(netOverride)} · IVA (19%): $${formatClp(ivaOverride)} · Total: $${formatClp(grossOverride)}`
-                        : 'Ingresa un neto para ver IVA y total.'}
-                    </p>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="Precio B2B (CLP)"
+                          value={priceOverrides[product.id] ?? ''}
+                          onChange={(e) => handlePriceChange(product.id, e.target.value)}
+                          className="h-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-10 text-[10px] uppercase font-bold tracking-widest"
+                          onClick={() => handlePriceChange(product.id, '')}
+                        >
+                          Base
+                        </Button>
+                      </div>
                     </div>
                   )
                 })}
@@ -229,12 +215,12 @@ export function EditModal({
               </p>
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isSubmitting}
-              className="w-full bg-slate-900 hover:bg-calmar-ocean text-white h-12 text-sm font-bold uppercase mt-6 shadow-xl gap-2 transition-colors"
+              className="w-full bg-slate-900 hover:bg-emerald-600 text-white h-12 text-sm font-bold uppercase mt-6 shadow-xl gap-2 transition-colors"
             >
-              {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
+              {isSubmitting ? 'Procesando...' : 'Confirmar aprobación'}
             </Button>
           </form>
         </CardContent>

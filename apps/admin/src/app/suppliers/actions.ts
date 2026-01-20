@@ -3,15 +3,44 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { formatPhoneIntl, formatRut, isValidPhoneIntl, isValidRut, normalizeRut } from '@calmar/utils'
 
 export async function createSupplier(formData: FormData) {
   const supabase = await createClient()
 
+  const taxIdRaw = (formData.get('tax_id') as string)?.trim()
+  const deliveryRutRaw = (formData.get('delivery_rut') as string)?.trim()
+  const taxId = taxIdRaw ? normalizeRut(taxIdRaw) : null
+  const deliveryRut = deliveryRutRaw ? normalizeRut(deliveryRutRaw) : null
+  const phoneCountry = (formData.get('contact_phone_country') as string)?.trim() || '56'
+  const phoneRaw = (formData.get('contact_phone') as string)?.trim()
+  const phoneFormatted = phoneRaw ? formatPhoneIntl(phoneCountry, phoneRaw) : null
+
+  if (taxIdRaw && (!taxId || !isValidRut(taxId))) {
+    throw new Error('El RUT del proveedor no es válido')
+  }
+
+  if (deliveryRutRaw && (!deliveryRut || !isValidRut(deliveryRut))) {
+    throw new Error('El RUT de entrega no es válido')
+  }
+  if (phoneRaw && !isValidPhoneIntl(phoneRaw)) {
+    throw new Error('El teléfono no es válido')
+  }
+
   const payload = {
     name: (formData.get('name') as string)?.trim(),
+    tax_id: taxId ? formatRut(taxId) : null,
+    business_name: (formData.get('business_name') as string)?.trim() || null,
+    address: (formData.get('address') as string)?.trim() || null,
+    city: (formData.get('city') as string)?.trim() || null,
+    comuna: (formData.get('comuna') as string)?.trim() || null,
+    business_activity: (formData.get('business_activity') as string)?.trim() || null,
     contact_name: (formData.get('contact_name') as string)?.trim() || null,
+    contact_role: (formData.get('contact_role') as string)?.trim() || null,
     contact_email: (formData.get('contact_email') as string)?.trim() || null,
-    contact_phone: (formData.get('contact_phone') as string)?.trim() || null,
+    contact_phone: phoneFormatted,
+    delivery_rut: deliveryRut ? formatRut(deliveryRut) : null,
+    pickup_address: (formData.get('pickup_address') as string)?.trim() || null,
     notes: (formData.get('notes') as string)?.trim() || null,
   }
 
@@ -44,11 +73,39 @@ export async function toggleSupplierStatus(supplierId: string, currentIsActive: 
 export async function updateSupplier(supplierId: string, formData: FormData) {
   const supabase = await createClient()
 
+  const taxIdRaw = (formData.get('tax_id') as string)?.trim()
+  const deliveryRutRaw = (formData.get('delivery_rut') as string)?.trim()
+  const taxId = taxIdRaw ? normalizeRut(taxIdRaw) : null
+  const deliveryRut = deliveryRutRaw ? normalizeRut(deliveryRutRaw) : null
+  const phoneCountry = (formData.get('contact_phone_country') as string)?.trim() || '56'
+  const phoneRaw = (formData.get('contact_phone') as string)?.trim()
+  const phoneFormatted = phoneRaw ? formatPhoneIntl(phoneCountry, phoneRaw) : null
+
+  if (taxIdRaw && (!taxId || !isValidRut(taxId))) {
+    throw new Error('El RUT del proveedor no es válido')
+  }
+
+  if (deliveryRutRaw && (!deliveryRut || !isValidRut(deliveryRut))) {
+    throw new Error('El RUT de entrega no es válido')
+  }
+  if (phoneRaw && !isValidPhoneIntl(phoneRaw)) {
+    throw new Error('El teléfono no es válido')
+  }
+
   const payload = {
     name: (formData.get('name') as string)?.trim(),
+    tax_id: taxId ? formatRut(taxId) : null,
+    business_name: (formData.get('business_name') as string)?.trim() || null,
+    address: (formData.get('address') as string)?.trim() || null,
+    city: (formData.get('city') as string)?.trim() || null,
+    comuna: (formData.get('comuna') as string)?.trim() || null,
+    business_activity: (formData.get('business_activity') as string)?.trim() || null,
     contact_name: (formData.get('contact_name') as string)?.trim() || null,
+    contact_role: (formData.get('contact_role') as string)?.trim() || null,
     contact_email: (formData.get('contact_email') as string)?.trim() || null,
-    contact_phone: (formData.get('contact_phone') as string)?.trim() || null,
+    contact_phone: phoneFormatted,
+    delivery_rut: deliveryRut ? formatRut(deliveryRut) : null,
+    pickup_address: (formData.get('pickup_address') as string)?.trim() || null,
     notes: (formData.get('notes') as string)?.trim() || null,
   }
 

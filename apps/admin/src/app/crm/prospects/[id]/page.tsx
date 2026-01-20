@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { CRMService } from '@calmar/database'
-import { ArrowLeft, Mail, Phone, Building2, Plus, Package, DollarSign, Calendar, User } from 'lucide-react'
-import { Button, Input } from '@calmar/ui'
+import { ArrowLeft, Mail, Phone, Building2, Plus, Package, DollarSign, Calendar, User, ShieldCheck } from 'lucide-react'
+import { Button, Input, RutInput } from '@calmar/ui'
 import Link from 'next/link'
-import { createInteraction, updateProspectStage } from '../../actions'
+import { createInteraction, updateProspect, updateProspectStage } from '../../actions'
 import { toast } from 'sonner'
+import { isValidPhoneIntl, isValidRut, parsePhoneIntl } from '@calmar/utils'
+import { formatClp } from '@calmar/utils'
+import { ApproveB2BModal } from '../approve-b2b-modal'
 
 const STAGES = [
   { id: 'contact', label: 'Contacto' },
@@ -29,7 +32,14 @@ export default function ProspectDetailPage() {
   const [movements, setMovements] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isUpdating, setIsUpdating] = useState(false)
   const [showInteractionForm, setShowInteractionForm] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [showApproveModal, setShowApproveModal] = useState(false)
+  const [taxIdValue, setTaxIdValue] = useState('')
+  const [requestingRutValue, setRequestingRutValue] = useState('')
+  const [phoneValue, setPhoneValue] = useState('')
+  const [phoneCountry, setPhoneCountry] = useState('56')
   const [interactionForm, setInteractionForm] = useState({
     interaction_type: 'note' as 'call' | 'email' | 'meeting' | 'note' | 'sample_sent' | 'quote_sent' | 'other',
     subject: '',
@@ -82,7 +92,30 @@ export default function ProspectDetailPage() {
     }
   }, [prospectId])
 
+  useEffect(() => {
+    if (prospect) {
+      setTaxIdValue(prospect.tax_id || '')
+      setRequestingRutValue(prospect.requesting_rut || '')
+      const parsedPhone = parsePhoneIntl(prospect.phone)
+      setPhoneValue(parsedPhone.digits || '')
+      setPhoneCountry(parsedPhone.countryCode || '56')
+    }
+  }, [prospect])
+
+  const isTaxIdValid = !taxIdValue || isValidRut(taxIdValue)
+  const isRequestingRutValid = !requestingRutValue || isValidRut(requestingRutValue)
+  const isPhoneValid = !phoneValue || isValidPhoneIntl(phoneValue)
+  const isFormValid = isTaxIdValid && isRequestingRutValid && isPhoneValid
+
+  const formatLocalPhone = (value: string) =>
+    value.replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ')
+
   const handleStageChange = async (newStage: string) => {
+    if (prospect?.type === 'b2b' && newStage === 'converted' && !prospect?.is_b2b_active) {
+      setShowApproveModal(true)
+      return
+    }
+
     try {
       await updateProspectStage(prospectId, newStage)
       await loadData()
@@ -90,6 +123,24 @@ export default function ProspectDetailPage() {
     } catch (error: any) {
       console.error('Error updating stage:', error)
       toast.error('Error al actualizar etapa')
+    }
+  }
+
+  const handleUpdateProspect = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsUpdating(true)
+    const formData = new FormData(e.currentTarget)
+    
+    try {
+      await updateProspect(prospectId, formData)
+      toast.success('Prospecto actualizado exitosamente')
+      setShowEditForm(false)
+      await loadData()
+    } catch (error: any) {
+      console.error('Error updating prospect:', error)
+      toast.error(error?.message || 'Error al actualizar el prospecto')
+    } finally {
+      setIsUpdating(false)
     }
   }
 
@@ -166,8 +217,19 @@ export default function ProspectDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Contact Info */}
           <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
-            <h2 className="text-lg font-black uppercase tracking-tight mb-4">Información de Contacto</h2>
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-lg font-black uppercase tracking-tight">Información de Contacto</h2>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setShowEditForm((value) => !value)}
+                className="uppercase font-black tracking-wider"
+              >
+                {showEditForm ? 'Ocultar' : 'Editar'}
+              </Button>
+            </div>
+            <div className="mt-4 space-y-3">
               <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-slate-400" />
                 <span className="text-sm font-medium">{prospect.email}</span>
@@ -184,7 +246,200 @@ export default function ProspectDetailPage() {
                   <span className="text-sm font-medium">RUT: {prospect.tax_id}</span>
                 </div>
               )}
+              {prospect.contact_role && (
+                <div className="flex items-center gap-3">
+                  <User className="w-5 h-5 text-slate-400" />
+                  <span className="text-sm font-medium">Cargo: {prospect.contact_role}</span>
+                </div>
+              )}
+              {prospect.address && (
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-5 h-5 text-slate-400" />
+                  <span className="text-sm font-medium">Dirección empresa: {prospect.address}</span>
+                </div>
+              )}
+              {prospect.city && (
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-5 h-5 text-slate-400" />
+                  <span className="text-sm font-medium">Ciudad: {prospect.city}</span>
+                </div>
+              )}
+              {prospect.comuna && (
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-5 h-5 text-slate-400" />
+                  <span className="text-sm font-medium">Comuna: {prospect.comuna}</span>
+                </div>
+              )}
+              {prospect.business_activity && (
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-5 h-5 text-slate-400" />
+                  <span className="text-sm font-medium">Giro: {prospect.business_activity}</span>
+                </div>
+              )}
+              {prospect.requesting_rut && (
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-5 h-5 text-slate-400" />
+                  <span className="text-sm font-medium">RUT solicita: {prospect.requesting_rut}</span>
+                </div>
+              )}
+              {prospect.shipping_address && (
+                <div className="flex items-center gap-3">
+                  <Package className="w-5 h-5 text-slate-400" />
+                  <span className="text-sm font-medium">Dirección de despacho: {prospect.shipping_address}</span>
+                </div>
+              )}
             </div>
+            {showEditForm && (
+              <div className="mt-6 border-t border-slate-100 pt-6">
+                <h3 className="text-sm font-black uppercase tracking-wider text-slate-700 mb-4">
+                  Editar Prospecto
+                </h3>
+                <form onSubmit={handleUpdateProspect} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Tipo
+                    </label>
+                    <select
+                      name="type"
+                      defaultValue={prospect.type}
+                      className="w-full h-11 px-3 rounded-xl border-2 border-slate-200 focus:border-calmar-ocean focus:outline-none text-sm"
+                    >
+                      <option value="b2b">B2B</option>
+                      <option value="b2c">B2C</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Razón Social
+                    </label>
+                    <Input name="company_name" defaultValue={prospect.company_name || ''} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Nombre de Contacto *
+                    </label>
+                    <Input name="contact_name" defaultValue={prospect.contact_name || ''} required className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Cargo del Contacto
+                    </label>
+                    <Input name="contact_role" defaultValue={prospect.contact_role || ''} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Email *
+                    </label>
+                    <Input name="email" type="email" defaultValue={prospect.email || ''} required className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Teléfono
+                    </label>
+                    <div className="flex gap-2">
+                      <select
+                        name="phone_country"
+                        value={phoneCountry}
+                        onChange={(e) => setPhoneCountry(e.target.value)}
+                        className="h-11 w-28 rounded-xl border-2 border-slate-200 bg-white px-2 text-sm font-black uppercase tracking-wider text-slate-600"
+                      >
+                        <option value="56">+56</option>
+                        <option value="54">+54</option>
+                        <option value="51">+51</option>
+                        <option value="57">+57</option>
+                        <option value="52">+52</option>
+                        <option value="55">+55</option>
+                        <option value="34">+34</option>
+                        <option value="1">+1</option>
+                      </select>
+                      <Input
+                        name="phone"
+                        value={formatLocalPhone(phoneValue)}
+                        onChange={(e) => setPhoneValue(e.target.value.replace(/\D/g, ''))}
+                        className="h-11"
+                      />
+                    </div>
+                    {!isPhoneValid && <p className="text-xs text-red-600">Teléfono inválido</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      RUT
+                    </label>
+                    <RutInput
+                      name="tax_id"
+                      value={taxIdValue}
+                      onChange={(e) => setTaxIdValue(e.target.value)}
+                      placeholder="12.345.678-9"
+                      className="h-11"
+                    />
+                    {!isTaxIdValid && <p className="text-xs text-red-600">RUT inválido</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Dirección empresa
+                    </label>
+                    <Input name="address" defaultValue={prospect.address || ''} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Ciudad
+                    </label>
+                    <Input name="city" defaultValue={prospect.city || ''} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Comuna
+                    </label>
+                    <Input name="comuna" defaultValue={prospect.comuna || ''} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Giro
+                    </label>
+                    <Input name="business_activity" defaultValue={prospect.business_activity || ''} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      RUT solicita
+                    </label>
+                    <RutInput
+                      name="requesting_rut"
+                      value={requestingRutValue}
+                      onChange={(e) => setRequestingRutValue(e.target.value)}
+                      placeholder="12.345.678-9"
+                      className="h-11"
+                    />
+                    {!isRequestingRutValid && <p className="text-xs text-red-600">RUT inválido</p>}
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Dirección de despacho
+                    </label>
+                    <Input name="shipping_address" defaultValue={prospect.shipping_address || ''} className="h-11" />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Notas
+                    </label>
+                    <textarea
+                      name="notes"
+                      defaultValue={prospect.notes || ''}
+                      rows={3}
+                      className="w-full px-3 py-2 rounded-xl border-2 border-slate-200 focus:border-calmar-ocean focus:outline-none text-sm resize-none"
+                    />
+                  </div>
+                  <div className="md:col-span-2 flex justify-end">
+                    <Button
+                      type="submit"
+                      disabled={!isFormValid || isUpdating}
+                      className="uppercase font-black tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {isUpdating ? 'Guardando...' : 'Guardar cambios'}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
 
           {/* Stage Selector */}
@@ -418,6 +673,42 @@ export default function ProspectDetailPage() {
 
         {/* Right Column - Stats */}
         <div className="space-y-6">
+          {prospect.type === 'b2b' && (
+            <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-black uppercase tracking-tight">Configuración B2B</h2>
+                <ShieldCheck className="w-5 h-5 text-calmar-mint" />
+              </div>
+              <div className="mt-4 space-y-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Estado</p>
+                  <p className={`text-sm font-bold ${prospect.is_b2b_active ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {prospect.is_b2b_active ? 'Aprobado' : 'Pendiente'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Línea de crédito</p>
+                  <p className="text-sm font-bold text-slate-900">
+                    {formatClp(Number(prospect.credit_limit || 0))}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Días de pago</p>
+                  <p className="text-sm font-bold text-slate-900">
+                    {Number(prospect.payment_terms_days || 30)} días
+                  </p>
+                </div>
+                {!prospect.is_b2b_active && (
+                  <Button
+                    onClick={() => setShowApproveModal(true)}
+                    className="w-full uppercase font-black tracking-wider"
+                  >
+                    Aprobar como B2B
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
           <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
             <h2 className="text-lg font-black uppercase tracking-tight mb-4">Estadísticas</h2>
             <div className="space-y-4">
@@ -451,6 +742,16 @@ export default function ProspectDetailPage() {
           </div>
         </div>
       </div>
+
+      {prospect.type === 'b2b' && (
+        <ApproveB2BModal
+          prospectId={prospectId}
+          companyName={prospect.company_name || prospect.contact_name}
+          isOpen={showApproveModal}
+          onClose={() => setShowApproveModal(false)}
+          onSuccess={loadData}
+        />
+      )}
     </div>
   )
 }

@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ProductService, CRMService } from '@calmar/database'
 import { createMovement } from '../../actions'
 import { Button, Input } from '@calmar/ui'
-import { ArrowLeft, Plus, X, Save, Users, Building2, UserX, Link2 } from 'lucide-react'
+import { ArrowLeft, Plus, X, Save, Users, UserX } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
@@ -30,19 +30,6 @@ interface Prospect {
   converted_to_type?: 'b2b' | 'b2c' | null
 }
 
-interface B2BClient {
-  id: string
-  company_name: string
-  contact_name: string
-  status: string
-}
-
-// Track linked records for automatic association
-interface LinkedRecords {
-  linkedB2BClientId: string | null
-  linkedProspectId: string | null
-}
-
 export default function NewMovementPage() {
   return (
     <Suspense fallback={<div className="p-8 text-center">Cargando...</div>}>
@@ -60,23 +47,15 @@ function NewMovementContent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [products, setProducts] = useState<any[]>([])
   const [prospects, setProspects] = useState<Prospect[]>([])
-  const [b2bClients, setB2bClients] = useState<B2BClient[]>([])
   const [isLoadingProducts, setIsLoadingProducts] = useState(true)
   const [isLoadingClients, setIsLoadingClients] = useState(true)
   
   // For samples without client association
   const [isAnonymousSample, setIsAnonymousSample] = useState(false)
   
-  // Track automatic linking between prospect and B2B client
-  const [linkedRecords, setLinkedRecords] = useState<LinkedRecords>({
-    linkedB2BClientId: null,
-    linkedProspectId: null
-  })
-  
   const [formData, setFormData] = useState({
     movement_type: defaultType as 'sample' | 'consignment' | 'sale_invoice' | 'sale_credit',
     prospect_id: prospectId || '',
-    b2b_client_id: '',
     customer_user_id: '',
     due_date: '',
     delivery_date: '',
@@ -117,29 +96,16 @@ function NewMovementContent() {
     const supabase = createClient()
     
     try {
-      // Load all prospects with conversion info
       const { data: prospectsData } = await supabase
         .from('prospects')
         .select('id, contact_name, company_name, email, type, stage, converted_to_client_id, converted_to_type')
         .order('created_at', { ascending: false })
       
       setProspects(prospectsData || [])
-      
-      // Load approved B2B clients
-      const { data: b2bData } = await supabase
-        .from('b2b_clients')
-        .select('id, company_name, contact_name, status')
-        .eq('status', 'approved')
-        .order('company_name', { ascending: true })
-      
-      setB2bClients(b2bData || [])
-      
-      // If prospect_id is provided, set it and check for linked B2B
+
+      // If prospect_id is provided, set it
       if (prospectId) {
-        const prospect = prospectsData?.find((p: Prospect) => p.id === prospectId)
-        if (prospect) {
-          handleProspectSelection(prospectId, prospect, b2bData || [])
-        }
+        handleProspectSelection(prospectId)
       }
     } catch (error) {
       console.error('Error loading clients:', error)
@@ -149,59 +115,8 @@ function NewMovementContent() {
     }
   }
 
-  // Handle prospect selection with automatic B2B linking
-  const handleProspectSelection = (prospectId: string, prospect?: Prospect, clientsList?: B2BClient[]) => {
-    const selectedProspect = prospect || prospects.find(p => p.id === prospectId)
-    const clients = clientsList || b2bClients
-    
-    if (!selectedProspect) {
-      setFormData(prev => ({ ...prev, prospect_id: prospectId, b2b_client_id: '' }))
-      setLinkedRecords({ linkedB2BClientId: null, linkedProspectId: null })
-      return
-    }
-
-    // Check if prospect is converted to B2B
-    if (selectedProspect.converted_to_client_id && selectedProspect.converted_to_type === 'b2b') {
-      const linkedB2B = clients.find(c => c.id === selectedProspect.converted_to_client_id)
-      if (linkedB2B) {
-        setFormData(prev => ({ 
-          ...prev, 
-          prospect_id: prospectId, 
-          b2b_client_id: linkedB2B.id 
-        }))
-        setLinkedRecords({ linkedB2BClientId: linkedB2B.id, linkedProspectId: null })
-        return
-      }
-    }
-
-    setFormData(prev => ({ ...prev, prospect_id: prospectId, b2b_client_id: '' }))
-    setLinkedRecords({ linkedB2BClientId: null, linkedProspectId: null })
-  }
-
-  // Handle B2B client selection with automatic prospect linking
-  const handleB2BClientSelection = (clientId: string) => {
-    if (!clientId) {
-      setFormData(prev => ({ ...prev, b2b_client_id: '', prospect_id: '' }))
-      setLinkedRecords({ linkedB2BClientId: null, linkedProspectId: null })
-      return
-    }
-
-    // Check if there's a prospect linked to this B2B client
-    const linkedProspect = prospects.find(
-      p => p.converted_to_client_id === clientId && p.converted_to_type === 'b2b'
-    )
-
-    if (linkedProspect) {
-      setFormData(prev => ({ 
-        ...prev, 
-        b2b_client_id: clientId, 
-        prospect_id: linkedProspect.id 
-      }))
-      setLinkedRecords({ linkedB2BClientId: null, linkedProspectId: linkedProspect.id })
-    } else {
-      setFormData(prev => ({ ...prev, b2b_client_id: clientId, prospect_id: '' }))
-      setLinkedRecords({ linkedB2BClientId: null, linkedProspectId: null })
-    }
+  const handleProspectSelection = (prospectId: string) => {
+    setFormData(prev => ({ ...prev, prospect_id: prospectId }))
   }
 
   const selectedProductData = products.find(p => p.id === selectedProduct)
@@ -253,16 +168,16 @@ function NewMovementContent() {
     }
 
     // For non-sample movements, require client association
-    if (formData.movement_type !== 'sample' && !formData.prospect_id && !formData.b2b_client_id && !formData.customer_user_id) {
+    if (formData.movement_type !== 'sample' && !formData.prospect_id && !formData.customer_user_id) {
       console.log('Validation failed: no client for non-sample')
-      toast.error('Selecciona un prospecto, cliente B2B o cliente')
+      toast.error('Selecciona un prospecto o cliente')
       return
     }
 
     // For samples, if not anonymous, require client OR mark as anonymous
-    if (formData.movement_type === 'sample' && !isAnonymousSample && !formData.prospect_id && !formData.b2b_client_id) {
+    if (formData.movement_type === 'sample' && !isAnonymousSample && !formData.prospect_id) {
       console.log('Validation failed: sample needs client or anonymous flag')
-      toast.error('Selecciona un prospecto/cliente o marca como muestra sin cliente')
+      toast.error('Selecciona un prospecto o marca como muestra sin cliente')
       return
     }
 
@@ -279,7 +194,6 @@ function NewMovementContent() {
       await createMovement({
         movement_type: formData.movement_type,
         prospect_id: isAnonymousSample ? null : (formData.prospect_id || null),
-        b2b_client_id: isAnonymousSample ? null : (formData.b2b_client_id || null),
         customer_user_id: formData.customer_user_id || null,
         items: items.map(item => ({
           product_id: item.product_id,
@@ -377,7 +291,7 @@ function NewMovementContent() {
                   onChange={(e) => {
                     setIsAnonymousSample(e.target.checked)
                     if (e.target.checked) {
-                      setFormData(prev => ({ ...prev, prospect_id: '', b2b_client_id: '' }))
+                      setFormData(prev => ({ ...prev, prospect_id: '' }))
                     } else {
                       setFormData(prev => ({ ...prev, sample_recipient_name: '', sample_event_context: '' }))
                     }
@@ -433,19 +347,6 @@ function NewMovementContent() {
                 </div>
               ) : (
                 <>
-                  {/* Automatic linking indicator */}
-                  {(linkedRecords.linkedB2BClientId || linkedRecords.linkedProspectId) && (
-                    <div className="flex items-center gap-2 p-3 bg-emerald-50 border-2 border-emerald-200 rounded-xl">
-                      <Link2 className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-emerald-700">
-                        {linkedRecords.linkedB2BClientId 
-                          ? `Vinculado automáticamente con: ${b2bClients.find(c => c.id === linkedRecords.linkedB2BClientId)?.company_name || 'Cliente B2B'}`
-                          : `Vinculado automáticamente con prospecto: ${prospects.find(p => p.id === linkedRecords.linkedProspectId)?.contact_name || 'Prospecto'}`
-                        }
-                      </span>
-                    </div>
-                  )}
-
                   {/* Prospect Selector */}
                   <div>
                     <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
@@ -474,52 +375,12 @@ function NewMovementContent() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 h-px bg-slate-200"></div>
-                    <span className="text-xs font-bold text-slate-400 uppercase">o</span>
-                    <div className="flex-1 h-px bg-slate-200"></div>
-                  </div>
-
-                  {/* B2B Client Selector */}
-                  <div>
-                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                      <Building2 className="w-4 h-4" />
-                      Cliente B2B
-                    </label>
-                    <select
-                      value={formData.b2b_client_id}
-                      onChange={(e) => handleB2BClientSelection(e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-2 focus:border-calmar-ocean focus:outline-none text-sm ${
-                        linkedRecords.linkedB2BClientId 
-                          ? 'border-emerald-300 bg-emerald-50' 
-                          : 'border-slate-200'
-                      }`}
-                    >
-                      <option value="">Seleccionar cliente B2B...</option>
-                      {b2bClients.map(client => {
-                        const hasLinkedProspect = prospects.some(
-                          p => p.converted_to_client_id === client.id && p.converted_to_type === 'b2b'
-                        )
-                        return (
-                          <option key={client.id} value={client.id}>
-                            {client.company_name} ({client.contact_name})
-                            {hasLinkedProspect ? ' ✓ Prospecto' : ''}
-                          </option>
-                        )
-                      })}
-                    </select>
-                    {b2bClients.length === 0 && (
-                      <p className="text-xs text-slate-500 mt-1">No hay clientes B2B aprobados</p>
-                    )}
-                  </div>
-
                   {/* Clear selection button */}
-                  {(formData.prospect_id || formData.b2b_client_id) && (
+                  {formData.prospect_id && (
                     <button
                       type="button"
                       onClick={() => {
-                        setFormData({ ...formData, prospect_id: '', b2b_client_id: '' })
-                        setLinkedRecords({ linkedB2BClientId: null, linkedProspectId: null })
+                        setFormData({ ...formData, prospect_id: '' })
                       }}
                       className="text-xs text-red-600 hover:text-red-700 font-bold uppercase tracking-wider"
                     >

@@ -165,12 +165,14 @@ export async function sendProspectAdminNotification(params: {
   type: string;
   companyName?: string | null;
   taxId?: string | null;
+  contactRole?: string | null;
   notes?: string | null;
 }) {
   const content = `
     <div style="background:${brand.muted};padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid ${brand.primary};">
       <div><strong>Tipo:</strong> ${params.type}</div>
       <div><strong>Contacto:</strong> ${params.contactName}</div>
+      ${params.contactRole ? `<div><strong>Cargo:</strong> ${params.contactRole}</div>` : ''}
       <div><strong>Email:</strong> ${params.email}</div>
       ${params.phone ? `<div><strong>Telefono:</strong> ${params.phone}</div>` : ''}
       ${params.companyName ? `<div><strong>Empresa:</strong> ${params.companyName}</div>` : ''}

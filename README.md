@@ -203,6 +203,7 @@ calmar-ecommerce/
 - **Cálculo de envío Blue Express**
 - **Gestión de inventario** con reservas automáticas y descuentos por pagos
 - **Registro de ingresos de stock** con costo neto, IVA, factura, fechas y estado de pago
+- **Gestión de proveedores** con datos tributarios y direcciones de retiro
 - **Sistema de categorías** jerárquico
 
 ### 👤 Gestión de Usuarios
@@ -217,15 +218,16 @@ calmar-ecommerce/
 
 ### 🏢 Programa B2B (Business to Business)
 
-- **Postulación de empresas** al programa B2B
-- **Precios netos por producto** para clientes B2B con desglose de IVA y total
+- **Postulación de empresas** al programa B2B (crea prospectos en CRM)
+- **Aprobación desde CRM** con configuración comercial centralizada
+- **Precios fijos por producto** para clientes B2B
 - **Crédito directo** con límites configurables
-- **Generación de API Keys** para integraciones
 - **Términos de pago** configurables (30 días, etc.)
 
 ### 📇 CRM y Prospectos
 
 - **Pipeline de prospectos** con etapas personalizables
+- **Ficha de prospectos** con datos de empresa, dirección y despacho
 - **Registro de muestras, consignaciones y ventas**
 - **Vinculación de compras web a prospectos por RUT**
 
@@ -296,7 +298,7 @@ Panel de administración para gestión interna.
 - Gestión de productos
 - Gestión de pedidos
 - Gestión de códigos de descuento
-- Gestión de usuarios y clientes B2B
+- Gestión de usuarios y aprobación B2B desde CRM
 - CRM de prospectos y movimientos
 - Reportes y métricas
 
@@ -312,7 +314,6 @@ Servicios para interacción con Supabase:
 - `OrderService` - Gestión de pedidos
 - `LoyaltyService` - Sistema de puntos
 - `DiscountCodeService` - Gestión y validación de códigos
-- `B2BService` - Gestión de clientes B2B
 
 ### `@calmar/ui`
 
@@ -444,8 +445,9 @@ npm run supabase:migrate # Reset y aplicar migraciones
 | `inventory`              | Stock de productos                        |
 | `orders`                 | Pedidos de clientes                       |
 | `order_items`            | Ítems de cada pedido                      |
-| `prospects`              | Prospectos CRM                            |
+| `prospects`              | Prospectos CRM con datos de empresa, despacho y configuración B2B |
 | `prospect_interactions`  | Historial de interacciones CRM            |
+| `prospect_product_prices` | Precios fijos por producto para clientes B2B |
 | `product_movements`      | Muestras, consignaciones y ventas         |
 | `movement_payments`      | Pagos asociados a movimientos             |
 | `payments`               | Registros de pagos                        |
@@ -456,10 +458,7 @@ npm run supabase:migrate # Reset y aplicar migraciones
 | `discount_code_products` | Restricciones por producto                |
 | `discount_code_users`    | Restricciones por usuario                 |
 | `discount_code_usages`   | Registro de usos de códigos               |
-| `b2b_clients`            | Clientes empresariales                    |
-| `b2b_product_prices`     | Precios netos por producto (B2B)          |
-| `b2b_api_keys`           | API Keys para integraciones B2B           |
-| `suppliers`              | Proveedores para ingresos de stock        |
+| `suppliers`              | Proveedores con datos tributarios y de retiro |
 | `stock_entries`          | Entradas de stock con trazabilidad y facturación (fechas incluidas) |
 | `stock_entry_history`    | Historial de cambios de inventario por ingreso        |
 | `supplier_items`         | Productos/servicios por proveedor con costo neto      |
@@ -483,8 +482,7 @@ npm run supabase:migrate # Reset y aplicar migraciones
 - [x] Integración con Flow para pagos
 - [x] Sistema de autenticación con Supabase
 - [x] Programa de puntos Calmar
-- [x] Programa B2B con precios fijos y crédito
-- [x] Generación de API Keys para B2B
+- [x] Programa B2B centralizado en CRM con precios fijos y crédito
 - [x] Historial de pedidos
 - [x] Newsletter y formulario de contacto
 - [x] Internacionalización (ES)

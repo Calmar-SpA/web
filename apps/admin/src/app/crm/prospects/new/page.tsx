@@ -7,7 +7,7 @@ import { Button, Input, RutInput } from '@calmar/ui'
 import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { isValidRut } from '@calmar/utils'
+import { isValidPhoneIntl, isValidRut } from '@calmar/utils'
 
 export default function NewProspectPage() {
   const router = useRouter()
@@ -16,11 +16,26 @@ export default function NewProspectPage() {
     type: 'b2b' as 'b2b' | 'b2c',
     company_name: '',
     contact_name: '',
+    contact_role: '',
     email: '',
     phone: '',
+    phone_country: '56',
     tax_id: '',
+    address: '',
+    city: '',
+    comuna: '',
+    business_activity: '',
+    requesting_rut: '',
+    shipping_address: '',
     notes: ''
   })
+
+  const isTaxIdValid = formData.tax_id ? isValidRut(formData.tax_id) : false
+  const isRequestingRutValid = !formData.requesting_rut || isValidRut(formData.requesting_rut)
+  const isPhoneValid = !formData.phone || isValidPhoneIntl(formData.phone)
+
+  const formatLocalPhone = (value: string) =>
+    value.replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,15 +46,33 @@ export default function NewProspectPage() {
       setIsSubmitting(false)
       return
     }
+    if (formData.requesting_rut && !isValidRut(formData.requesting_rut)) {
+      toast.error('El RUT solicita no es válido')
+      setIsSubmitting(false)
+      return
+    }
+    if (formData.phone && !isValidPhoneIntl(formData.phone)) {
+      toast.error('El teléfono no es válido')
+      setIsSubmitting(false)
+      return
+    }
 
     try {
       await createProspect({
         type: formData.type,
         company_name: formData.company_name || undefined,
         contact_name: formData.contact_name,
+        contact_role: formData.contact_role || undefined,
         email: formData.email,
         phone: formData.phone || undefined,
+        phone_country: formData.phone_country,
         tax_id: formData.tax_id || undefined,
+        address: formData.address || undefined,
+        city: formData.city || undefined,
+        comuna: formData.comuna || undefined,
+        business_activity: formData.business_activity || undefined,
+        requesting_rut: formData.requesting_rut || undefined,
+        shipping_address: formData.shipping_address || undefined,
         notes: formData.notes || undefined
       })
       
@@ -129,6 +162,87 @@ export default function NewProspectPage() {
             />
           </div>
         )}
+        {formData.type === 'b2b' && (
+          <div>
+            <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
+              Dirección empresa
+            </label>
+            <Input
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder="Ej: Av. Siempre Viva 123"
+              className="h-12"
+            />
+          </div>
+        )}
+        {formData.type === 'b2b' && (
+          <div>
+            <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
+              Ciudad
+            </label>
+            <Input
+              value={formData.city}
+              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              placeholder="Ej: Santiago"
+              className="h-12"
+            />
+          </div>
+        )}
+        {formData.type === 'b2b' && (
+          <div>
+            <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
+              Comuna
+            </label>
+            <Input
+              value={formData.comuna}
+              onChange={(e) => setFormData({ ...formData, comuna: e.target.value })}
+              placeholder="Ej: Providencia"
+              className="h-12"
+            />
+          </div>
+        )}
+        {formData.type === 'b2b' && (
+          <div>
+            <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
+              Giro
+            </label>
+            <Input
+              value={formData.business_activity}
+              onChange={(e) => setFormData({ ...formData, business_activity: e.target.value })}
+              placeholder="Ej: Comercialización de alimentos"
+              className="h-12"
+            />
+          </div>
+        )}
+        {formData.type === 'b2b' && (
+          <div>
+            <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
+              RUT solicita
+            </label>
+            <RutInput
+              value={formData.requesting_rut}
+              onChange={(e) => setFormData({ ...formData, requesting_rut: e.target.value })}
+              placeholder="12.345.678-9"
+              className="h-12"
+            />
+            {formData.requesting_rut && !isRequestingRutValid && (
+              <p className="text-xs text-red-600 mt-1">RUT inválido</p>
+            )}
+          </div>
+        )}
+        {formData.type === 'b2b' && (
+          <div>
+            <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
+              Dirección de despacho
+            </label>
+            <Input
+              value={formData.shipping_address}
+              onChange={(e) => setFormData({ ...formData, shipping_address: e.target.value })}
+              placeholder="Ej: Bodega, calle 45 #120"
+              className="h-12"
+            />
+          </div>
+        )}
 
         {/* Contact Name */}
         <div>
@@ -140,6 +254,17 @@ export default function NewProspectPage() {
             value={formData.contact_name}
             onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
             placeholder="Ej: Juan Pérez"
+            className="h-12"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
+            Cargo del Contacto
+          </label>
+          <Input
+            value={formData.contact_role}
+            onChange={(e) => setFormData({ ...formData, contact_role: e.target.value })}
+            placeholder="Ej: Jefe de Compras"
             className="h-12"
           />
         </div>
@@ -164,12 +289,31 @@ export default function NewProspectPage() {
           <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
             Teléfono
           </label>
-          <Input
-            value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            placeholder="+56 9 1234 5678"
-            className="h-12"
-          />
+          <div className="flex gap-2">
+            <select
+              value={formData.phone_country}
+              onChange={(e) => setFormData({ ...formData, phone_country: e.target.value })}
+              className="h-12 w-28 rounded-xl border-2 border-slate-200 bg-white px-2 text-sm font-black uppercase tracking-wider text-slate-600"
+            >
+              <option value="56">+56</option>
+              <option value="54">+54</option>
+              <option value="51">+51</option>
+              <option value="57">+57</option>
+              <option value="52">+52</option>
+              <option value="55">+55</option>
+              <option value="34">+34</option>
+              <option value="1">+1</option>
+            </select>
+            <Input
+              value={formatLocalPhone(formData.phone)}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })}
+              placeholder="Ej: 9 123 456 789"
+              className="h-12"
+            />
+          </div>
+          {formData.phone && !isPhoneValid && (
+            <p className="text-xs text-red-600 mt-1">Teléfono inválido</p>
+          )}
         </div>
 
         {/* RUT */}
@@ -184,6 +328,9 @@ export default function NewProspectPage() {
             placeholder="12.345.678-9"
             className="h-12"
           />
+          {formData.tax_id && !isTaxIdValid && (
+            <p className="text-xs text-red-600 mt-1">RUT inválido</p>
+          )}
           <p className="text-xs text-slate-500 mt-1">Formato: 12.345.678-9</p>
         </div>
 
@@ -210,7 +357,7 @@ export default function NewProspectPage() {
           </Link>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isTaxIdValid || !isRequestingRutValid || !isPhoneValid}
             className="flex-1 uppercase font-black tracking-wider"
           >
             <Save className="w-4 h-4 mr-2" />

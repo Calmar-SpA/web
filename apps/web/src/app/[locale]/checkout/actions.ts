@@ -5,7 +5,7 @@ import { flow } from '@/lib/flow'
 import { sendOrderPaidAdminEmail, sendOrderPaidCustomerEmail } from '@/lib/mail'
 import { notifyLowInventoryIfNeeded } from '@/lib/inventory-alerts'
 import { formatRut, normalizeRut, isValidRut } from '@calmar/utils'
-import { B2BService, DiscountCodeService, LoyaltyService } from '@calmar/database'
+import { CRMService, DiscountCodeService, LoyaltyService } from '@calmar/database'
 import { revalidatePath } from 'next/cache'
 
 // Login action for checkout - returns result without redirecting
@@ -214,16 +214,18 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
 
   // 2. Handle B2B Discount
   let b2bPriceMap = new Map<string, number>()
-  let b2bClient: any = null
+  let b2bProspect: any = null
+  let isActiveB2B = false
   if (user) {
-    const b2bService = new B2BService(supabase)
-    b2bClient = await b2bService.getClientByUserId(user.id)
+    const crmService = new CRMService(supabase)
+    b2bProspect = await crmService.getProspectByUserId(user.id)
+    isActiveB2B = Boolean(b2bProspect?.type === 'b2b' && b2bProspect?.is_b2b_active)
     
-    if (b2bClient?.is_active) {
+    if (isActiveB2B) {
       const { data: b2bPrices, error: b2bPricesError } = await supabase
-        .from('b2b_product_prices')
+        .from('prospect_product_prices')
         .select('product_id, fixed_price')
-        .eq('b2b_client_id', b2bClient.id)
+        .eq('prospect_id', b2bProspect.id)
 
       if (b2bPricesError) throw b2bPricesError
 
@@ -243,7 +245,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
     }
 
     // Apply newsletter discount only if NOT B2B pricing
-    if (!b2bClient?.is_active && newsletterDiscountPercent && newsletterDiscountPercent > 0) {
+    if (!isActiveB2B && newsletterDiscountPercent && newsletterDiscountPercent > 0) {
       newsletterDiscountAmount = Math.floor(baseTotal * (Number(newsletterDiscountPercent) / 100))
       baseTotal -= newsletterDiscountAmount
     }
@@ -317,7 +319,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
 
   // 3.5 Handle Credit Limit Check if payment method is 'credit'
   if (data.paymentMethod === 'credit') {
-    if (!b2bClient?.is_active || Number(b2bClient.credit_limit) < totalWithShipping) {
+    if (!isActiveB2B || Number(b2bProspect?.credit_limit || 0) < totalWithShipping) {
       throw new Error('Crédito insuficiente o cuenta B2B no activa')
     }
   }
@@ -486,13 +488,10 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
 
   if (data.paymentMethod === 'credit') {
     // 1. Deduct from credit limit
-    const b2bService = new B2BService(supabase)
-    const b2bClient = await b2bService.getClientByUserId(user!.id)
-    
     await supabase
-      .from('b2b_clients')
-      .update({ credit_limit: Number(b2bClient.credit_limit) - totalWithShipping })
-      .eq('id', b2bClient.id)
+      .from('prospects')
+      .update({ credit_limit: Number(b2bProspect.credit_limit) - totalWithShipping })
+      .eq('id', b2bProspect.id)
 
     // 2. Record payment
     await supabase
