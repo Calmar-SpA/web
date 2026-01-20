@@ -77,7 +77,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams?: S
         </div>
         <div className="bg-white p-5 rounded-2xl border-2 border-slate-100 shadow-sm">
           <p className="text-xs font-black uppercase tracking-widest text-slate-500">Categorías activas</p>
-          <p className="text-2xl font-black text-slate-900 mt-2">{categories.filter((c: any) => c.is_active).length}</p>
+          <p className="text-2xl font-black text-slate-900 mt-2">{(categories ?? []).filter((c: any) => c.is_active).length}</p>
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams?: S
                 className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm"
               >
                 <option value="">Todas las categorías</option>
-                {categories.map((category: any) => (
+                {(categories ?? []).map((category: any) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>

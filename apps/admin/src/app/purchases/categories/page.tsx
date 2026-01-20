@@ -73,13 +73,13 @@ export default async function PurchaseCategoriesPage() {
                 : `No se pudieron cargar las categorías. ${errorMessage}`}
             </div>
           )}
-          {categories.length === 0 ? (
+          {(categories ?? []).length === 0 ? (
             <div className="py-12 text-center text-slate-500 bg-white rounded-xl border border-slate-200">
               Aún no hay categorías registradas.
             </div>
           ) : (
             <div className="space-y-4">
-              {categories.map((category: any) => (
+              {(categories ?? []).map((category: any) => (
                 <div key={category.id} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm space-y-4">
                   <div className="flex items-center justify-between">
                     <CategoryBadge name={category.name} color={category.color} />
