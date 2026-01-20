@@ -108,7 +108,7 @@ export default async function PurchaseDetailPage({ params }: { params: Promise<{
                   className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm"
                 >
                   <option value="">Selecciona un cliente</option>
-                  {prospects.map((prospect: any) => (
+                  {(prospects ?? []).map((prospect: any) => (
                     <option key={prospect.id} value={prospect.id}>
                       {prospect.company_name || prospect.contact_name || 'Sin nombre'} {prospect.tax_id ? `(${prospect.tax_id})` : ''}
                     </option>
