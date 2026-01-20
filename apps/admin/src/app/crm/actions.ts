@@ -57,7 +57,7 @@ export async function createProspect(data: {
   const prospect = await crmService.createProspect({
     ...prospectData,
     tax_id: formattedTaxId,
-    requesting_rut: requestingRut ? formatRut(requestingRut) : null,
+    requesting_rut: requestingRut ? formatRut(requestingRut) : undefined,
     phone: phoneFormatted
   })
 

@@ -68,20 +68,6 @@ export class CRMService {
   constructor(private supabase: SupabaseClient) {}
 
   /**
-   * Get prospect linked to a user account
-   */
-  async getProspectByUserId(userId: string) {
-    const { data, error } = await this.supabase
-      .from('prospects')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle()
-
-    if (error) throw error
-    return data
-  }
-
-  /**
    * Get all prospects with optional filters
    */
   async getProspects(filters?: {
@@ -186,83 +172,6 @@ export class CRMService {
 
     if (error) throw error
     return data
-  }
-
-  /**
-   * Approve prospect as B2B client
-   */
-  async approveProspectAsB2B(
-    id: string,
-    data: { credit_limit: number; payment_terms_days?: number }
-  ) {
-    const { data: prospect, error } = await this.supabase
-      .from('prospects')
-      .update({
-        is_b2b_active: true,
-        b2b_approved_at: new Date().toISOString(),
-        credit_limit: data.credit_limit,
-        payment_terms_days: data.payment_terms_days || 30,
-        stage: 'converted',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) throw error
-    return prospect
-  }
-
-  /**
-   * Get fixed prices for a prospect
-   */
-  async getProspectProductPrices(prospectId: string) {
-    const { data, error } = await this.supabase
-      .from('prospect_product_prices')
-      .select('product_id, fixed_price')
-      .eq('prospect_id', prospectId)
-
-    if (error) throw error
-    return data || []
-  }
-
-  /**
-   * Sync fixed prices for a prospect
-   */
-  async syncProspectProductPrices(prospectId: string, prices: ProspectProductPriceInput[]) {
-    const normalized = (prices || [])
-      .map(price => ({
-        prospect_id: prospectId,
-        product_id: price.product_id,
-        fixed_price: Number(price.fixed_price)
-      }))
-      .filter(price => price.product_id && Number.isFinite(price.fixed_price) && price.fixed_price >= 0)
-
-    if (normalized.length === 0) {
-      const { error } = await this.supabase
-        .from('prospect_product_prices')
-        .delete()
-        .eq('prospect_id', prospectId)
-
-      if (error) throw error
-      return
-    }
-
-    const productIds = normalized.map(price => `"${price.product_id}"`).join(',')
-
-    const { error: deleteError } = await this.supabase
-      .from('prospect_product_prices')
-      .delete()
-      .eq('prospect_id', prospectId)
-      .not('product_id', 'in', `(${productIds})`)
-
-    if (deleteError) throw deleteError
-
-    const { error: upsertError } = await this.supabase
-      .from('prospect_product_prices')
-      .upsert(normalized, { onConflict: 'prospect_id,product_id' })
-
-    if (upsertError) throw upsertError
   }
 
   /**
