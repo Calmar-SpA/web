@@ -30,7 +30,7 @@ export async function createProspect(data: {
   const taxId = normalizeRut(data.tax_id)
   const requestingRut = normalizeRut(data.requesting_rut)
   const phoneCountry = data.phone_country || '56'
-  const phoneFormatted = data.phone ? formatPhoneIntl(phoneCountry, data.phone) : null
+  const phoneFormatted = data.phone ? formatPhoneIntl(phoneCountry, data.phone) : undefined
   const { phone_country: _phoneCountry, ...prospectData } = data
 
   if (!taxId || !isValidRut(taxId)) {
