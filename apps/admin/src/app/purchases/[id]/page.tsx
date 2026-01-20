@@ -194,15 +194,15 @@ export default async function PurchaseDetailPage({ params }: { params: Promise<{
             </form>
           )}
 
-          {isMarketing && deliveries.length === 0 && (
+          {isMarketing && (deliveries ?? []).length === 0 && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
               Aún no hay entregas registradas para esta compra.
             </div>
           )}
 
-          {isMarketing && deliveries.length > 0 && (
+          {isMarketing && (deliveries ?? []).length > 0 && (
             <div className="space-y-4">
-              {deliveries.map((delivery: any) => (
+              {(deliveries ?? []).map((delivery: any) => (
                 <DeliveryCard key={delivery.id} delivery={delivery} prospects={prospects ?? []} />
               ))}
             </div>
