@@ -2,9 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { CRMService } from '@calmar/database'
-import { sendProspectAdminNotification, sendRefundAdminNotification } from '@/lib/mail'
+import { sendProspectActivationEmail, sendProspectAdminNotification, sendRefundAdminNotification } from '@/lib/mail'
 import { revalidatePath } from 'next/cache'
-import { formatPhoneIntl, formatRut, isValidPhoneIntl, isValidRut, normalizeRut } from '@calmar/utils'
+import { formatPhoneIntl, formatRut, isValidPhoneIntl, isValidRut, normalizeRut, parsePhoneIntl } from '@calmar/utils'
 
 type FixedPriceInput = { productId: string; fixedPrice: number }
 
@@ -161,6 +161,102 @@ export async function updateProspectStage(prospectId: string, stage: string) {
   
   await crmService.updateProspectStage(prospectId, stage)
   
+  revalidatePath('/crm/prospects')
+  revalidatePath(`/crm/prospects/${prospectId}`)
+}
+
+const REQUIRED_PROSPECT_FIELDS = [
+  { key: 'type', label: 'Tipo' },
+  { key: 'company_name', label: 'Razón Social' },
+  { key: 'contact_name', label: 'Nombre de Contacto' },
+  { key: 'contact_role', label: 'Cargo del Contacto' },
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Teléfono' },
+  { key: 'tax_id', label: 'RUT' },
+  { key: 'address', label: 'Dirección empresa' },
+  { key: 'city', label: 'Ciudad' },
+  { key: 'comuna', label: 'Comuna' },
+  { key: 'business_activity', label: 'Giro' },
+  { key: 'requesting_rut', label: 'RUT solicita' },
+  { key: 'shipping_address', label: 'Dirección de despacho' },
+  { key: 'notes', label: 'Notas' }
+]
+
+const isBlank = (value?: string | null) => !value || !String(value).trim()
+
+const getMissingActivationFields = (prospect: any) => {
+  const parsedPhone = parsePhoneIntl(prospect?.phone || '')
+  const phoneDigits = parsedPhone.digits || ''
+
+  return REQUIRED_PROSPECT_FIELDS.filter(({ key }) => {
+    if (key === 'phone') {
+      return isBlank(phoneDigits) || !isValidPhoneIntl(phoneDigits)
+    }
+    if (key === 'tax_id') {
+      return isBlank(prospect?.tax_id) || !isValidRut(String(prospect.tax_id))
+    }
+    if (key === 'requesting_rut') {
+      return isBlank(prospect?.requesting_rut) || !isValidRut(String(prospect.requesting_rut))
+    }
+    if (key === 'type') {
+      return prospect?.type !== 'b2b' && prospect?.type !== 'b2c'
+    }
+    return isBlank(prospect?.[key])
+  })
+}
+
+export async function activateProspect(prospectId: string) {
+  const supabase = await createClient()
+  const crmService = new CRMService(supabase)
+
+  const { data: prospect, error } = await supabase
+    .from('prospects')
+    .select('*')
+    .eq('id', prospectId)
+    .single()
+
+  if (error) throw error
+
+  const missingFields = getMissingActivationFields(prospect)
+  if (missingFields.length > 0) {
+    const missingLabels = missingFields.map(field => field.label).join(', ')
+    throw new Error(`Faltan datos obligatorios: ${missingLabels}`)
+  }
+
+  const { data: userByEmail } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', prospect.email)
+    .maybeSingle()
+
+  const hasAccount = Boolean(prospect.user_id || userByEmail)
+
+  await crmService.updateProspectStage(prospectId, 'converted')
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
+  const registerUrl = new URL('/register', baseUrl)
+  registerUrl.searchParams.set('type', prospect.type || '')
+  registerUrl.searchParams.set('company_name', prospect.company_name || '')
+  registerUrl.searchParams.set('contact_name', prospect.contact_name || '')
+  registerUrl.searchParams.set('contact_role', prospect.contact_role || '')
+  registerUrl.searchParams.set('email', prospect.email || '')
+  registerUrl.searchParams.set('phone', prospect.phone || '')
+  registerUrl.searchParams.set('tax_id', prospect.tax_id || '')
+  registerUrl.searchParams.set('address', prospect.address || '')
+  registerUrl.searchParams.set('city', prospect.city || '')
+  registerUrl.searchParams.set('comuna', prospect.comuna || '')
+  registerUrl.searchParams.set('business_activity', prospect.business_activity || '')
+  registerUrl.searchParams.set('requesting_rut', prospect.requesting_rut || '')
+  registerUrl.searchParams.set('shipping_address', prospect.shipping_address || '')
+  registerUrl.searchParams.set('notes', prospect.notes || '')
+
+  await sendProspectActivationEmail({
+    contactName: prospect.contact_name,
+    contactEmail: prospect.email,
+    hasAccount,
+    registerUrl: registerUrl.toString()
+  })
+
   revalidatePath('/crm/prospects')
   revalidatePath(`/crm/prospects/${prospectId}`)
 }

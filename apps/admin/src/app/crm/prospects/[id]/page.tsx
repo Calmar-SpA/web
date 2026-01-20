@@ -7,18 +7,19 @@ import { CRMService } from '@calmar/database'
 import { ArrowLeft, Mail, Phone, Building2, Plus, Package, DollarSign, Calendar, User, ShieldCheck } from 'lucide-react'
 import { Button, Input, RutInput } from '@calmar/ui'
 import Link from 'next/link'
-import { createInteraction, updateProspect, updateProspectStage } from '../../actions'
+import { activateProspect, createInteraction, updateProspect, updateProspectStage } from '../../actions'
 import { toast } from 'sonner'
 import { isValidPhoneIntl, isValidRut, parsePhoneIntl } from '@calmar/utils'
 import { formatClp } from '@calmar/utils'
 import { ApproveB2BModal } from '../approve-b2b-modal'
+import { CompleteDataModal, getMissingProspectFields } from '../complete-data-modal'
 
 const STAGES = [
   { id: 'contact', label: 'Contacto' },
   { id: 'interested', label: 'Interesado' },
   { id: 'sample_sent', label: 'Muestra Enviada' },
   { id: 'negotiation', label: 'Negociación' },
-  { id: 'converted', label: 'Convertido' },
+  { id: 'converted', label: 'Activo' },
   { id: 'lost', label: 'Perdido' }
 ]
 
@@ -36,6 +37,8 @@ export default function ProspectDetailPage() {
   const [showInteractionForm, setShowInteractionForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
   const [showApproveModal, setShowApproveModal] = useState(false)
+  const [showCompleteModal, setShowCompleteModal] = useState(false)
+  const [pendingStage, setPendingStage] = useState<string | null>(null)
   const [taxIdValue, setTaxIdValue] = useState('')
   const [requestingRutValue, setRequestingRutValue] = useState('')
   const [phoneValue, setPhoneValue] = useState('')
@@ -111,8 +114,30 @@ export default function ProspectDetailPage() {
     value.replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ')
 
   const handleStageChange = async (newStage: string) => {
-    if (prospect?.type === 'b2b' && newStage === 'converted' && !prospect?.is_b2b_active) {
-      setShowApproveModal(true)
+    if (!prospect) return
+
+    if (newStage === 'converted') {
+      const missingFields = getMissingProspectFields(prospect)
+      if (missingFields.length > 0) {
+        setPendingStage(newStage)
+        setShowCompleteModal(true)
+        return
+      }
+
+      if (prospect.type === 'b2b' && !prospect.is_b2b_active) {
+        setPendingStage(newStage)
+        setShowApproveModal(true)
+        return
+      }
+
+      try {
+        await activateProspect(prospectId)
+        await loadData()
+        toast.success('Prospecto activado')
+      } catch (error: any) {
+        console.error('Error updating stage:', error)
+        toast.error('Error al activar prospecto')
+      }
       return
     }
 
@@ -164,6 +189,42 @@ export default function ProspectDetailPage() {
     } catch (error: any) {
       console.error('Error creating interaction:', error)
       toast.error('Error al registrar interacción')
+    }
+  }
+
+  const handleCompleteDataSuccess = async () => {
+    await loadData()
+    if (pendingStage === 'converted' && prospect) {
+      if (prospect.type === 'b2b' && !prospect.is_b2b_active) {
+        setShowApproveModal(true)
+        return
+      }
+      try {
+        await activateProspect(prospectId)
+        await loadData()
+        toast.success('Prospecto activado')
+      } catch (error: any) {
+        console.error('Error updating stage:', error)
+        toast.error('Error al activar prospecto')
+      } finally {
+        setPendingStage(null)
+      }
+    }
+  }
+
+  const handleApproveSuccess = async () => {
+    await loadData()
+    if (pendingStage === 'converted') {
+      try {
+        await activateProspect(prospectId)
+        await loadData()
+        toast.success('Prospecto activado')
+      } catch (error: any) {
+        console.error('Error updating stage:', error)
+        toast.error('Error al activar prospecto')
+      } finally {
+        setPendingStage(null)
+      }
     }
   }
 
@@ -749,9 +810,19 @@ export default function ProspectDetailPage() {
           companyName={prospect.company_name || prospect.contact_name}
           isOpen={showApproveModal}
           onClose={() => setShowApproveModal(false)}
-          onSuccess={loadData}
+          onSuccess={handleApproveSuccess}
         />
       )}
+
+      <CompleteDataModal
+        prospect={prospect}
+        isOpen={showCompleteModal}
+        onClose={() => {
+          setShowCompleteModal(false)
+          setPendingStage(null)
+        }}
+        onSuccess={handleCompleteDataSuccess}
+      />
     </div>
   )
 }

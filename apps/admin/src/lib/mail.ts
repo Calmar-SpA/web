@@ -191,6 +191,54 @@ export async function sendProspectAdminNotification(params: {
   });
 }
 
+export async function sendProspectActivationEmail(params: {
+  contactName: string;
+  contactEmail: string;
+  hasAccount: boolean;
+  registerUrl: string;
+}) {
+  const greeting = params.contactName ? `Hola ${params.contactName},` : 'Hola,';
+  const accountMessage = params.hasAccount
+    ? `
+      <p style="margin:12px 0;line-height:1.6;">
+        Tu cuenta ya esta activa. Puedes ingresar y revisar el detalle de tus pedidos y toda tu informacion.
+      </p>
+      <p style="margin:12px 0;line-height:1.6;">
+        Si necesitas ayuda, responde a este correo.
+      </p>
+    `
+    : `
+      <p style="margin:12px 0;line-height:1.6;">
+        Ya estas activo en el sistema. Para ingresar debes registrarte con el mismo correo con el que creaste la ficha.
+      </p>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${params.registerUrl}" style="background:${brand.primaryDark};color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">
+          Crear mi cuenta
+        </a>
+      </div>
+      <p style="margin:12px 0;line-height:1.6;">
+        Solo tendras que crear una contraseña. Tus datos ya estaran completos.
+      </p>
+    `;
+
+  const content = `
+    <p style="margin:12px 0;line-height:1.6;">${greeting}</p>
+    <p style="margin:12px 0;line-height:1.6;">
+      Tu estado en Calmar ahora es <strong>Activo</strong>.
+    </p>
+    ${accountMessage}
+  `;
+
+  const html = buildEmailShell('Tu cuenta esta activa', content);
+
+  return sendEmail({
+    to: params.contactEmail,
+    subject: 'Tu cuenta en Calmar esta activa',
+    html,
+    replyTo: ADMIN_EMAIL,
+  });
+}
+
 export async function sendRefundAdminNotification(params: {
   referenceId: string;
   reason?: string | null;

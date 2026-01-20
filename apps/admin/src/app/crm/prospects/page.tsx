@@ -6,15 +6,16 @@ import { CRMService } from '@calmar/database'
 import { Search, Plus, Building2, User, Mail, Phone, LayoutGrid, List, Trash2 } from 'lucide-react'
 import { Input } from '@calmar/ui'
 import Link from 'next/link'
-import { updateProspectStage, deleteProspect } from '../actions'
+import { activateProspect, updateProspectStage, deleteProspect } from '../actions'
 import { toast } from 'sonner'
+import { CompleteDataModal, getMissingProspectFields, ProspectForCompletion } from './complete-data-modal'
 
 const STAGES = [
   { id: 'contact', label: 'Contacto', color: 'bg-slate-100' },
   { id: 'interested', label: 'Interesado', color: 'bg-blue-100' },
   { id: 'sample_sent', label: 'Muestra Enviada', color: 'bg-purple-100' },
   { id: 'negotiation', label: 'Negociación', color: 'bg-yellow-100' },
-  { id: 'converted', label: 'Convertido', color: 'bg-green-100' },
+  { id: 'converted', label: 'Activo', color: 'bg-green-100' },
   { id: 'lost', label: 'Perdido', color: 'bg-red-100' }
 ]
 
@@ -26,6 +27,9 @@ export default function ProspectsPage() {
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
   const [draggedProspect, setDraggedProspect] = useState<string | null>(null)
   const [ordersByProspect, setOrdersByProspect] = useState<Record<string, { count: number; lastDate?: string; total: number }>>({})
+  const [showCompleteModal, setShowCompleteModal] = useState(false)
+  const [selectedProspect, setSelectedProspect] = useState<ProspectForCompletion | null>(null)
+  const [pendingStage, setPendingStage] = useState<string | null>(null)
 
   const loadProspects = async () => {
     setIsLoading(true)
@@ -101,9 +105,21 @@ export default function ProspectsPage() {
     e.preventDefault()
     
     if (!draggedProspect) return
+    const prospect = prospects.find(p => p.id === draggedProspect)
 
     try {
-      await updateProspectStage(draggedProspect, targetStage)
+      if (targetStage === 'converted' && prospect) {
+        const missingFields = getMissingProspectFields(prospect)
+        if (missingFields.length > 0) {
+          setSelectedProspect(prospect)
+          setPendingStage(targetStage)
+          setShowCompleteModal(true)
+          return
+        }
+        await activateProspect(draggedProspect)
+      } else {
+        await updateProspectStage(draggedProspect, targetStage)
+      }
       await loadProspects()
       toast.success('Etapa actualizada')
     } catch (error: any) {
@@ -369,6 +385,30 @@ export default function ProspectsPage() {
           )}
         </div>
       )}
+
+      <CompleteDataModal
+        prospect={selectedProspect}
+        isOpen={showCompleteModal}
+        onClose={() => {
+          setShowCompleteModal(false)
+          setSelectedProspect(null)
+          setPendingStage(null)
+        }}
+        onSuccess={async () => {
+          if (pendingStage === 'converted' && selectedProspect) {
+            try {
+              await activateProspect(selectedProspect.id)
+              await loadProspects()
+              toast.success('Prospecto activado')
+            } catch (error: any) {
+              console.error('Error updating stage:', error)
+              toast.error('Error al activar prospecto')
+            } finally {
+              setPendingStage(null)
+            }
+          }
+        }}
+      />
     </div>
   )
 }

@@ -231,6 +231,11 @@ calmar-ecommerce/
 - **Registro de muestras, consignaciones y ventas**
 - **Vinculación de compras web a prospectos por RUT**
 
+### 🧾 Gestión Interna
+
+- **Registro de compras internas** con categorías y estados de pago
+- **Entregas de material publicitario** asociadas a clientes
+
 ### 🎁 Programa de Fidelización (Calmar Points)
 
 - **Acumulación de puntos** por compras
@@ -285,6 +290,7 @@ La tienda online principal para clientes finales.
 - `/checkout` - Proceso de compra
 - `/account` - Panel de usuario con pedidos, puntos y configuración
 - `/login` - Autenticación
+- `/register` - Registro con datos prellenados desde CRM
 - `/about` - Página "Nosotros"
 - `/contact` - Formulario de contacto
 - `/b2b-apply` - Postulación al programa B2B
@@ -298,6 +304,7 @@ Panel de administración para gestión interna.
 - Gestión de productos
 - Gestión de pedidos
 - Gestión de códigos de descuento
+- Registro de compras internas y material publicitario
 - Gestión de usuarios y aprobación B2B desde CRM
 - CRM de prospectos y movimientos
 - Reportes y métricas
@@ -462,6 +469,9 @@ npm run supabase:migrate # Reset y aplicar migraciones
 | `stock_entries`          | Entradas de stock con trazabilidad y facturación (fechas incluidas) |
 | `stock_entry_history`    | Historial de cambios de inventario por ingreso        |
 | `supplier_items`         | Productos/servicios por proveedor con costo neto      |
+| `purchase_categories`    | Categorías de compras internas            |
+| `purchases`              | Registro de compras internas              |
+| `marketing_deliveries`   | Entregas de material publicitario a clientes |
 | `contact_messages`       | Mensajes del formulario de contacto       |
 | `newsletter_subscribers` | Suscriptores al boletín                   |
 
@@ -491,6 +501,7 @@ npm run supabase:migrate # Reset y aplicar migraciones
 - [x] Animaciones con Framer Motion
 - [x] Notificaciones por email transaccionales
 - [x] Sistema de cupones de descuento
+- [x] Registro de compras internas y material publicitario
 
 ### 🔄 En Desarrollo
 

@@ -16,11 +16,13 @@ import {
   Tag,
   Boxes,
   Truck,
+  Receipt,
   ChevronLeft,
   ChevronRight
 } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
+import { SidebarTooltip } from "./sidebar-tooltip"
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -43,6 +45,7 @@ export function Sidebar() {
     { href: "/orders", label: "Pedidos", icon: ShoppingCart, color: "text-calmar-ocean" },
     { href: "/products", label: "Productos", icon: Package, color: "text-calmar-primary" },
     { href: "/inventory", label: "Inventario", icon: Boxes, color: "text-calmar-primary-light" },
+    { href: "/purchases", label: "Compras", icon: Receipt, color: "text-calmar-primary" },
     { href: "/suppliers", label: "Proveedores", icon: Truck, color: "text-calmar-mint" },
     { href: "/discount-codes", label: "Códigos", icon: Tag, color: "text-calmar-mint" },
     { href: "/crm", label: "CRM", icon: UsersRound, color: "text-calmar-accent" },
@@ -72,14 +75,14 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside className={`
         fixed md:sticky top-0 left-0 z-40
-        w-64 ${isCollapsed ? "md:w-16" : "md:w-64"} h-screen
+        w-64 ${isCollapsed ? "md:w-20" : "md:w-64"} h-screen
         bg-[#1d504b]
         text-white flex flex-col
         transform transition-transform duration-300 ease-in-out
         shadow-2xl
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-        <div className={`p-8 ${isCollapsed ? "md:px-3 md:py-6" : ""}`}>
+        <div className={`flex-shrink-0 p-8 ${isCollapsed ? "md:px-3 md:py-6" : ""}`}>
           <div className={`flex ${isCollapsed ? "md:justify-center" : ""}`}>
             <Image 
               src="https://zyqkuhzsnomufwmfoily.supabase.co/storage/v1/object/public/products/logo-calmar-header.webp" 
@@ -94,76 +97,49 @@ export function Sidebar() {
           </p>
         </div>
         
-        <nav className="flex-1 px-4 overflow-visible">
-          <div className={`space-y-2 ${isCollapsed ? "md:space-y-1" : ""}`}>
+        <nav className="flex-1 px-4 overflow-y-auto sidebar-scroll">
+          <div className="space-y-2 pb-2">
             {navItems.map((item) => {
               const Icon = item.icon
               const active = isActive(item.href)
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsMobileOpen(false)}
-                  className={`
-                    group relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-semibold tracking-tight
-                    ${isCollapsed ? "md:justify-center md:px-2 md:py-2 md:gap-0" : ""}
-                    ${active 
-                      ? 'bg-emerald-500/20 text-white border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
-                      : 'text-emerald-100/60 hover:bg-white/5 hover:text-white'
-                    }
-                  `}
-                >
-                  <Icon
-                    className={`w-5 h-5 ${isCollapsed ? "md:w-7 md:h-7" : ""} ${active ? 'text-emerald-400' : 'text-emerald-100/40'}`}
-                  />
-                  <span className={isCollapsed ? "md:hidden" : ""}>{item.label}</span>
-                  
-                  {isCollapsed && (
-                    <div className="
-                      absolute left-full top-1/2 -translate-y-1/2 ml-4
-                      px-3 py-1.5 rounded-md bg-slate-900 text-white text-xs font-medium
-                      opacity-0 invisible group-hover:opacity-100 group-hover:visible
-                      transition-all duration-200 transform scale-95 group-hover:scale-100
-                      pointer-events-none whitespace-nowrap shadow-xl border border-white/10
-                      hidden md:block z-[100]
-                    ">
-                      {item.label}
-                      {/* Arrow */}
-                      <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-slate-900" />
-                    </div>
-                  )}
-                </Link>
+                <SidebarTooltip key={item.href} content={item.label} enabled={isCollapsed}>
+                  <Link
+                    href={item.href}
+                    onClick={() => setIsMobileOpen(false)}
+                    className={`
+                      flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-semibold tracking-tight
+                      ${isCollapsed ? "md:justify-center md:px-3 md:py-3 md:gap-0" : ""}
+                      ${active 
+                        ? 'bg-emerald-500/20 text-white border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
+                        : 'text-emerald-100/60 hover:bg-white/5 hover:text-white'
+                      }
+                    `}
+                  >
+                    <Icon
+                      className={`w-5 h-5 flex-shrink-0 ${active ? 'text-emerald-400' : 'text-emerald-100/40'}`}
+                    />
+                    <span className={isCollapsed ? "md:hidden" : ""}>{item.label}</span>
+                  </Link>
+                </SidebarTooltip>
               )
             })}
           </div>
         </nav>
 
-        <div className={`p-4 border-t border-white/5 space-y-2 ${isCollapsed ? "md:pt-3" : ""}`}>
-          <button
-            className={`
-              group relative flex items-center gap-3 w-full px-4 py-3 rounded-xl
-              hover:bg-red-500/10 text-red-300 hover:text-red-100 transition-colors text-sm font-semibold tracking-tight
-              ${isCollapsed ? "md:justify-center md:px-2 md:py-2 md:gap-0" : ""}
-            `}
-          >
-            <LogOut className={`w-4 h-4 ${isCollapsed ? "md:w-7 md:h-7" : ""}`} />
-            <span className={isCollapsed ? "md:hidden" : ""}>Cerrar Sesión</span>
-
-            {isCollapsed && (
-              <div className="
-                absolute left-full top-1/2 -translate-y-1/2 ml-4
-                px-3 py-1.5 rounded-md bg-slate-900 text-white text-xs font-medium
-                opacity-0 invisible group-hover:opacity-100 group-hover:visible
-                transition-all duration-200 transform scale-95 group-hover:scale-100
-                pointer-events-none whitespace-nowrap shadow-xl border border-white/10
-                hidden md:block z-[100]
-              ">
-                Cerrar Sesión
-                {/* Arrow */}
-                <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-slate-900" />
-              </div>
-            )}
-          </button>
+        <div className={`flex-shrink-0 p-4 border-t border-white/5 ${isCollapsed ? "md:pt-3" : ""}`}>
+          <SidebarTooltip content="Cerrar Sesión" enabled={isCollapsed}>
+            <button
+              className={`
+                flex items-center gap-3 w-full px-4 py-3 rounded-xl
+                hover:bg-red-500/10 text-red-300 hover:text-red-100 transition-colors text-sm font-semibold tracking-tight
+                ${isCollapsed ? "md:justify-center md:px-3 md:py-3 md:gap-0" : ""}
+              `}
+            >
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+              <span className={isCollapsed ? "md:hidden" : ""}>Cerrar Sesión</span>
+            </button>
+          </SidebarTooltip>
         </div>
       </aside>
 
@@ -173,7 +149,7 @@ export function Sidebar() {
           hidden md:flex items-center justify-center
           fixed top-4 z-50 h-8 w-8 rounded-full
           bg-white text-calmar-primary shadow-md hover:shadow-lg transition
-          ${isCollapsed ? "left-16 ml-2" : "left-64 ml-2"}
+          ${isCollapsed ? "left-20 ml-2" : "left-64 ml-2"}
         `}
         title={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
         aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
