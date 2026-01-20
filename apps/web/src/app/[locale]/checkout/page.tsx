@@ -15,13 +15,13 @@ export default async function CheckoutPage() {
         .maybeSingle()
     : { data: null }
 
-  const b2bPrices = b2bProspect?.is_b2b_active
+  const { data: b2bPrices } = b2bProspect?.is_b2b_active
     ? await supabase
         .from('prospect_product_prices')
         .select('product_id, fixed_price')
         .eq('prospect_id', b2bProspect.id)
-    : []
-  const b2bPriceMap = b2bPrices.reduce<Record<string, number>>((acc, price) => {
+    : { data: [] }
+  const b2bPriceMap = (b2bPrices || []).reduce<Record<string, number>>((acc, price) => {
     acc[price.product_id] = Number(price.fixed_price)
     return acc
   }, {})
