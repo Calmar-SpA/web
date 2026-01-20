@@ -26,7 +26,7 @@ export type ProspectForCompletion = {
   is_b2b_active?: boolean | null
 }
 
-type MissingField = { key: keyof ProspectForCompletion | 'phone_country'; label: string }
+type MissingField = { key: keyof ProspectForCompletion; label: string }
 
 const REQUIRED_FIELDS: MissingField[] = [
   { key: 'type', label: 'Tipo' },
