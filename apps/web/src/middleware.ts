@@ -1,4 +1,4 @@
-import { type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import createMiddleware from 'next-intl/middleware'
 import { locales, defaultLocale } from './i18n/config'
@@ -12,10 +12,28 @@ const intlMiddleware = createMiddleware({
 export async function middleware(request: NextRequest) {
   // 1. Update Supabase session
   // This updates request.cookies AND returns a response with set-cookie headers if needed
-  const sessionResponse = await updateSession(request)
+  const { response: sessionResponse, user } = await updateSession(request)
   
   // 2. Handle I18n routing
   const intlResponse = intlMiddleware(request)
+
+  const pathname = request.nextUrl.pathname
+  const pathSegments = pathname.split('/').filter(Boolean)
+  const pathLocale = locales.includes(pathSegments[0]) ? pathSegments[0] : null
+  const accountPath = pathLocale ? `/${pathLocale}/account` : '/account'
+  const needsAuth = pathname === accountPath || pathname.startsWith(`${accountPath}/`)
+
+  if (needsAuth && !user) {
+    const loginPath = pathLocale ? `/${pathLocale}/login` : '/login'
+    const redirectResponse = NextResponse.redirect(new URL(loginPath, request.url))
+
+    sessionResponse.cookies.getAll().forEach((cookie) => {
+      const { name, value, ...options } = cookie
+      redirectResponse.cookies.set(name, value, options)
+    })
+
+    return redirectResponse
+  }
 
   // 3. Merge cookies from sessionResponse into intlResponse
   // This ensures that if updateSession refreshed a token, those cookies are kept.

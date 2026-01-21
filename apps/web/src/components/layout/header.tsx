@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic'
 import { useActionState, useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { completeProfile, type CompleteProfileState } from "@/actions/complete-profile"
+import { logout } from "@/app/[locale]/login/actions"
 
 const LanguageSwitcher = dynamic(() => import("./language-switcher").then(mod => ({ default: mod.LanguageSwitcher })), {
   ssr: false,
@@ -25,6 +26,7 @@ export function Header() {
   const t = useTranslations("Navigation")
   const profileT = useTranslations("ProfileCompletion")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [userName, setUserName] = useState<string | null>(null)
   const [userRut, setUserRut] = useState<string | null>(null)
@@ -41,6 +43,10 @@ export function Header() {
     { name: capitalize(t("about")), href: "/about" },
     { name: capitalize(t("contact")), href: "/contact" },
   ]
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -144,21 +150,33 @@ export function Header() {
           <LanguageSwitcher />
           
           {hasUser ? (
-            <Link href="/account" className="hidden sm:flex items-center gap-3 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors">
-              <div className="w-8 h-8 rounded-full bg-calmar-primary/10 flex items-center justify-center text-calmar-primary text-xs font-bold">
-                {initials || "U"}
-              </div>
-              <div className="leading-tight">
-                <span className="block text-xs font-bold text-foreground">
-                  {displayName}
-                </span>
-                <span className="block text-[11px] text-foreground/60">
-                  {userEmail}
-                </span>
-              </div>
-            </Link>
+            <>
+              <Link href="/account" className="hidden sm:flex items-center gap-3 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors">
+                <div className="w-8 h-8 rounded-full bg-calmar-primary/10 flex items-center justify-center text-calmar-primary text-xs font-bold">
+                  {initials || "U"}
+                </div>
+                <div className="leading-tight">
+                  <span className="block text-xs font-bold text-foreground">
+                    {displayName}
+                  </span>
+                  <span className="block text-[11px] text-foreground/60">
+                    {userEmail}
+                  </span>
+                </div>
+              </Link>
+              <form action={logout} className="hidden sm:block">
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  className="text-base font-bold text-red-600 hover:text-red-700 hover:bg-red-50"
+                  style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
+                >
+                  {t("logout")}
+                </Button>
+              </form>
+            </>
           ) : (
-            <Link href="/account" className="hidden sm:block">
+            <Link href="/login" className="hidden sm:block">
               <Button variant="ghost" className="text-base font-bold hover:text-primary" style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}>
                 {t("account").charAt(0).toUpperCase() + t("account").slice(1).toLowerCase()}
               </Button>
@@ -167,78 +185,103 @@ export function Header() {
           <CartDrawer />
           
           {/* Mobile Menu */}
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" className="md:hidden p-2" aria-label="Abrir menú">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="3" y1="12" x2="21" y2="12"></line>
-                  <line x1="3" y1="6" x2="21" y2="6"></line>
-                  <line x1="3" y1="18" x2="21" y2="18"></line>
-                </svg>
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="w-full sm:max-w-md flex flex-col p-0">
-              <div className="p-6 border-b flex items-center justify-between">
-                <SheetTitle className="text-base font-bold">Menú</SheetTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full hover:bg-slate-100 h-8 w-8 transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  aria-label="Cerrar menú"
-                >
-                  <div className="relative w-4 h-4">
-                    <div className="absolute top-1/2 left-0 w-full h-[2px] bg-slate-900 rotate-45 transform -translate-y-1/2 rounded-full" />
-                    <div className="absolute top-1/2 left-0 w-full h-[2px] bg-slate-900 -rotate-45 transform -translate-y-1/2 rounded-full" />
-                  </div>
+          {isHydrated ? (
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" className="md:hidden p-2" aria-label="Abrir menú">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                  </svg>
                 </Button>
-              </div>
-              <nav className="p-6 flex flex-col gap-4">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="text-lg font-bold text-foreground/90 hover:text-primary transition-colors"
-                    style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
+              </SheetTrigger>
+              <SheetContent className="w-full sm:max-w-md flex flex-col p-0">
+                <div className="p-6 border-b flex items-center justify-between">
+                  <SheetTitle className="text-base font-bold">Menú</SheetTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full hover:bg-slate-100 h-8 w-8 transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
+                    aria-label="Cerrar menú"
                   >
-                    {link.name}
-                  </Link>
-                ))}
-              </nav>
-              <div className="px-6 pb-6">
-                <div className="h-px w-full bg-slate-100 mb-4" />
-                {hasUser ? (
-                  <Link
-                    href="/account"
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:border-slate-300 transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <div className="w-9 h-9 rounded-full bg-calmar-primary/10 flex items-center justify-center text-calmar-primary text-xs font-bold">
-                      {initials || "U"}
+                    <div className="relative w-4 h-4">
+                      <div className="absolute top-1/2 left-0 w-full h-[2px] bg-slate-900 rotate-45 transform -translate-y-1/2 rounded-full" />
+                      <div className="absolute top-1/2 left-0 w-full h-[2px] bg-slate-900 -rotate-45 transform -translate-y-1/2 rounded-full" />
                     </div>
-                    <div className="min-w-0">
-                      <span className="block text-sm font-bold text-foreground truncate">
-                        {displayName}
-                      </span>
-                      <span className="block text-xs text-foreground/60 truncate">
-                        {userEmail}
-                      </span>
+                  </Button>
+                </div>
+                <nav className="p-6 flex flex-col gap-4">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="text-lg font-bold text-foreground/90 hover:text-primary transition-colors"
+                      style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {link.name}
+                    </Link>
+                  ))}
+                </nav>
+                <div className="px-6 pb-6">
+                  <div className="h-px w-full bg-slate-100 mb-4" />
+                  {hasUser ? (
+                    <div className="space-y-3">
+                      <Link
+                        href="/account"
+                        className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:border-slate-300 transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <div className="w-9 h-9 rounded-full bg-calmar-primary/10 flex items-center justify-center text-calmar-primary text-xs font-bold">
+                          {initials || "U"}
+                        </div>
+                        <div className="min-w-0">
+                          <span className="block text-sm font-bold text-foreground truncate">
+                            {displayName}
+                          </span>
+                          <span className="block text-xs text-foreground/60 truncate">
+                            {userEmail}
+                          </span>
+                        </div>
+                      </Link>
+                      <form action={logout}>
+                        <Button
+                          type="submit"
+                          className="w-full border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+                        >
+                          {t("logout")}
+                        </Button>
+                      </form>
                     </div>
-                  </Link>
-                ) : (
-                  <Link
-                    href="/account"
-                    className="text-base font-bold text-foreground/80 hover:text-primary transition-colors"
-                    style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {t("account").charAt(0).toUpperCase() + t("account").slice(1).toLowerCase()}
-                  </Link>
-                )}
-              </div>
-            </SheetContent>
-          </Sheet>
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="text-base font-bold text-foreground/80 hover:text-primary transition-colors"
+                      style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {t("account").charAt(0).toUpperCase() + t("account").slice(1).toLowerCase()}
+                    </Link>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+          ) : (
+            <Button
+              variant="ghost"
+              className="md:hidden p-2"
+              aria-label="Abrir menú"
+              disabled
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </Button>
+          )}
         </div>
         </div>
       </header>

@@ -196,13 +196,24 @@ export async function sendProspectActivationEmail(params: {
   contactEmail: string;
   hasAccount: boolean;
   registerUrl: string;
+  accountUrl?: string;
 }) {
   const greeting = params.contactName ? `Hola ${params.contactName},` : 'Hola,';
+  const accountButton = params.accountUrl
+    ? `
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${params.accountUrl}" style="background:${brand.primaryDark};color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">
+          Ir a mi cuenta
+        </a>
+      </div>
+    `
+    : ''
   const accountMessage = params.hasAccount
     ? `
       <p style="margin:12px 0;line-height:1.6;">
         Tu cuenta ya esta activa. Puedes ingresar y revisar el detalle de tus pedidos y toda tu informacion.
       </p>
+      ${accountButton}
       <p style="margin:12px 0;line-height:1.6;">
         Si necesitas ayuda, responde a este correo.
       </p>

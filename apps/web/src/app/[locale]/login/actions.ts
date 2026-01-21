@@ -7,6 +7,8 @@ import { normalizeRut, isValidRut } from '@calmar/utils'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
+  const locale = String(formData.get('locale') || '').trim()
+  const accountPath = locale ? `/${locale}/account` : '/account'
 
   // type-casting here for convenience
   // in practice, you should use a validation library
@@ -22,13 +24,15 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  redirect(accountPath)
 }
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
   const locale = String(formData.get('locale') || '').trim()
   const loginPath = locale ? `/${locale}/login` : '/login'
+  const buildSignupRedirect = (code: string) =>
+    redirect(`${loginPath}?tab=register&signup_error=${code}`)
 
   const data = {
     email: formData.get('email') as string,
@@ -39,14 +43,14 @@ export async function signup(formData: FormData) {
   const fullNameParts = fullNameInput.split(/\s+/).filter(Boolean)
 
   if (fullNameParts.length < 2) {
-    redirect(`${loginPath}?signup_error=full_name`)
+    buildSignupRedirect('full_name')
   }
 
   const rutInput = String(formData.get('rut') || '')
   const rut = normalizeRut(rutInput)
 
   if (!rut || !isValidRut(rut)) {
-    redirect(`${loginPath}?signup_error=rut`)
+    buildSignupRedirect('rut')
   }
 
   const { error } = await supabase.auth.signUp({
@@ -60,7 +64,22 @@ export async function signup(formData: FormData) {
   })
 
   if (error) {
-    redirect(`${loginPath}?signup_error=generic`)
+    const message = error.message.toLowerCase()
+    const code = error.code?.toLowerCase() || ''
+
+    if (code.includes('user_already_exists') || message.includes('already registered') || message.includes('already exists')) {
+      buildSignupRedirect('email_exists')
+    }
+
+    if (code.includes('weak_password') || (message.includes('password') && (message.includes('weak') || message.includes('short')))) {
+      buildSignupRedirect('weak_password')
+    }
+
+    if (code.includes('email_address_invalid') || (message.includes('email') && message.includes('invalid'))) {
+      buildSignupRedirect('email_invalid')
+    }
+
+    buildSignupRedirect('generic')
   }
 
   revalidatePath('/', 'layout')

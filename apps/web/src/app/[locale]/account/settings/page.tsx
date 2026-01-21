@@ -6,6 +6,7 @@ import { getTranslations } from 'next-intl/server'
 import { User, Shield, Bell, Save } from 'lucide-react'
 import { updateProfile, updatePassword, updateNewsletterPreference } from './actions'
 import { ProfileForm } from '@/components/account/profile-form'
+import { logout } from '../../login/actions'
 
 export default async function SettingsPage({
   params,
@@ -98,8 +99,8 @@ export default async function SettingsPage({
               </div>
             </form>
 
-            <form action="/auth/signout" method="post">
-              <Button variant="destructive" className="w-full font-bold text-xs uppercase tracking-widest bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 shadow-none">
+            <form action={logout}>
+              <Button type="submit" variant="destructive" className="w-full font-bold text-xs uppercase tracking-widest bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 shadow-none">
                 {t("logout")}
               </Button>
             </form>

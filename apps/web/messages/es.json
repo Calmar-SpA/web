@@ -35,6 +35,7 @@
     "contact": "Contacto",
     "account": "Mi Cuenta",
     "b2b": "Programa B2B",
+    "logout": "Cerrar Sesión",
     "search": "Buscar productos..."
   },
   "Cart": {
@@ -236,6 +237,9 @@
     "password": "Contraseña",
     "signIn": "Ingresar",
     "signUp": "Registrarse",
+    "signupErrorEmailExists": "Este email ya está registrado. Inicia sesión.",
+    "signupErrorWeakPassword": "La contraseña es muy corta. Usa al menos 6 caracteres.",
+    "signupErrorEmailInvalid": "El email no es válido.",
     "signupErrorGeneric": "No pudimos crear tu cuenta. Intenta nuevamente.",
     "terms": "Al continuar, aceptas nuestros términos y condiciones."
   },

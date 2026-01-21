@@ -23,6 +23,7 @@ import {
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { SidebarTooltip } from "./sidebar-tooltip"
+import { logout } from "@/app/login/actions"
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -129,16 +130,19 @@ export function Sidebar() {
 
         <div className={`flex-shrink-0 p-4 border-t border-white/5 ${isCollapsed ? "md:pt-3" : ""}`}>
           <SidebarTooltip content="Cerrar Sesión" enabled={isCollapsed}>
-            <button
-              className={`
-                flex items-center gap-3 w-full px-4 py-3 rounded-xl
-                hover:bg-red-500/10 text-red-300 hover:text-red-100 transition-colors text-sm font-semibold tracking-tight
-                ${isCollapsed ? "md:justify-center md:px-3 md:py-3 md:gap-0" : ""}
-              `}
-            >
-              <LogOut className="w-5 h-5 flex-shrink-0" />
-              <span className={isCollapsed ? "md:hidden" : ""}>Cerrar Sesión</span>
-            </button>
+            <form action={logout} className="w-full">
+              <button
+                type="submit"
+                className={`
+                  flex items-center gap-3 w-full px-4 py-3 rounded-xl
+                  hover:bg-red-500/10 text-red-300 hover:text-red-100 transition-colors text-sm font-semibold tracking-tight
+                  ${isCollapsed ? "md:justify-center md:px-3 md:py-3 md:gap-0" : ""}
+                `}
+              >
+                <LogOut className="w-5 h-5 flex-shrink-0" />
+                <span className={isCollapsed ? "md:hidden" : ""}>Cerrar Sesión</span>
+              </button>
+            </form>
           </SidebarTooltip>
         </div>
       </aside>

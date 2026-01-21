@@ -10,17 +10,24 @@ type VersionResponse = {
 };
 
 async function fetchBuildId(signal?: AbortSignal) {
-  const response = await fetch("/api/version", {
-    cache: "no-store",
-    signal,
-  });
+  try {
+    const response = await fetch("/api/version", {
+      cache: "no-store",
+      signal,
+    });
 
-  if (!response.ok) {
-    return null;
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = (await response.json()) as VersionResponse;
+    return data.buildId || null;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return null;
+    }
+    throw error;
   }
-
-  const data = (await response.json()) as VersionResponse;
-  return data.buildId || null;
 }
 
 export function useVersionCheck() {

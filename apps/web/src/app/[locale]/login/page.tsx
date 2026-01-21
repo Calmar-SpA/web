@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Input, RutInput } from '@calmar/ui'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import Image from 'next/image'
+import { Link } from '@/navigation'
 
 export default async function LoginPage({
   params,
@@ -17,14 +18,22 @@ export default async function LoginPage({
   setRequestLocale(locale)
   const t = await getTranslations('Login')
   const signupError = resolvedSearchParams?.signup_error
+  const activeTab = resolvedSearchParams?.tab === 'register' ? 'register' : 'login'
+  const loginPath = locale ? `/${locale}/login` : '/login'
   const signupErrorMessage = (() => {
     if (signupError === 'full_name') return t('fullNameRequired')
     if (signupError === 'rut') return t('rutInvalid')
+    if (signupError === 'email_exists') return t('signupErrorEmailExists')
+    if (signupError === 'weak_password') return t('signupErrorWeakPassword')
+    if (signupError === 'email_invalid') return t('signupErrorEmailInvalid')
     if (signupError === 'generic') return t('signupErrorGeneric')
     return null
   })()
   const isFullNameError = signupError === 'full_name'
   const isRutError = signupError === 'rut'
+  const showSignupError = activeTab === 'register' && signupErrorMessage
+  const tabButtonBase =
+    'w-full h-10 rounded-full text-xs font-black uppercase tracking-widest transition-colors'
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--background)] relative overflow-hidden">
@@ -41,57 +50,91 @@ export default async function LoginPage({
             height={60} 
             className="h-16 w-auto object-contain mb-2 dark:invert"
           />
+          <CardTitle className="text-xl font-black uppercase tracking-tight">{t('title')}</CardTitle>
           <CardDescription className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">
             {t('description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <form className="grid gap-4">
-            <input type="hidden" name="locale" value={locale} />
-            <div className="grid gap-2">
-              <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('email')}</label>
-              <Input id="email" name="email" type="email" placeholder="hola@ejemplo.cl" required />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="full_name" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('fullName')}</label>
-              <Input
-                id="full_name"
-                name="full_name"
-                type="text"
-                placeholder={t('fullNamePlaceholder')}
-                autoComplete="name"
-                aria-invalid={isFullNameError}
-                className={isFullNameError ? "border-red-500 focus-visible:ring-red-500/20" : undefined}
-              />
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t('fullNameHint')}</p>
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="rut" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('rut')}</label>
-              <RutInput
-                id="rut"
-                name="rut"
-                placeholder={t('rutPlaceholder')}
-                aria-invalid={isRutError}
-                className={isRutError ? "border-red-500 focus-visible:ring-red-500/20" : undefined}
-              />
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t('rutHint')}</p>
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="password" throws-error="true" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('password')}</label>
-              <Input id="password" name="password" type="password" required />
-            </div>
-            {signupErrorMessage && (
-              <p className="text-xs font-semibold text-red-500">{signupErrorMessage}</p>
-            )}
-            <div className="grid grid-cols-2 gap-4 pt-4">
-              <Button formAction={login} className="bg-slate-900 text-white font-bold uppercase text-xs tracking-widest">
+          <div className="grid grid-cols-2 rounded-full bg-slate-100 p-1">
+            <Button
+              asChild
+              variant="ghost"
+              className={`${tabButtonBase} ${activeTab === 'login' ? 'bg-slate-900 text-white hover:bg-slate-900' : 'text-slate-500 hover:text-slate-900'}`}
+            >
+              <Link href={loginPath} aria-current={activeTab === 'login' ? 'page' : undefined}>
+                {t('signIn')}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              className={`${tabButtonBase} ${activeTab === 'register' ? 'bg-slate-900 text-white hover:bg-slate-900' : 'text-slate-500 hover:text-slate-900'}`}
+            >
+              <Link href={`${loginPath}?tab=register`} aria-current={activeTab === 'register' ? 'page' : undefined}>
+                {t('signUp')}
+              </Link>
+            </Button>
+          </div>
+
+          {activeTab === 'login' ? (
+            <form className="grid gap-4">
+              <input type="hidden" name="locale" value={locale} />
+              <div className="grid gap-2">
+                <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('email')}</label>
+                <Input id="email" name="email" type="email" placeholder="hola@ejemplo.cl" autoComplete="email" required />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('password')}</label>
+                <Input id="password" name="password" type="password" autoComplete="current-password" required />
+              </div>
+              <Button formAction={login} className="bg-slate-900 text-white font-bold uppercase text-xs tracking-widest h-12">
                 {t('signIn')}
               </Button>
-              <Button variant="outline" formAction={signup} className="font-bold uppercase text-xs tracking-widest">
+            </form>
+          ) : (
+            <form className="grid gap-4">
+              <input type="hidden" name="locale" value={locale} />
+              <div className="grid gap-2">
+                <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('email')}</label>
+                <Input id="email" name="email" type="email" placeholder="hola@ejemplo.cl" autoComplete="email" required />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="full_name" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('fullName')}</label>
+                <Input
+                  id="full_name"
+                  name="full_name"
+                  type="text"
+                  placeholder={t('fullNamePlaceholder')}
+                  autoComplete="name"
+                  aria-invalid={isFullNameError}
+                  className={isFullNameError ? "border-red-500 focus-visible:ring-red-500/20" : undefined}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="rut" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('rut')}</label>
+                <RutInput
+                  id="rut"
+                  name="rut"
+                  placeholder={t('rutPlaceholder')}
+                  aria-invalid={isRutError}
+                  className={isRutError ? "border-red-500 focus-visible:ring-red-500/20" : undefined}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('password')}</label>
+                <Input id="password" name="password" type="password" autoComplete="new-password" required />
+              </div>
+              {showSignupError && (
+                <p className="text-xs font-semibold text-red-500">{signupErrorMessage}</p>
+              )}
+              <Button formAction={signup} className="bg-slate-900 text-white font-bold uppercase text-xs tracking-widest h-12">
                 {t('signUp')}
               </Button>
-            </div>
-          </form>
+            </form>
+          )}
         </CardContent>
         <CardFooter>
           <p className="text-[10px] text-center w-full text-slate-400 font-bold uppercase tracking-widest">

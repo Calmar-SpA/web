@@ -235,6 +235,7 @@ export async function activateProspect(prospectId: string) {
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
   const registerUrl = new URL('/register', baseUrl)
+  const accountUrl = new URL('/account', baseUrl)
   registerUrl.searchParams.set('type', prospect.type || '')
   registerUrl.searchParams.set('company_name', prospect.company_name || '')
   registerUrl.searchParams.set('contact_name', prospect.contact_name || '')
@@ -254,7 +255,8 @@ export async function activateProspect(prospectId: string) {
     contactName: prospect.contact_name,
     contactEmail: prospect.email,
     hasAccount,
-    registerUrl: registerUrl.toString()
+    registerUrl: registerUrl.toString(),
+    accountUrl: accountUrl.toString()
   })
 
   revalidatePath('/crm/prospects')

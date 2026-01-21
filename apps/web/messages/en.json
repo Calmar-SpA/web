@@ -35,6 +35,7 @@
     "contact": "Contact",
     "account": "My Account",
     "b2b": "B2B Program",
+    "logout": "Log Out",
     "search": "Search products..."
   },
   "Cart": {
@@ -236,6 +237,9 @@
     "password": "Password",
     "signIn": "Sign In",
     "signUp": "Sign Up",
+    "signupErrorEmailExists": "This email is already registered. Please sign in.",
+    "signupErrorWeakPassword": "The password is too short. Use at least 6 characters.",
+    "signupErrorEmailInvalid": "The email is invalid.",
     "signupErrorGeneric": "We couldn't create your account. Please try again.",
     "terms": "By continuing, you agree to our terms and conditions."
   },

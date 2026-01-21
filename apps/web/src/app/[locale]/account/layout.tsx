@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from '@/navigation'
 import { getTranslations } from 'next-intl/server'
+import { logout } from '../login/actions'
 
 export default async function AccountLayout({
   children,
@@ -35,8 +36,8 @@ export default async function AccountLayout({
             >
               {t("settings.navTitle")}
             </Link>
-            <form action="/auth/signout" method="post">
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 transition-colors text-slate-700 font-medium">
+            <form action={logout}>
+              <button type="submit" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 transition-colors text-slate-700 font-medium">
                 <span className="text-left">{t("logout")}</span>
               </button>
             </form>
