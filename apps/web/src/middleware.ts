@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import createMiddleware from 'next-intl/middleware'
-import { locales, defaultLocale } from './i18n/config'
+import { locales, defaultLocale, type Locale } from './i18n/config'
 
 const intlMiddleware = createMiddleware({
   locales,
@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
   const pathSegments = pathname.split('/').filter(Boolean)
-  const pathLocale = locales.includes(pathSegments[0]) ? pathSegments[0] : null
+  const pathLocale = (locales as readonly string[]).includes(pathSegments[0]) ? pathSegments[0] as Locale : null
   const accountPath = pathLocale ? `/${pathLocale}/account` : '/account'
   const needsAuth = pathname === accountPath || pathname.startsWith(`${accountPath}/`)
 
