@@ -11,7 +11,7 @@ export default async function LoginPage({
   searchParams
 }: {
   params: Promise<{ locale: string }>
-  searchParams?: Promise<{ signup_error?: string }>
+  searchParams?: Promise<{ signup_error?: string; tab?: string }>
 }) {
   const { locale } = await params
   const resolvedSearchParams = await searchParams
