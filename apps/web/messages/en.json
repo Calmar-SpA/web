@@ -151,24 +151,77 @@
     "soonDesc": "Use your points to get Calmar products for free.",
     "ordersList": {
       "title": "My orders",
-      "subtitle": "Manage and track your purchases at Calmar.",
+      "subtitle": "Manage and track your purchases and deliveries at Calmar.",
       "goToShop": "Go to shop",
       "empty": {
         "title": "You don't have any orders yet",
         "description": "How about trying our filtered sea water?",
         "button": "VIEW PRODUCTS"
       },
+      "types": {
+        "online": "Online Purchase",
+        "sample": "Sample",
+        "consignment": "Consignment",
+        "saleInvoice": "Invoice Sale",
+        "saleCredit": "Credit Sale"
+      },
       "status": {
         "pending_payment": "Pending Payment",
+        "pending": "Pending",
         "paid": "Paid",
         "processing": "Processing",
         "shipped": "Shipped",
         "delivered": "Delivered",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "returned": "Returned",
+        "sold": "Sold",
+        "partial_paid": "Partial Payment",
+        "overdue": "Overdue"
       },
       "orderNumber": "Order #{number}",
       "date": "{date} • {count} products",
-      "total": "Total"
+      "total": "Total",
+      "pendingPayment": "Pending balance",
+      "product": "product",
+      "products": "products",
+      "hasInvoice": "Has invoice"
+    },
+    "movementDetail": {
+      "backToOrders": "Back to my orders",
+      "createdAt": "Created on {date}",
+      "dueDate": "Due date: {date}",
+      "types": {
+        "sample": "Sample",
+        "consignment": "Consignment",
+        "saleInvoice": "Invoice Sale",
+        "saleCredit": "Credit Sale"
+      },
+      "status": {
+        "pending": "Pending",
+        "delivered": "Delivered",
+        "returned": "Returned",
+        "sold": "Sold",
+        "paid": "Paid",
+        "partialPaid": "Partial Payment",
+        "overdue": "Overdue"
+      },
+      "overdueAlert": {
+        "title": "Payment overdue",
+        "description": "This record has an overdue pending balance. Please make payment as soon as possible."
+      },
+      "products": "Products",
+      "quantity": "Quantity",
+      "unknownProduct": "Product",
+      "documents": "Documents",
+      "invoiceDocument": "Invoice / Receipt",
+      "dispatchDocument": "Dispatch Order",
+      "paymentHistory": "Payment History",
+      "notes": "Notes",
+      "summary": "Summary",
+      "totalAmount": "Total",
+      "amountPaid": "Paid",
+      "pendingBalance": "Pending Balance",
+      "sampleNoPayment": "Samples do not require payment"
     },
     "loyalty": {
       "title": "Calmar Points",
@@ -241,6 +294,7 @@
     "signupErrorWeakPassword": "The password is too short. Use at least 6 characters.",
     "signupErrorEmailInvalid": "The email is invalid.",
     "signupErrorGeneric": "We couldn't create your account. Please try again.",
+    "signupSuccessCheckEmail": "Check your email to confirm your account.",
     "terms": "By continuing, you agree to our terms and conditions."
   },
   "ProfileCompletion": {

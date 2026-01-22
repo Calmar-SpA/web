@@ -151,24 +151,77 @@
     "soonDesc": "Usa tus puntos para llevarte productos Calmar gratis.",
     "ordersList": {
       "title": "Mis pedidos",
-      "subtitle": "Gestiona y rastrea tus compras en Calmar.",
+      "subtitle": "Gestiona y rastrea tus compras y entregas en Calmar.",
       "goToShop": "Ir a la tienda",
       "empty": {
         "title": "Aún no tienes pedidos",
         "description": "¿Qué tal si pruebas nuestra agua de mar filtrada?",
         "button": "VER PRODUCTOS"
       },
+      "types": {
+        "online": "Compra Online",
+        "sample": "Muestra",
+        "consignment": "Consignación",
+        "saleInvoice": "Venta Factura",
+        "saleCredit": "Venta Crédito"
+      },
       "status": {
         "pending_payment": "Pendiente de Pago",
+        "pending": "Pendiente",
         "paid": "Pagado",
         "processing": "En Preparación",
         "shipped": "Enviado",
         "delivered": "Entregado",
-        "cancelled": "Cancelado"
+        "cancelled": "Cancelado",
+        "returned": "Devuelto",
+        "sold": "Vendido",
+        "partial_paid": "Pago Parcial",
+        "overdue": "Vencido"
       },
       "orderNumber": "Pedido #{number}",
       "date": "{date} • {count} productos",
-      "total": "Total"
+      "total": "Total",
+      "pendingPayment": "Saldo pendiente",
+      "product": "producto",
+      "products": "productos",
+      "hasInvoice": "Tiene factura/boleta"
+    },
+    "movementDetail": {
+      "backToOrders": "Volver a mis pedidos",
+      "createdAt": "Registrado el {date}",
+      "dueDate": "Vencimiento: {date}",
+      "types": {
+        "sample": "Muestra",
+        "consignment": "Consignación",
+        "saleInvoice": "Venta Factura",
+        "saleCredit": "Venta Crédito"
+      },
+      "status": {
+        "pending": "Pendiente",
+        "delivered": "Entregado",
+        "returned": "Devuelto",
+        "sold": "Vendido",
+        "paid": "Pagado",
+        "partialPaid": "Pago Parcial",
+        "overdue": "Vencido"
+      },
+      "overdueAlert": {
+        "title": "Pago vencido",
+        "description": "Este registro tiene un saldo pendiente que ya venció. Por favor, realiza el pago a la brevedad."
+      },
+      "products": "Productos",
+      "quantity": "Cantidad",
+      "unknownProduct": "Producto",
+      "documents": "Documentos",
+      "invoiceDocument": "Factura / Boleta",
+      "dispatchDocument": "Orden de Despacho",
+      "paymentHistory": "Historial de Pagos",
+      "notes": "Notas",
+      "summary": "Resumen",
+      "totalAmount": "Total",
+      "amountPaid": "Pagado",
+      "pendingBalance": "Saldo Pendiente",
+      "sampleNoPayment": "Las muestras no requieren pago"
     },
     "loyalty": {
       "title": "Puntos Calmar",
@@ -241,6 +294,7 @@
     "signupErrorWeakPassword": "La contraseña es muy corta. Usa al menos 6 caracteres.",
     "signupErrorEmailInvalid": "El email no es válido.",
     "signupErrorGeneric": "No pudimos crear tu cuenta. Intenta nuevamente.",
+    "signupSuccessCheckEmail": "Revisa tu correo para confirmar tu cuenta.",
     "terms": "Al continuar, aceptas nuestros términos y condiciones."
   },
   "ProfileCompletion": {

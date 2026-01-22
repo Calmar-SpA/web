@@ -83,7 +83,7 @@ export function ApproveB2BModal({
 
       const result = await approveProspectAsB2B(prospectId, formData, fixedPrices)
       if (result.success) {
-        toast.success('Prospecto aprobado como B2B')
+        toast.success('Configuración B2B guardada')
         onSuccess()
         onClose()
       }
@@ -101,7 +101,7 @@ export function ApproveB2BModal({
         <CardHeader className="flex flex-row items-center justify-between gap-3 bg-slate-900 px-5 py-4 text-white sm:px-6">
           <div className="flex items-center gap-3">
             <ShieldCheck className="h-6 w-6 text-calmar-mint" />
-            <CardTitle className="text-xl uppercase tracking-tight">Aprobar B2B</CardTitle>
+            <CardTitle className="text-xl uppercase tracking-tight">Configurar B2B</CardTitle>
           </div>
           <Button
             variant="ghost"
@@ -220,7 +220,7 @@ export function ApproveB2BModal({
               disabled={isSubmitting}
               className="w-full bg-slate-900 hover:bg-emerald-600 text-white h-12 text-sm font-bold uppercase mt-6 shadow-xl gap-2 transition-colors"
             >
-              {isSubmitting ? 'Procesando...' : 'Confirmar aprobación'}
+              {isSubmitting ? 'Procesando...' : 'Guardar configuración'}
             </Button>
           </form>
         </CardContent>

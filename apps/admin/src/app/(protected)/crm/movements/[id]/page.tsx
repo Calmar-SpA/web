@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { CRMService } from '@calmar/database'
-import { ArrowLeft, DollarSign, Calendar, Package, AlertCircle, CheckCircle, Plus, UserX } from 'lucide-react'
+import { ArrowLeft, DollarSign, Calendar, Package, AlertCircle, CheckCircle, Plus, UserX, FileText, Upload, Trash2, ExternalLink } from 'lucide-react'
 import { Button, Input } from '@calmar/ui'
 import Link from 'next/link'
-import { updateMovementStatus, registerPayment, returnConsignment, convertConsignmentToSale } from '../../actions'
+import { updateMovementStatus, registerPayment, returnConsignment, convertConsignmentToSale, uploadMovementDocument, deleteMovementDocument } from '../../actions'
 import { toast } from 'sonner'
 
 const STATUSES = {
@@ -343,6 +343,30 @@ export default function MovementDetailPage() {
             </div>
           )}
 
+          {/* Documents */}
+          <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
+            <h2 className="text-lg font-black uppercase tracking-tight mb-4">Documentos</h2>
+            <div className="space-y-4">
+              {/* Invoice/Receipt */}
+              <DocumentUpload
+                label="Factura / Boleta"
+                movementId={movementId}
+                documentType="invoice"
+                currentUrl={movement.invoice_url}
+                onUploadComplete={loadMovement}
+              />
+              
+              {/* Dispatch Order */}
+              <DocumentUpload
+                label="Orden de Despacho"
+                movementId={movementId}
+                documentType="dispatch_order"
+                currentUrl={movement.dispatch_order_url}
+                onUploadComplete={loadMovement}
+              />
+            </div>
+          </div>
+
           {/* Notes */}
           {movement.notes && (
             <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
@@ -531,6 +555,150 @@ export default function MovementDetailPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// Document Upload Component
+function DocumentUpload({
+  label,
+  movementId,
+  documentType,
+  currentUrl,
+  onUploadComplete
+}: {
+  label: string
+  movementId: string
+  documentType: 'invoice' | 'dispatch_order'
+  currentUrl: string | null
+  onUploadComplete: () => void
+}) {
+  const [isUploading, setIsUploading] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type (PDF, images)
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Solo se permiten archivos PDF o imágenes')
+      return
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('El archivo no puede superar los 10MB')
+      return
+    }
+
+    setIsUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('movementId', movementId)
+      formData.append('documentType', documentType)
+
+      const result = await uploadMovementDocument(formData)
+      
+      if (result.success) {
+        toast.success('Documento subido')
+        onUploadComplete()
+      } else {
+        toast.error(result.error || 'Error al subir documento')
+      }
+    } catch (error: any) {
+      console.error('Upload error:', error)
+      toast.error('Error al subir documento')
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm('¿Estás seguro de eliminar este documento?')) return
+
+    setIsDeleting(true)
+    try {
+      const result = await deleteMovementDocument(movementId, documentType)
+      
+      if (result.success) {
+        toast.success('Documento eliminado')
+        onUploadComplete()
+      } else {
+        toast.error(result.error || 'Error al eliminar documento')
+      }
+    } catch (error: any) {
+      console.error('Delete error:', error)
+      toast.error('Error al eliminar documento')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  return (
+    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <FileText className="w-5 h-5 text-slate-400" />
+          <span className="font-bold text-sm text-slate-700">{label}</span>
+        </div>
+        
+        {currentUrl ? (
+          <div className="flex items-center gap-2">
+            <a
+              href={currentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs font-bold text-calmar-ocean hover:underline"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Ver documento
+            </a>
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+              title="Eliminar documento"
+            >
+              {isDeleting ? (
+                <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        ) : (
+          <label className="cursor-pointer">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.webp"
+              onChange={handleFileSelect}
+              className="hidden"
+              disabled={isUploading}
+            />
+            <span className="flex items-center gap-1 text-xs font-bold text-calmar-ocean hover:underline">
+              {isUploading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-calmar-ocean border-t-transparent rounded-full animate-spin" />
+                  Subiendo...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4" />
+                  Subir documento
+                </>
+              )}
+            </span>
+          </label>
+        )}
+      </div>
     </div>
   )
 }

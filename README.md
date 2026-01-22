@@ -479,6 +479,7 @@ npm run supabase:migrate # Reset y aplicar migraciones
 
 - **Row Level Security (RLS)** habilitado en todas las tablas
 - **Políticas granulares** para lectura/escritura según rol
+- **Pedidos y movimientos** visibles solo para su propietario o admins
 - **Trigger automático** para sincronizar auth.users con users públicos
 
 ---

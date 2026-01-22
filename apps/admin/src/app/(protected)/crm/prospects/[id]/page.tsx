@@ -7,7 +7,7 @@ import { CRMService } from '@calmar/database'
 import { ArrowLeft, Mail, Phone, Building2, Plus, Package, DollarSign, Calendar, User, ShieldCheck } from 'lucide-react'
 import { Button, Input, RutInput } from '@calmar/ui'
 import Link from 'next/link'
-import { activateProspect, createInteraction, updateProspect, updateProspectStage } from '../../actions'
+import { activateProspect, createInteraction, resendActivationEmail, toggleProspectB2BActive, updateProspect, updateProspectStage } from '../../actions'
 import { toast } from 'sonner'
 import { isValidPhoneIntl, isValidRut, parsePhoneIntl } from '@calmar/utils'
 import { formatClp } from '@calmar/utils'
@@ -34,6 +34,7 @@ export default function ProspectDetailPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [isResendingEmail, setIsResendingEmail] = useState(false)
   const [showInteractionForm, setShowInteractionForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
   const [showApproveModal, setShowApproveModal] = useState(false)
@@ -124,19 +125,19 @@ export default function ProspectDetailPage() {
         return
       }
 
-      if (prospect.type === 'b2b' && !prospect.is_b2b_active) {
+      if (prospect.type === 'b2b' && !prospect.credit_limit) {
         setPendingStage(newStage)
         setShowApproveModal(true)
         return
       }
 
       try {
-        await activateProspect(prospectId)
+        await updateProspectStage(prospectId, newStage)
         await loadData()
-        toast.success('Prospecto activado')
+        toast.success('Etapa actualizada a Activo')
       } catch (error: any) {
         console.error('Error updating stage:', error)
-        toast.error('Error al activar prospecto')
+        toast.error('Error al actualizar etapa')
       }
       return
     }
@@ -189,6 +190,19 @@ export default function ProspectDetailPage() {
     } catch (error: any) {
       console.error('Error creating interaction:', error)
       toast.error('Error al registrar interacción')
+    }
+  }
+
+  const handleResendEmail = async () => {
+    setIsResendingEmail(true)
+    try {
+      await resendActivationEmail(prospectId)
+      toast.success('Correo de activación enviado correctamente')
+    } catch (error: any) {
+      console.error('Error resending email:', error)
+      toast.error('Error al enviar el correo de activación')
+    } finally {
+      setIsResendingEmail(false)
     }
   }
 
@@ -280,15 +294,28 @@ export default function ProspectDetailPage() {
           <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-lg font-black uppercase tracking-tight">Información de Contacto</h2>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => setShowEditForm((value) => !value)}
-                className="uppercase font-black tracking-wider"
-              >
-                {showEditForm ? 'Ocultar' : 'Editar'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleResendEmail}
+                  disabled={isResendingEmail}
+                  className="uppercase font-black tracking-wider"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  {isResendingEmail ? 'Enviando...' : 'Reenviar Activación'}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowEditForm((value) => !value)}
+                  className="uppercase font-black tracking-wider"
+                >
+                  {showEditForm ? 'Ocultar' : 'Editar'}
+                </Button>
+              </div>
             </div>
             <div className="mt-4 space-y-3">
               <div className="flex items-center gap-3">
@@ -744,7 +771,7 @@ export default function ProspectDetailPage() {
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Estado</p>
                   <p className={`text-sm font-bold ${prospect.is_b2b_active ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {prospect.is_b2b_active ? 'Aprobado' : 'Pendiente'}
+                    {prospect.is_b2b_active ? 'Activo' : 'Pendiente de activación'}
                   </p>
                 </div>
                 <div>
@@ -759,12 +786,28 @@ export default function ProspectDetailPage() {
                     {Number(prospect.payment_terms_days || 30)} días
                   </p>
                 </div>
-                {!prospect.is_b2b_active && (
+                <Button
+                  onClick={async () => {
+                    try {
+                      await toggleProspectB2BActive(prospectId, prospect.is_b2b_active)
+                      await loadData()
+                      toast.success(prospect.is_b2b_active ? 'B2B desactivado' : 'B2B activado y correo enviado')
+                    } catch (error) {
+                      toast.error('Error al cambiar estado B2B')
+                    }
+                  }}
+                  variant={prospect.is_b2b_active ? "outline" : "default"}
+                  className="w-full uppercase font-black tracking-wider"
+                >
+                  {prospect.is_b2b_active ? 'Desactivar B2B' : 'Activar B2B'}
+                </Button>
+                {!prospect.is_b2b_active && !prospect.credit_limit && (
                   <Button
                     onClick={() => setShowApproveModal(true)}
+                    variant="outline"
                     className="w-full uppercase font-black tracking-wider"
                   >
-                    Aprobar como B2B
+                    Configurar B2B
                   </Button>
                 )}
               </div>

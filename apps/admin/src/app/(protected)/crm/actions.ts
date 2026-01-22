@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { CRMService } from '@calmar/database'
 import { sendProspectActivationEmail, sendProspectAdminNotification, sendRefundAdminNotification } from '@/lib/mail'
 import { revalidatePath } from 'next/cache'
@@ -61,6 +62,20 @@ export async function createProspect(data: {
     phone: phoneFormatted
   })
 
+  // Vincular con usuario existente si coincide el email
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', data.email)
+    .maybeSingle()
+
+  if (existingUser) {
+    await supabase
+      .from('prospects')
+      .update({ user_id: existingUser.id })
+      .eq('id', prospect.id)
+  }
+
   await sendProspectAdminNotification({
     contactName: data.contact_name,
     email: data.email,
@@ -88,47 +103,6 @@ export async function approveProspectAsB2B(
 
   const prospect = await crmService.approveProspectAsB2B(prospectId, data)
   await crmService.syncProspectProductPrices(prospectId, fixedPrices)
-
-  if (prospect?.user_id) {
-    await supabase
-      .from('users')
-      .update({ role: 'b2b' })
-      .eq('id', prospect.user_id)
-  }
-
-  const { data: userByEmail } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', prospect.email)
-    .maybeSingle()
-
-  const hasAccount = Boolean(prospect.user_id || userByEmail)
-
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
-  const registerUrl = new URL('/register', baseUrl)
-  const accountUrl = new URL('/account', baseUrl)
-  registerUrl.searchParams.set('type', prospect.type || '')
-  registerUrl.searchParams.set('company_name', prospect.company_name || '')
-  registerUrl.searchParams.set('contact_name', prospect.contact_name || '')
-  registerUrl.searchParams.set('contact_role', prospect.contact_role || '')
-  registerUrl.searchParams.set('email', prospect.email || '')
-  registerUrl.searchParams.set('phone', prospect.phone || '')
-  registerUrl.searchParams.set('tax_id', prospect.tax_id || '')
-  registerUrl.searchParams.set('address', prospect.address || '')
-  registerUrl.searchParams.set('city', prospect.city || '')
-  registerUrl.searchParams.set('comuna', prospect.comuna || '')
-  registerUrl.searchParams.set('business_activity', prospect.business_activity || '')
-  registerUrl.searchParams.set('requesting_rut', prospect.requesting_rut || '')
-  registerUrl.searchParams.set('shipping_address', prospect.shipping_address || '')
-  registerUrl.searchParams.set('notes', prospect.notes || '')
-
-  await sendProspectActivationEmail({
-    contactName: prospect.contact_name,
-    contactEmail: prospect.email,
-    hasAccount,
-    registerUrl: registerUrl.toString(),
-    accountUrl: accountUrl.toString()
-  })
 
   revalidatePath('/crm/prospects')
   revalidatePath(`/crm/prospects/${prospectId}`)
@@ -172,16 +146,96 @@ export async function toggleProspectB2BActive(prospectId: string, currentIsActiv
       updated_at: new Date().toISOString()
     })
     .eq('id', prospectId)
-    .select('user_id')
+    .select('*')
     .single()
 
   if (error) throw error
 
-  if (prospect?.user_id) {
+  let userId = prospect.user_id
+
+  // Si se está activando y no tiene usuario vinculado, buscar por email o crear invitación
+  if (!currentIsActive && !userId) {
+    const { data: userByEmail } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', prospect.email)
+      .maybeSingle()
+
+    if (userByEmail) {
+      userId = userByEmail.id
+      await supabase
+        .from('prospects')
+        .update({ user_id: userId })
+        .eq('id', prospectId)
+    } else {
+      // Crear invitación en Supabase Auth
+      const supabaseAdmin = createAdminClient()
+      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+        prospect.email,
+        {
+          data: {
+            full_name: prospect.contact_name,
+            rut: prospect.tax_id,
+            role: 'b2b'
+          }
+        }
+      )
+
+      if (inviteError) {
+        console.error('Error inviting user:', inviteError)
+        throw new Error(`Error al invitar al usuario: ${inviteError.message}`)
+      }
+
+      userId = inviteData.user.id
+      await supabase
+        .from('prospects')
+        .update({ user_id: userId })
+        .eq('id', prospectId)
+    }
+  }
+
+  if (userId) {
     await supabase
       .from('users')
       .update({ role: !currentIsActive ? 'b2b' : 'customer' })
-      .eq('id', prospect.user_id)
+      .eq('id', userId)
+  }
+
+  // Si se está activando, enviar el correo solo si ya tenía cuenta
+  if (!currentIsActive) {
+    const { data: userRecord } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (userRecord) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
+      const registerUrl = new URL('/es/register', baseUrl)
+      const accountUrl = new URL('/es/account', baseUrl)
+      registerUrl.searchParams.set('type', prospect.type || '')
+      registerUrl.searchParams.set('company_name', prospect.company_name || '')
+      registerUrl.searchParams.set('contact_name', prospect.contact_name || '')
+      registerUrl.searchParams.set('contact_role', prospect.contact_role || '')
+      registerUrl.searchParams.set('email', prospect.email || '')
+      registerUrl.searchParams.set('phone', prospect.phone || '')
+      registerUrl.searchParams.set('tax_id', prospect.tax_id || '')
+      registerUrl.searchParams.set('address', prospect.address || '')
+      registerUrl.searchParams.set('city', prospect.city || '')
+      registerUrl.searchParams.set('comuna', prospect.comuna || '')
+      registerUrl.searchParams.set('business_activity', prospect.business_activity || '')
+      registerUrl.searchParams.set('requesting_rut', prospect.requesting_rut || '')
+      registerUrl.searchParams.set('shipping_address', prospect.shipping_address || '')
+      registerUrl.searchParams.set('notes', prospect.notes || '')
+
+      await sendProspectActivationEmail({
+        contactName: prospect.contact_name,
+        contactEmail: prospect.email,
+        hasAccount: true,
+        registerUrl: registerUrl.toString(),
+        accountUrl: accountUrl.toString()
+      })
+    }
   }
 
   revalidatePath('/crm/prospects')
@@ -257,6 +311,104 @@ export async function activateProspect(prospectId: string) {
     throw new Error(`Faltan datos obligatorios: ${missingLabels}`)
   }
 
+  let userId = prospect.user_id
+
+  // Si no tiene usuario vinculado, buscar por email o crear invitación
+  if (!userId) {
+    const { data: userByEmail } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', prospect.email)
+      .maybeSingle()
+
+    if (userByEmail) {
+      userId = userByEmail.id
+      await supabase
+        .from('prospects')
+        .update({ user_id: userId })
+        .eq('id', prospectId)
+    } else {
+      // Crear invitación en Supabase Auth
+      const supabaseAdmin = createAdminClient()
+      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+        prospect.email,
+        {
+          data: {
+            full_name: prospect.contact_name,
+            rut: prospect.tax_id,
+          }
+        }
+      )
+
+      if (inviteError) {
+        console.error('Error inviting user:', inviteError)
+        throw new Error(`Error al invitar al usuario: ${inviteError.message}`)
+      }
+
+      userId = inviteData.user.id
+      await supabase
+        .from('prospects')
+        .update({ user_id: userId })
+        .eq('id', prospectId)
+    }
+  }
+
+  const hasAccount = Boolean(userId)
+
+  await crmService.updateProspectStage(prospectId, 'converted')
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
+  const registerUrl = new URL('/es/register', baseUrl)
+  const accountUrl = new URL('/es/account', baseUrl)
+  // ... (mantener el resto de los parámetros de la URL)
+  registerUrl.searchParams.set('type', prospect.type || '')
+  registerUrl.searchParams.set('company_name', prospect.company_name || '')
+  registerUrl.searchParams.set('contact_name', prospect.contact_name || '')
+  registerUrl.searchParams.set('contact_role', prospect.contact_role || '')
+  registerUrl.searchParams.set('email', prospect.email || '')
+  registerUrl.searchParams.set('phone', prospect.phone || '')
+  registerUrl.searchParams.set('tax_id', prospect.tax_id || '')
+  registerUrl.searchParams.set('address', prospect.address || '')
+  registerUrl.searchParams.set('city', prospect.city || '')
+  registerUrl.searchParams.set('comuna', prospect.comuna || '')
+  registerUrl.searchParams.set('business_activity', prospect.business_activity || '')
+  registerUrl.searchParams.set('requesting_rut', prospect.requesting_rut || '')
+  registerUrl.searchParams.set('shipping_address', prospect.shipping_address || '')
+  registerUrl.searchParams.set('notes', prospect.notes || '')
+
+  // Solo enviar el correo de activación si ya tenía cuenta. 
+  // Si acabamos de invitarlo, Supabase ya envió el correo de invitación.
+  const { data: userRecord } = await supabase
+    .from('users')
+    .select('id')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (userRecord) {
+    await sendProspectActivationEmail({
+      contactName: prospect.contact_name,
+      contactEmail: prospect.email,
+      hasAccount: true,
+      registerUrl: registerUrl.toString(),
+      accountUrl: accountUrl.toString()
+    })
+  }
+
+  revalidatePath('/crm/prospects')
+  revalidatePath(`/crm/prospects/${prospectId}`)
+}
+
+export async function resendActivationEmail(prospectId: string) {
+  const supabase = await createClient()
+
+  const { data: prospect, error } = await supabase
+    .from('prospects')
+    .select('*')
+    .eq('id', prospectId)
+    .single()
+
+  if (error) throw error
+
   const { data: userByEmail } = await supabase
     .from('users')
     .select('id')
@@ -265,11 +417,9 @@ export async function activateProspect(prospectId: string) {
 
   const hasAccount = Boolean(prospect.user_id || userByEmail)
 
-  await crmService.updateProspectStage(prospectId, 'converted')
-
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
-  const registerUrl = new URL('/register', baseUrl)
-  const accountUrl = new URL('/account', baseUrl)
+  const registerUrl = new URL('/es/register', baseUrl)
+  const accountUrl = new URL('/es/account', baseUrl)
   registerUrl.searchParams.set('type', prospect.type || '')
   registerUrl.searchParams.set('company_name', prospect.company_name || '')
   registerUrl.searchParams.set('contact_name', prospect.contact_name || '')
@@ -293,8 +443,7 @@ export async function activateProspect(prospectId: string) {
     accountUrl: accountUrl.toString()
   })
 
-  revalidatePath('/crm/prospects')
-  revalidatePath(`/crm/prospects/${prospectId}`)
+  return { success: true }
 }
 
 export async function updateProspect(prospectId: string, formData: FormData) {
@@ -495,4 +644,117 @@ export async function convertConsignmentToSale(movementId: string) {
   revalidatePath('/crm/debts')
   
   return movement
+}
+
+export async function uploadMovementDocument(formData: FormData) {
+  const supabase = await createClient()
+  
+  const file = formData.get('file') as File
+  const movementId = formData.get('movementId') as string
+  const documentType = formData.get('documentType') as 'invoice' | 'dispatch_order'
+
+  if (!file || !movementId || !documentType) {
+    return { success: false, error: 'Datos incompletos' }
+  }
+
+  try {
+    // Generate unique filename
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${movementId}/${documentType}-${Date.now()}.${fileExt}`
+
+    // Upload to storage
+    const { error: uploadError } = await supabase.storage
+      .from('movement-documents')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: true
+      })
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError)
+      return { success: false, error: 'Error al subir el archivo' }
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('movement-documents')
+      .getPublicUrl(fileName)
+
+    // Update movement with document URL
+    const updateField = documentType === 'invoice' ? 'invoice_url' : 'dispatch_order_url'
+    
+    const { error: updateError } = await supabase
+      .from('product_movements')
+      .update({ [updateField]: publicUrl })
+      .eq('id', movementId)
+
+    if (updateError) {
+      console.error('Update error:', updateError)
+      return { success: false, error: 'Error al actualizar el movimiento' }
+    }
+
+    revalidatePath(`/crm/movements/${movementId}`)
+    return { success: true, url: publicUrl }
+
+  } catch (error) {
+    console.error('Upload document error:', error)
+    return { success: false, error: 'Error al procesar el documento' }
+  }
+}
+
+export async function deleteMovementDocument(
+  movementId: string,
+  documentType: 'invoice' | 'dispatch_order'
+) {
+  const supabase = await createClient()
+
+  try {
+    // Get current document URL to extract file path
+    const { data: movement, error: fetchError } = await supabase
+      .from('product_movements')
+      .select('invoice_url, dispatch_order_url')
+      .eq('id', movementId)
+      .single()
+
+    if (fetchError) {
+      return { success: false, error: 'Movimiento no encontrado' }
+    }
+
+    const currentUrl = documentType === 'invoice' 
+      ? movement.invoice_url 
+      : movement.dispatch_order_url
+
+    if (currentUrl) {
+      // Extract file path from URL
+      const urlParts = currentUrl.split('/movement-documents/')
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1]
+        
+        // Delete from storage
+        await supabase.storage
+          .from('movement-documents')
+          .remove([filePath])
+      }
+    }
+
+    // Clear document URL in movement
+    const updateField = documentType === 'invoice' ? 'invoice_url' : 'dispatch_order_url'
+    
+    const { error: updateError } = await supabase
+      .from('product_movements')
+      .update({ [updateField]: null })
+      .eq('id', movementId)
+
+    if (updateError) {
+      console.error('Update error:', updateError)
+      return { success: false, error: 'Error al actualizar el movimiento' }
+    }
+
+    revalidatePath(`/crm/movements/${movementId}`)
+    return { success: true }
+
+  } catch (error) {
+    console.error('Delete document error:', error)
+    return { success: false, error: 'Error al eliminar el documento' }
+  }
 }

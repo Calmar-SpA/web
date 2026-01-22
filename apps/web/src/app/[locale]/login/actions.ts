@@ -31,6 +31,9 @@ export async function signup(formData: FormData) {
   const supabase = await createClient()
   const locale = String(formData.get('locale') || '').trim()
   const loginPath = locale ? `/${locale}/login` : '/login'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const callbackPath = locale ? `/${locale}/auth/callback` : '/auth/callback'
+  const accountPath = locale ? `/${locale}/account` : '/account'
   const buildSignupRedirect = (code: string) =>
     redirect(`${loginPath}?tab=register&signup_error=${code}`)
 
@@ -59,7 +62,8 @@ export async function signup(formData: FormData) {
       data: {
         rut,
         full_name: fullNameInput
-      }
+      },
+      emailRedirectTo: `${baseUrl}${callbackPath}?next=${encodeURIComponent(accountPath)}`
     }
   })
 
@@ -83,7 +87,7 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  redirect(`${loginPath}?tab=register&signup_success=true`)
 }
 
 export async function logout() {

@@ -23,7 +23,7 @@ import {
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { SidebarTooltip } from "./sidebar-tooltip"
-import { logout } from "@/app/login/actions"
+import { logout } from "@/app/(auth)/login/actions"
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -161,13 +161,17 @@ export function Sidebar() {
         {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
 
-      {/* Mobile Overlay */}
-      {isMobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
+      {/* Mobile Overlay - Solo visible en móvil cuando el menú está abierto */}
+      <div
+        className={`
+          fixed inset-0 bg-black/50 z-30
+          md:hidden md:pointer-events-none md:opacity-0
+          transition-opacity duration-300
+          ${isMobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+        `}
+        onClick={() => setIsMobileOpen(false)}
+        aria-hidden={!isMobileOpen}
+      />
     </>
   )
 }

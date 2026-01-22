@@ -220,15 +220,13 @@ export async function sendProspectActivationEmail(params: {
     `
     : `
       <p style="margin:12px 0;line-height:1.6;">
-        Ya estas activo en el sistema. Para ingresar debes registrarte con el mismo correo con el que creaste la ficha.
+        Ya estas activo en el sistema. Te hemos enviado un correo de invitacion para que crees tu contraseña y puedas acceder.
       </p>
-      <div style="text-align:center;margin:24px 0;">
-        <a href="${params.registerUrl}" style="background:${brand.primaryDark};color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">
-          Crear mi cuenta
-        </a>
-      </div>
       <p style="margin:12px 0;line-height:1.6;">
-        Solo tendras que crear una contraseña. Tus datos ya estaran completos.
+        Busca un correo con el asunto "You have been invited" (o similar) para completar tu registro.
+      </p>
+      <p style="margin:12px 0;line-height:1.6;">
+        Tus datos ya estaran completos una vez que accedas.
       </p>
     `;
 

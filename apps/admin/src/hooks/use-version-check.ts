@@ -10,17 +10,25 @@ type VersionResponse = {
 };
 
 async function fetchBuildId(signal?: AbortSignal) {
-  const response = await fetch("/api/version", {
-    cache: "no-store",
-    signal,
-  });
+  try {
+    const response = await fetch("/api/version", {
+      cache: "no-store",
+      signal,
+    });
 
-  if (!response.ok) {
-    return null;
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = (await response.json()) as VersionResponse;
+    return data.buildId || null;
+  } catch (error) {
+    // Ignorar errores de abort - son esperados al desmontar el componente
+    if (error instanceof Error && error.name === 'AbortError') {
+      return null;
+    }
+    throw error;
   }
-
-  const data = (await response.json()) as VersionResponse;
-  return data.buildId || null;
 }
 
 export function useVersionCheck() {
@@ -68,7 +76,7 @@ export function useVersionCheck() {
 
     return () => {
       isActive = false;
-      controller.abort();
+      controller.abort("Component unmounted");
       clearInterval(interval);
     };
   }, [hasNewVersion]);

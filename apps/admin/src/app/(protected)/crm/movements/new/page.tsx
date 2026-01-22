@@ -69,6 +69,7 @@ function NewMovementContent() {
   const [selectedVariant, setSelectedVariant] = useState<string>('')
   const [itemQuantity, setItemQuantity] = useState(1)
   const [itemPrice, setItemPrice] = useState(0)
+  const [prospectPrices, setProspectPrices] = useState<Map<string, number>>(new Map())
 
   useEffect(() => {
     loadProducts()
@@ -105,7 +106,7 @@ function NewMovementContent() {
 
       // If prospect_id is provided, set it
       if (prospectId) {
-        handleProspectSelection(prospectId)
+        await handleProspectSelection(prospectId)
       }
     } catch (error) {
       console.error('Error loading clients:', error)
@@ -115,8 +116,50 @@ function NewMovementContent() {
     }
   }
 
-  const handleProspectSelection = (prospectId: string) => {
-    setFormData(prev => ({ ...prev, prospect_id: prospectId }))
+  const handleProspectSelection = async (selectedProspectId: string) => {
+    setFormData(prev => ({ ...prev, prospect_id: selectedProspectId }))
+
+    if (!selectedProspectId) {
+      setProspectPrices(new Map())
+      if (selectedProduct) {
+        const product = products.find(p => p.id === selectedProduct)
+        if (product) {
+          setItemPrice(Number(product.base_price))
+        }
+      }
+      return
+    }
+
+    const supabase = createClient()
+
+    try {
+      const { data, error } = await supabase
+        .from('prospect_product_prices')
+        .select('product_id, fixed_price')
+        .eq('prospect_id', selectedProspectId)
+
+      if (error) throw error
+
+      const priceMap = new Map(
+        (data || []).map(price => [price.product_id, Number(price.fixed_price)])
+      )
+      setProspectPrices(priceMap)
+
+      if (selectedProduct) {
+        const product = products.find(p => p.id === selectedProduct)
+        if (product) {
+          const fixedPrice = priceMap.get(product.id)
+          const resolvedPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
+            ? fixedPrice
+            : Number(product.base_price)
+          setItemPrice(resolvedPrice)
+        }
+      }
+    } catch (error) {
+      console.error('Error loading B2B prices:', error)
+      toast.error('No se pudieron cargar los precios B2B')
+      setProspectPrices(new Map())
+    }
   }
 
   const selectedProductData = products.find(p => p.id === selectedProduct)
@@ -355,7 +398,9 @@ function NewMovementContent() {
                     </label>
                     <select
                       value={formData.prospect_id}
-                      onChange={(e) => handleProspectSelection(e.target.value)}
+                      onChange={(e) => {
+                        void handleProspectSelection(e.target.value)
+                      }}
                       className={`w-full px-3 py-2 rounded-lg border-2 focus:border-calmar-ocean focus:outline-none text-sm ${
                         formData.prospect_id 
                           ? 'border-emerald-300 bg-emerald-50' 
@@ -380,7 +425,7 @@ function NewMovementContent() {
                     <button
                       type="button"
                       onClick={() => {
-                        setFormData({ ...formData, prospect_id: '' })
+                        void handleProspectSelection('')
                       }}
                       className="text-xs text-red-600 hover:text-red-700 font-bold uppercase tracking-wider"
                     >
@@ -410,7 +455,11 @@ function NewMovementContent() {
                   setSelectedVariant('')
                   const product = products.find(p => p.id === e.target.value)
                   if (product) {
-                    setItemPrice(Number(product.base_price))
+                    const fixedPrice = prospectPrices.get(product.id)
+                    const resolvedPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
+                      ? fixedPrice
+                      : Number(product.base_price)
+                    setItemPrice(resolvedPrice)
                   }
                 }}
                 className="w-full px-3 py-2 rounded-lg border-2 border-slate-200 focus:border-calmar-ocean focus:outline-none text-sm"

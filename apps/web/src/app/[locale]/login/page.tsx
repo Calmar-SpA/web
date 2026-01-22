@@ -11,13 +11,14 @@ export default async function LoginPage({
   searchParams
 }: {
   params: Promise<{ locale: string }>
-  searchParams?: Promise<{ signup_error?: string; tab?: string }>
+  searchParams?: Promise<{ signup_error?: string; signup_success?: string; tab?: string }>
 }) {
   const { locale } = await params
   const resolvedSearchParams = await searchParams
   setRequestLocale(locale)
   const t = await getTranslations('Login')
   const signupError = resolvedSearchParams?.signup_error
+  const signupSuccess = resolvedSearchParams?.signup_success === 'true'
   const activeTab = resolvedSearchParams?.tab === 'register' ? 'register' : 'login'
   const loginPath = locale ? `/${locale}/login` : '/login'
   const signupErrorMessage = (() => {
@@ -32,6 +33,7 @@ export default async function LoginPage({
   const isFullNameError = signupError === 'full_name'
   const isRutError = signupError === 'rut'
   const showSignupError = activeTab === 'register' && signupErrorMessage
+  const showSignupSuccess = activeTab === 'register' && signupSuccess
   const tabButtonBase =
     'w-full h-10 rounded-full text-xs font-black uppercase tracking-widest transition-colors'
 
@@ -129,6 +131,11 @@ export default async function LoginPage({
               </div>
               {showSignupError && (
                 <p className="text-xs font-semibold text-red-500">{signupErrorMessage}</p>
+              )}
+              {showSignupSuccess && (
+                <p className="text-xs font-semibold text-emerald-600">
+                  {t('signupSuccessCheckEmail')}
+                </p>
               )}
               <Button formAction={signup} className="bg-slate-900 text-white font-bold uppercase text-xs tracking-widest h-12">
                 {t('signUp')}
