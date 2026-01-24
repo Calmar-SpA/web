@@ -3,11 +3,109 @@
 import { createClient } from '@/lib/supabase/server'
 import { flow } from '@/lib/flow'
 import { OrderService } from '@calmar/database'
+import { revalidatePath } from 'next/cache'
+import { sendOrderPaidAdminEmail } from '@/lib/mail'
 
 interface ActionResult {
   success: boolean
   error?: string
   paymentUrl?: string
+}
+
+/**
+ * Submit a transfer payment proof
+ */
+export async function submitTransferPayment(
+  movementId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'No autenticado' }
+    }
+
+    const file = formData.get('file') as File
+    const amount = parseFloat(formData.get('amount') as string)
+    const reference = formData.get('reference') as string
+    const notes = formData.get('notes') as string
+
+    if (!file) {
+      return { success: false, error: 'El comprobante es requerido' }
+    }
+
+    // 1. Upload file to storage
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${movementId}-${Date.now()}.${fileExt}`
+    const filePath = `proofs/${fileName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('payment-proofs')
+      .upload(filePath, file)
+
+    if (uploadError) {
+      console.error('[TransferPayment] Upload error:', uploadError)
+      return { success: false, error: 'Error al subir el comprobante' }
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('payment-proofs')
+      .getPublicUrl(filePath)
+
+    // 2. Create movement payment record
+    const { error: paymentError } = await supabase
+      .from('movement_payments')
+      .insert({
+        movement_id: movementId,
+        amount,
+        payment_method: 'transfer',
+        payment_reference: reference,
+        notes,
+        payment_proof_url: publicUrl,
+        verification_status: 'pending',
+        created_by: user.id
+      })
+
+    if (paymentError) {
+      console.error('[TransferPayment] DB error:', paymentError)
+      return { success: false, error: 'Error al registrar el pago' }
+    }
+
+    // 3. Notify admin
+    const orderService = new OrderService(supabase)
+    const movement = await orderService.getMovementForUser(movementId)
+    
+    // We'll use a dynamic import or just call the admin notification if available
+    // For now, let's assume we can use a simpler notification or the existing one
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3001'
+      const adminUrl = `${baseUrl}/crm/payments`
+      
+      // Since we are in apps/web, we might not have access to apps/admin/lib/mail
+      // But let's check if we can use the web's mail lib to notify admin
+      await sendOrderPaidAdminEmail({
+        orderNumber: movement.movement_number || movement.id.slice(0, 8),
+        customerName: user.email || 'Cliente',
+        customerEmail: user.email || '',
+        totalAmount: amount,
+        paymentMethod: `Transferencia (Pendiente Verificación) - Ver en: ${adminUrl}`,
+        shippingSummary: 'N/A (Pago de Movimiento)',
+      })
+    } catch (mailError) {
+      console.error('[TransferPayment] Mail notification error:', mailError)
+    }
+
+    revalidatePath(`/account/orders/m/${movementId}`)
+    revalidatePath(`/es/account/orders/m/${movementId}`)
+
+    return { success: true }
+  } catch (error) {
+    console.error('[TransferPayment] Critical error:', error)
+    return { success: false, error: 'Error al procesar el pago' }
+  }
 }
 
 /**

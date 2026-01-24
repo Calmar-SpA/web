@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { CRMService } from '@calmar/database'
-import { ArrowLeft, DollarSign, Calendar, Package, AlertCircle, CheckCircle, Plus, UserX, FileText, Upload, Trash2, ExternalLink } from 'lucide-react'
+import { ArrowLeft, DollarSign, Calendar, Package, AlertCircle, CheckCircle, Plus, UserX, FileText, Upload, Trash2, ExternalLink, Eye, CheckCircle2, XCircle } from 'lucide-react'
 import { Button, Input } from '@calmar/ui'
 import Link from 'next/link'
-import { updateMovementStatus, registerPayment, returnConsignment, convertConsignmentToSale, uploadMovementDocument, deleteMovementDocument } from '../../actions'
+import { updateMovementStatus, registerPayment, returnConsignment, convertConsignmentToSale, uploadMovementDocument, deleteMovementDocument, approvePayment, rejectPayment } from '../../actions'
 import { toast } from 'sonner'
 
 const STATUSES = {
@@ -128,6 +128,33 @@ export default function MovementDetailPage() {
     } catch (error: any) {
       console.error('Error converting to sale:', error)
       toast.error('Error al convertir consignación')
+    }
+  }
+
+  const handleApprovePayment = async (paymentId: string) => {
+    if (!confirm('¿Estás seguro de aprobar este pago?')) return
+    try {
+      await approvePayment(paymentId)
+      toast.success('Pago aprobado')
+      await loadMovement()
+    } catch (error) {
+      toast.error('Error al aprobar pago')
+    }
+  }
+
+  const handleRejectPayment = async (paymentId: string) => {
+    const reason = prompt('Motivo del rechazo:')
+    if (reason === null) return
+    if (!reason.trim()) {
+      toast.error('Debes ingresar un motivo')
+      return
+    }
+    try {
+      await rejectPayment(paymentId, reason)
+      toast.success('Pago rechazado')
+      await loadMovement()
+    } catch (error) {
+      toast.error('Error al rechazar pago')
     }
   }
 
@@ -297,17 +324,66 @@ export default function MovementDetailPage() {
                           <p className="font-bold text-slate-900">
                             ${Number(payment.amount).toLocaleString('es-CL')}
                           </p>
-                          <p className="text-xs text-slate-600 mt-1">
-                            {payment.payment_method} 
-                            {payment.payment_reference && ` - Ref: ${payment.payment_reference}`}
-                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                              payment.verification_status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                              payment.verification_status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {payment.verification_status === 'approved' ? 'Aprobado' :
+                               payment.verification_status === 'pending' ? 'Pendiente Verificación' :
+                               'Rechazado'}
+                            </span>
+                            <p className="text-xs text-slate-600">
+                              {payment.payment_method} 
+                              {payment.payment_reference && ` - Ref: ${payment.payment_reference}`}
+                            </p>
+                          </div>
+                          {payment.payment_proof_url && (
+                            <a 
+                              href={payment.payment_proof_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-calmar-ocean hover:underline mt-1"
+                            >
+                              <Eye className="h-3 w-3" />
+                              Ver comprobante
+                            </a>
+                          )}
+                          {payment.rejection_reason && (
+                            <p className="text-[10px] text-red-600 italic mt-1">
+                              Motivo rechazo: {payment.rejection_reason}
+                            </p>
+                          )}
                           {payment.notes && (
                             <p className="text-xs text-slate-500 mt-1">{payment.notes}</p>
                           )}
                         </div>
-                        <span className="text-xs text-slate-500">
-                          {new Date(payment.paid_at).toLocaleDateString('es-CL')}
-                        </span>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className="text-xs text-slate-500">
+                            {new Date(payment.paid_at || payment.created_at).toLocaleDateString('es-CL')}
+                          </span>
+                          {payment.verification_status === 'pending' && (
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="h-8 border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                                onClick={() => handleApprovePayment(payment.id)}
+                              >
+                                <CheckCircle2 className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="h-8 border-red-200 text-red-600 hover:bg-red-50"
+                                onClick={() => handleRejectPayment(payment.id)}
+                              >
+                                <XCircle className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))

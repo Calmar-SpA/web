@@ -63,6 +63,13 @@ y productos de hidratación avanzada.
 | ---------- | ----------------------------------------------------------- |
 | **Flow**   | Procesador de pagos chileno (Webpay, OnePay, Transferencia) |
 
+### Logística & Envíos
+
+| Tecnología       | Propósito                                              |
+| ---------------- | ------------------------------------------------------ |
+| **Chilexpress**  | Cotización, cobertura y generación de envíos           |
+| **Blue Express** | Tarifario por zona y tamaño para cotizaciones rápidas  |
+
 ### DevOps & Herramientas
 
 | Tecnología         | Versión | Propósito             |
@@ -74,7 +81,7 @@ y productos de hidratación avanzada.
 
 ---
 
-## � Sistema de Diseño
+## 🎨 Sistema de Diseño
 
 ### Paleta de Colores
 
@@ -167,7 +174,7 @@ h1, h2, h3, h4, h5, h6 {
 
 ---
 
-## �🏗 Arquitectura del Proyecto
+## 🏗 Arquitectura del Proyecto
 
 El proyecto está estructurado como un **monorepo** utilizando Turborepo y npm
 workspaces:
@@ -201,6 +208,7 @@ calmar-ecommerce/
 - **Códigos de descuento** con reglas de uso y validación
 - **Integración con Flow** para pagos nacionales chilenos
 - **Cálculo de envío Blue Express**
+- **Cotización y creación de envíos con Chilexpress**
 - **Gestión de inventario** con reservas automáticas y descuentos por pagos
 - **Registro de ingresos de stock** con costo neto, IVA, factura, fechas y estado de pago
 - **Gestión de proveedores** con datos tributarios y direcciones de retiro
@@ -323,6 +331,7 @@ Servicios para interacción con Supabase:
 - `ProductService` - CRUD de productos
 - `OrderService` - Gestión de pedidos
 - `LoyaltyService` - Sistema de puntos
+- `CRMService` - Prospectos, interacciones y movimientos comerciales
 - `DiscountCodeService` - Gestión y validación de códigos
 
 ### `@calmar/ui`
@@ -341,6 +350,9 @@ Tipos TypeScript compartidos entre aplicaciones.
 Utilidades compartidas:
 
 - `FlowService` - Integración con pasarela de pagos Flow
+- `ChilexpressService` - Cotización, cobertura y tracking de envíos
+- `pricing` - Cálculo de neto/IVA y formateo CLP
+- `rut` y `phone` - Normalización y validación de datos chilenos
 
 ### `@calmar/config`
 
@@ -400,6 +412,14 @@ FLOW_API_KEY=your-flow-api-key
 FLOW_SECRET_KEY=your-flow-secret-key
 FLOW_BASE_URL=https://www.flow.cl/api  # o https://sandbox.flow.cl/api para testing
 
+# Chilexpress (Envíos)
+CHILEXPRESS_RATING_API_KEY=your-rating-api-key
+CHILEXPRESS_TRANSPORT_API_KEY=your-transport-api-key
+CHILEXPRESS_GEOREFERENCE_API_KEY=your-georeference-api-key
+CHILEXPRESS_BASE_URL=https://testservices.wschilexpress.com
+CHILEXPRESS_TCC=your-tcc
+CHILEXPRESS_ORIGIN_CODE=PUCO
+
 # Email (SendGrid)
 SENDGRID_API_KEY=your-sendgrid-api-key
 SENDGRID_FROM_EMAIL=notificaciones@calmar.cl
@@ -453,7 +473,7 @@ npm run supabase:migrate # Reset y aplicar migraciones
 | `product_variants`       | Variantes de productos (sabores, tamaños) |
 | `categories`             | Categorías de productos                   |
 | `inventory`              | Stock de productos                        |
-| `orders`                 | Pedidos de clientes                       |
+| `orders`                 | Pedidos de clientes (incluye `order_number` e `is_business_order`) |
 | `order_items`            | Ítems de cada pedido                      |
 | `prospects`              | Prospectos CRM con datos de empresa, despacho y configuración B2B |
 | `prospect_interactions`  | Historial de interacciones CRM            |
@@ -485,6 +505,12 @@ npm run supabase:migrate # Reset y aplicar migraciones
 - **Pedidos y movimientos** visibles solo para su propietario o admins
 - **Trigger automático** para sincronizar auth.users con users públicos
 
+### Funciones SQL clave
+
+- `generate_order_number` - Genera números de orden amigables (ej: `ORD-1001`)
+- `deduct_prospect_credit` - Descuenta crédito disponible para clientes B2B
+- `create_credit_sale_movement` - Crea movimientos de venta a crédito con control de errores
+
 ---
 
 ## 🎯 Alcances del Proyecto
@@ -511,7 +537,7 @@ npm run supabase:migrate # Reset y aplicar migraciones
 
 - [ ] Panel de administración completo
 - [ ] Sistema de recompensas canjeables
-- [x] Integración con servicios de envío (Blue Express)
+- [x] Integración con servicios de envío (Blue Express/Chilexpress)
 
 ### 🔮 Futuro (Roadmap)
 

@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { OrderService } from '@calmar/database'
 import { ProductService } from '@calmar/database'
-import { ShoppingCart, Package, DollarSign, Users, TrendingUp } from 'lucide-react'
+import { ShoppingCart, Package, DollarSign, Users, TrendingUp, CreditCard } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function AdminDashboardPage() {
@@ -45,6 +45,12 @@ export default async function AdminDashboardPage() {
   // Total products
   const totalProducts = products.length
 
+  // Pending movement payments
+  const { count: pendingPaymentsCount } = await supabase
+    .from('movement_payments')
+    .select('*', { count: 'exact', head: true })
+    .eq('verification_status', 'pending')
+
   const stats = [
     {
       title: 'Ventas Hoy',
@@ -65,6 +71,16 @@ export default async function AdminDashboardPage() {
       iconColor: 'text-blue-700',
       valueColor: 'text-blue-900',
       borderColor: 'border-blue-300',
+    },
+    {
+      title: 'Pagos por Verificar',
+      value: (pendingPaymentsCount || 0).toString(),
+      icon: CreditCard,
+      bgColor: 'bg-white',
+      iconBg: 'bg-amber-100',
+      iconColor: 'text-amber-700',
+      valueColor: 'text-amber-900',
+      borderColor: 'border-amber-300',
     },
     {
       title: 'Total Productos',
@@ -117,6 +133,7 @@ export default async function AdminDashboardPage() {
               href={
                 stat.title === 'Pedidos Pendientes' ? '/orders' :
                 stat.title === 'Total Productos' || stat.title === 'Stock Bajo' ? '/products' :
+                stat.title === 'Pagos por Verificar' ? '/crm/payments' :
                 '#'
               }
               className="group"

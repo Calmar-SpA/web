@@ -18,7 +18,8 @@ import {
   Truck,
   Receipt,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Settings
 } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
@@ -53,6 +54,7 @@ export function Sidebar() {
     { href: "/media", label: "Media", icon: Film, color: "text-calmar-accent" },
     { href: "/users", label: "Usuarios", icon: Users, color: "text-calmar-mint" },
     { href: "/email-tests", label: "Emails", icon: Mail, color: "text-calmar-primary" },
+    { href: "/settings", label: "Configuración", icon: Settings, color: "text-slate-400" },
   ]
 
   const isActive = (href: string) => {

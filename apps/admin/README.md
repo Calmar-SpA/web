@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🔧 Calmar Admin (Panel Interno)
 
-## Getting Started
+Panel de administración para operaciones internas. UI moderna, minimalista y **mobile-first**.
 
-First, run the development server:
+## 🚀 Desarrollo
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Desde la raíz del monorepo
+npm run dev:admin
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir `http://localhost:3003`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🧩 Stack Principal
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Zalando Sans Expanded](https://fonts.google.com/specimen/Zalando+Sans+Expanded) and [Inter](https://fonts.google.com/specimen/Inter) from Google Fonts.
+- Next.js 16 (App Router)
+- React 19
+- TypeScript
+- Tailwind CSS + shadcn/ui
+- Supabase (Auth + DB)
 
-## Learn More
+## 🔐 Variables de Entorno (resumen)
 
-To learn more about Next.js, take a look at the following resources:
+Se comparten con la app web, definidas en el `README.md` raíz. Algunas claves:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`, `SENDGRID_FROM_NAME`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🗂️ Estructura Relevante
 
-## Deploy on Vercel
+- `src/app` - Rutas y páginas
+- `src/components` - UI reutilizable
+- `src/lib` - Servicios y helpers
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📌 Notas
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Tipografías cargadas con `next/font`: **Zalando Sans Expanded** y **Inter**.
+- Para configuración global del proyecto, ver `README.md` en la raíz.

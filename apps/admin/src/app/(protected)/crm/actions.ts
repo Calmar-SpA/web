@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CRMService } from '@calmar/database'
-import { sendProspectActivationEmail, sendProspectAdminNotification, sendRefundAdminNotification } from '@/lib/mail'
+import { sendProspectActivationEmail, sendProspectAdminNotification, sendRefundAdminNotification, sendPaymentStatusCustomerNotification } from '@/lib/mail'
 import { revalidatePath } from 'next/cache'
 import { formatPhoneIntl, formatRut, isValidPhoneIntl, isValidRut, normalizeRut, parsePhoneIntl } from '@calmar/utils'
 
@@ -728,4 +728,84 @@ export async function deleteMovementDocument(
     console.error('Delete document error:', error)
     return { success: false, error: 'Error al eliminar el documento' }
   }
+}
+
+export async function approvePayment(paymentId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  const { data: payment, error } = await supabase
+    .from('movement_payments')
+    .update({
+      verification_status: 'approved',
+      verified_by: user?.id,
+      verified_at: new Date().toISOString()
+    })
+    .eq('id', paymentId)
+    .select('*, movement:product_movements(*, customer:users!customer_user_id(*), prospect:prospects(*))')
+    .single()
+
+  if (error) throw error
+  
+  // Notify customer
+  const movement = payment.movement
+  const customerEmail = movement?.customer?.email || movement?.prospect?.email
+  const customerName = movement?.customer?.full_name || movement?.prospect?.contact_name || 'Cliente'
+  
+  if (customerEmail) {
+    await sendPaymentStatusCustomerNotification({
+      to: customerEmail,
+      customerName,
+      movementNumber: movement.movement_number || movement.id.slice(0, 8),
+      amount: Number(payment.amount),
+      status: 'approved'
+    })
+  }
+
+  revalidatePath('/crm/payments')
+  if (payment?.movement_id) {
+    revalidatePath(`/crm/movements/${payment.movement_id}`)
+  }
+  return { success: true }
+}
+
+export async function rejectPayment(paymentId: string, reason: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  const { data: payment, error } = await supabase
+    .from('movement_payments')
+    .update({
+      verification_status: 'rejected',
+      verified_by: user?.id,
+      verified_at: new Date().toISOString(),
+      rejection_reason: reason
+    })
+    .eq('id', paymentId)
+    .select('*, movement:product_movements(*, customer:users!customer_user_id(*), prospect:prospects(*))')
+    .single()
+
+  if (error) throw error
+  
+  // Notify customer
+  const movement = payment.movement
+  const customerEmail = movement?.customer?.email || movement?.prospect?.email
+  const customerName = movement?.customer?.full_name || movement?.prospect?.contact_name || 'Cliente'
+  
+  if (customerEmail) {
+    await sendPaymentStatusCustomerNotification({
+      to: customerEmail,
+      customerName,
+      movementNumber: movement.movement_number || movement.id.slice(0, 8),
+      amount: Number(payment.amount),
+      status: 'rejected',
+      rejectionReason: reason
+    })
+  }
+
+  revalidatePath('/crm/payments')
+  if (payment?.movement_id) {
+    revalidatePath(`/crm/movements/${payment.movement_id}`)
+  }
+  return { success: true }
 }

@@ -269,3 +269,67 @@ export async function sendRefundAdminNotification(params: {
     html,
   });
 }
+
+export async function sendPaymentVerificationAdminNotification(params: {
+  movementNumber: string;
+  customerName: string;
+  amount: number;
+  adminUrl: string;
+}) {
+  const content = `
+    <div style="background:${brand.muted};padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid ${brand.primary};">
+      <div><strong>Movimiento:</strong> ${params.movementNumber}</div>
+      <div><strong>Cliente:</strong> ${params.customerName}</div>
+      <div><strong>Monto:</strong> $${params.amount.toLocaleString('es-CL')}</div>
+      <div style="margin-top:16px;">
+        <a href="${params.adminUrl}" style="background:${brand.primaryDark};color:white;padding:10px 20px;text-decoration:none;border-radius:4px;font-weight:bold;">
+          Verificar Pago
+        </a>
+      </div>
+    </div>
+  `;
+
+  const html = buildEmailShell('Nuevo pago por verificar', content);
+
+  return sendEmail({
+    to: ADMIN_EMAIL,
+    subject: `Nuevo pago por verificar - ${params.movementNumber}`,
+    html,
+  });
+}
+
+export async function sendPaymentStatusCustomerNotification(params: {
+  to: string;
+  customerName: string;
+  movementNumber: string;
+  amount: number;
+  status: 'approved' | 'rejected';
+  rejectionReason?: string;
+}) {
+  const isApproved = params.status === 'approved';
+  const title = isApproved ? 'Pago Aprobado' : 'Pago Rechazado';
+  
+  const content = `
+    <div style="background:${brand.muted};padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid ${isApproved ? '#10b981' : '#ef4444'};">
+      <p>Hola ${params.customerName},</p>
+      <p>Tu pago por el movimiento <strong>${params.movementNumber}</strong> por un monto de <strong>$${params.amount.toLocaleString('es-CL')}</strong> ha sido <strong>${isApproved ? 'aprobado' : 'rechazado'}</strong>.</p>
+      
+      ${!isApproved && params.rejectionReason ? `
+        <div style="margin-top:12px;padding:12px;background:white;border-radius:4px;border:1px solid #fee2e2;">
+          <strong>Motivo del rechazo:</strong> ${params.rejectionReason}
+        </div>
+        <p style="margin-top:12px;">Por favor, revisa el motivo e intenta informar el pago nuevamente con el comprobante correcto.</p>
+      ` : ''}
+      
+      ${isApproved ? '<p>Tu saldo ha sido actualizado correctamente.</p>' : ''}
+    </div>
+  `;
+
+  const html = buildEmailShell(title, content);
+
+  return sendEmail({
+    to: params.to,
+    subject: `${title} - Movimiento ${params.movementNumber}`,
+    html,
+  });
+}
