@@ -187,7 +187,9 @@ function OrderCard({ item, t, locale, statusMap, typeBadges }: { item: UnifiedOr
               </div>
               <div className="flex items-center gap-2">
                 {item.invoice_url && (
-                  <FileText className="w-4 h-4 text-slate-400" title={t('hasInvoice')} />
+                  <span title={t('hasInvoice')}>
+                    <FileText className="w-4 h-4 text-slate-400" />
+                  </span>
                 )}
                 <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-calmar-ocean transition-colors" />
               </div>
