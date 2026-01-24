@@ -9,7 +9,7 @@ export default async function CheckoutPage() {
   const { data: b2bProspect } = user
     ? await supabase
         .from('prospects')
-        .select('id, company_name, tax_id, credit_limit, is_b2b_active, payment_terms_days')
+        .select('id, company_name, contact_name, email, tax_id, credit_limit, is_b2b_active, payment_terms_days, address, city, comuna, shipping_address')
         .eq('user_id', user.id)
         .eq('type', 'b2b')
         .maybeSingle()

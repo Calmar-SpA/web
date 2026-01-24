@@ -8,6 +8,8 @@ import { useActionState, useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { completeProfile, type CompleteProfileState } from "@/actions/complete-profile"
 import { logout } from "@/app/[locale]/login/actions"
+import { useUserMode, type UserMode } from "@/hooks/use-user-mode"
+import { User, Building2 } from "lucide-react"
 
 const LanguageSwitcher = dynamic(() => import("./language-switcher").then(mod => ({ default: mod.LanguageSwitcher })), {
   ssr: false,
@@ -36,6 +38,9 @@ export function Header() {
     { success: false }
   )
   
+  const { mode, setMode } = useUserMode()
+  const [isB2B, setIsB2B] = useState(false)
+  
   const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
   
   const navLinks = [
@@ -60,6 +65,7 @@ export function Header() {
         setUserEmail(null)
         setUserName(null)
         setUserRut(null)
+        setIsB2B(false)
         setIsProfileModalOpen(false)
         return
       }
@@ -68,13 +74,14 @@ export function Header() {
 
       const { data: profile } = await supabase
         .from('users')
-        .select('full_name, rut')
+        .select('full_name, rut, role')
         .eq('id', user.id)
         .single()
 
       if (isMounted) {
         setUserName(profile?.full_name ?? null)
         setUserRut(profile?.rut ?? null)
+        setIsB2B(profile?.role === 'b2b' || profile?.role === 'admin')
         const needsProfile = !profile?.full_name || !profile?.rut
         setIsProfileModalOpen(needsProfile)
       }
@@ -82,8 +89,16 @@ export function Header() {
 
     loadUser()
 
+    // Subscribe to auth changes to update header when user logs in/out
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        loadUser()
+      }
+    })
+
     return () => {
       isMounted = false
+      subscription.unsubscribe()
     }
   }, [])
 
@@ -147,6 +162,34 @@ export function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          {/* Mode Selector (Personal vs Empresa) */}
+          {hasUser && isB2B && (
+            <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-full border border-slate-200 mr-2">
+              <button
+                onClick={() => setMode('personal')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                  mode === 'personal' 
+                    ? 'bg-white text-calmar-primary shadow-sm' 
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <User className="w-3 h-3" />
+                Personal
+              </button>
+              <button
+                onClick={() => setMode('business')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                  mode === 'business' 
+                    ? 'bg-slate-900 text-white shadow-sm' 
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <Building2 className="w-3 h-3" />
+                Empresa
+              </button>
+            </div>
+          )}
+
           <LanguageSwitcher />
           
           {hasUser ? (
@@ -213,6 +256,43 @@ export function Header() {
                   </Button>
                 </div>
                 <nav className="p-6 flex flex-col gap-4">
+                  {/* Mobile Mode Selector */}
+                  {hasUser && isB2B && (
+                    <div className="flex flex-col gap-2 mb-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Modo de navegación</p>
+                      <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl">
+                        <button
+                          onClick={() => {
+                            setMode('personal')
+                            setIsMobileMenuOpen(false)
+                          }}
+                          className={`flex items-center justify-center gap-2 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+                            mode === 'personal' 
+                              ? 'bg-white text-calmar-primary shadow-sm' 
+                              : 'text-slate-500'
+                          }`}
+                        >
+                          <User className="w-4 h-4" />
+                          Personal
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMode('business')
+                            setIsMobileMenuOpen(false)
+                          }}
+                          className={`flex items-center justify-center gap-2 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+                            mode === 'business' 
+                              ? 'bg-slate-900 text-white shadow-sm' 
+                              : 'text-slate-500'
+                          }`}
+                        >
+                          <Building2 className="w-4 h-4" />
+                          Empresa
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {navLinks.map((link) => (
                     <Link
                       key={link.href}

@@ -79,7 +79,7 @@ export class OrderService {
     // 1. Get web orders by user_id
     const { data: orders, error: ordersError } = await this.supabase
       .from('orders')
-      .select('id, order_number, status, total_amount, created_at, order_items(count)')
+      .select('id, order_number, status, total_amount, created_at, is_business_order, order_items(count), payments(payment_provider)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
@@ -87,10 +87,20 @@ export class OrderService {
 
     // Add orders to unified list
     for (const order of orders || []) {
+      // Determinar el tipo basado en is_business_order y el payment_provider
+      const paymentProvider = order.payments?.[0]?.payment_provider
+      const isBusinessOrder = Boolean(order.is_business_order)
+      const isCreditPayment = paymentProvider === 'internal_credit'
+      
+      // Si es orden de empresa con crédito, usar 'sale_credit' para que aparezca en Movimientos de Empresa
+      const orderType: UnifiedOrderItem['type'] = (isBusinessOrder && isCreditPayment) 
+        ? 'sale_credit' 
+        : 'online'
+
       unified.push({
         id: order.id,
         source: 'order',
-        type: 'online',
+        type: orderType,
         reference_number: order.order_number,
         status: order.status,
         items_count: order.order_items?.[0]?.count || 0,
@@ -108,54 +118,65 @@ export class OrderService {
       })
     }
 
-    // 2. Get movements via prospect_id (RLS will filter to user's own)
-    const { data: movements, error: movementsError } = await this.supabase
-      .from('product_movements')
-      .select(`
-        id, movement_number, movement_type, status, total_amount, amount_paid, 
-        due_date, created_at, items, invoice_url, dispatch_order_url,
-        payments:movement_payments(amount)
-      `)
-      .order('created_at', { ascending: false })
+    // 2. Get movements via prospect_id
+    // First, find the prospect(s) associated with this user
+    const { data: userProspects } = await this.supabase
+      .from('prospects')
+      .select('id')
+      .eq('user_id', userId)
 
-    if (movementsError) throw movementsError
+    const prospectIds = userProspects?.map(p => p.id) || []
 
-    // Add movements to unified list
-    for (const movement of movements || []) {
-      const totalPaid = movement.payments?.reduce(
-        (sum: number, p: { amount: number }) => sum + Number(p.amount), 0
-      ) || Number(movement.amount_paid || 0)
-      
-      const remainingBalance = Number(movement.total_amount) - totalPaid
-      const itemsArray = Array.isArray(movement.items) ? movement.items : []
+    if (prospectIds.length > 0) {
+      const { data: movements, error: movementsError } = await this.supabase
+        .from('product_movements')
+        .select(`
+          id, movement_number, movement_type, status, total_amount, amount_paid, 
+          due_date, created_at, items, invoice_url, dispatch_order_url,
+          payments:movement_payments(amount)
+        `)
+        .in('prospect_id', prospectIds)
+        .order('created_at', { ascending: false })
 
-      // Determine type label
-      const typeMap: Record<string, UnifiedOrderItem['type']> = {
-        'sample': 'sample',
-        'consignment': 'consignment',
-        'sale_invoice': 'sale_invoice',
-        'sale_credit': 'sale_credit'
+      if (movementsError) throw movementsError
+
+      // Add movements to unified list
+      for (const movement of movements || []) {
+        const totalPaid = movement.payments?.reduce(
+          (sum: number, p: { amount: number }) => sum + Number(p.amount), 0
+        ) || Number(movement.amount_paid || 0)
+        
+        const remainingBalance = Number(movement.total_amount) - totalPaid
+        const itemsArray = Array.isArray(movement.items) ? movement.items : []
+
+        // Determine type label
+        const typeMap: Record<string, UnifiedOrderItem['type']> = {
+          'sample': 'sample',
+          'consignment': 'consignment',
+          'sale_invoice': 'sale_invoice',
+          'sale_credit': 'sale_credit'
+        }
+
+        unified.push({
+          id: movement.id,
+          source: 'movement',
+          type: typeMap[movement.movement_type] || 'sale_invoice',
+          reference_number: movement.movement_number,
+          status: movement.status,
+          items_count: itemsArray.length,
+          total_amount: Number(movement.total_amount),
+          amount_paid: totalPaid,
+          remaining_balance: remainingBalance > 0 ? remainingBalance : 0,
+          due_date: movement.due_date,
+          created_at: movement.created_at,
+          // Can request return only for consignments with status 'delivered'
+          can_request_return: movement.movement_type === 'consignment' && movement.status === 'delivered',
+          // Can pay if there's remaining balance and it's not a sample
+          can_pay: remainingBalance > 0 && movement.movement_type !== 'sample',
+          invoice_url: movement.invoice_url,
+          dispatch_order_url: movement.dispatch_order_url
+        })
       }
-
-      unified.push({
-        id: movement.id,
-        source: 'movement',
-        type: typeMap[movement.movement_type] || 'sale_invoice',
-        reference_number: movement.movement_number,
-        status: movement.status,
-        items_count: itemsArray.length,
-        total_amount: Number(movement.total_amount),
-        amount_paid: totalPaid,
-        remaining_balance: remainingBalance > 0 ? remainingBalance : 0,
-        due_date: movement.due_date,
-        created_at: movement.created_at,
-        // Can request return only for consignments with status 'delivered'
-        can_request_return: movement.movement_type === 'consignment' && movement.status === 'delivered',
-        // Can pay if there's remaining balance and it's not a sample
-        can_pay: remainingBalance > 0 && movement.movement_type !== 'sample',
-        invoice_url: movement.invoice_url,
-        dispatch_order_url: movement.dispatch_order_url
-      })
     }
 
     // Sort by created_at descending

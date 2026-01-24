@@ -261,6 +261,22 @@
       "marketing": "Recibir correos de marketing y ofertas",
       "transactional": "Recibir correos sobre mis pedidos (Requerido)",
       "save": "Guardar cambios"
+    },
+    "debt": {
+      "title": "Crédito por Pagar",
+      "totalPending": "Saldo Pendiente Total",
+      "pendingItems": "Pendientes",
+      "upcomingPayments": "Próximos Vencimientos",
+      "noDueDate": "Sin fecha límite",
+      "overdue": "Vencido hace {days} días",
+      "dueToday": "Vence hoy",
+      "dueTomorrow": "Vence mañana",
+      "dueInDays": "Vence en {days} días",
+      "dueOn": "Vence el {date}",
+      "hasOverdue": "{count} vencido(s)",
+      "viewAll": "Ver todos ({count})",
+      "noDebt": "¡Sin saldo pendiente!",
+      "noDebtDesc": "No tienes créditos por pagar en este momento."
     }
   },
   "Shop": {
@@ -293,8 +309,12 @@
     "signupErrorEmailExists": "Este email ya está registrado. Inicia sesión.",
     "signupErrorWeakPassword": "La contraseña es muy corta. Usa al menos 6 caracteres.",
     "signupErrorEmailInvalid": "El email no es válido.",
+    "signupErrorRutExists": "Este RUT ya está registrado. Si ya tienes cuenta, inicia sesión.",
     "signupErrorGeneric": "No pudimos crear tu cuenta. Intenta nuevamente.",
     "signupSuccessCheckEmail": "Revisa tu correo para confirmar tu cuenta.",
+    "loginErrorInvalidCredentials": "Email o contraseña incorrectos.",
+    "loginErrorEmailNotConfirmed": "Debes confirmar tu email antes de ingresar. Revisa tu bandeja de entrada.",
+    "loginErrorGeneric": "No pudimos iniciar sesión. Intenta nuevamente.",
     "terms": "Al continuar, aceptas nuestros términos y condiciones."
   },
   "ProfileCompletion": {

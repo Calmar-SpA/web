@@ -38,6 +38,7 @@ export function ProfileForm({ locale, fullName, email, rut, action }: ProfileFor
       }}
     >
       <input type="hidden" name="locale" value={locale} />
+      <input type="hidden" name="redirect_to" value="account/settings" />
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-2">
           <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('fullName')}</label>

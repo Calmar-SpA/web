@@ -35,6 +35,21 @@ export async function middleware(request: NextRequest) {
     return redirectResponse
   }
 
+  // Redirigir usuarios autenticados fuera de /login
+  const loginPath = pathLocale ? `/${pathLocale}/login` : '/login'
+  const isLoginPage = pathname === loginPath
+
+  if (isLoginPage && user) {
+    const redirectResponse = NextResponse.redirect(new URL(accountPath, request.url))
+
+    sessionResponse.cookies.getAll().forEach((cookie) => {
+      const { name, value, ...options } = cookie
+      redirectResponse.cookies.set(name, value, options)
+    })
+
+    return redirectResponse
+  }
+
   // 3. Merge cookies from sessionResponse into intlResponse
   // This ensures that if updateSession refreshed a token, those cookies are kept.
   sessionResponse.cookies.getAll().forEach((cookie) => {

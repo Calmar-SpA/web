@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         .from('orders')
         .update({ status: 'paid' })
         .eq('id', status.commerceOrder)
-        .select('id, user_id, order_number, email, total_amount, shipping_address')
+        .select('id, user_id, order_number, email, total_amount, shipping_address, is_business_order')
         .single()
 
       if (orderError) {
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
       console.log(`[Flow Confirm] Order found: ${order.order_number}, Email: ${order.email}`)
 
-      if (order.user_id) {
+      if (order.user_id && !order.is_business_order) {
         try {
           const loyaltyService = new LoyaltyService(supabase)
           await loyaltyService.awardPoints(order.user_id, status.commerceOrder, Number(order.total_amount))

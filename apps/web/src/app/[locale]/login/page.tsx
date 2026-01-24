@@ -11,13 +11,14 @@ export default async function LoginPage({
   searchParams
 }: {
   params: Promise<{ locale: string }>
-  searchParams?: Promise<{ signup_error?: string; signup_success?: string; tab?: string }>
+  searchParams?: Promise<{ signup_error?: string; signup_success?: string; tab?: string; login_error?: string }>
 }) {
   const { locale } = await params
   const resolvedSearchParams = await searchParams
   setRequestLocale(locale)
   const t = await getTranslations('Login')
   const signupError = resolvedSearchParams?.signup_error
+  const loginError = resolvedSearchParams?.login_error
   const signupSuccess = resolvedSearchParams?.signup_success === 'true'
   const activeTab = resolvedSearchParams?.tab === 'register' ? 'register' : 'login'
   const loginPath = locale ? `/${locale}/login` : '/login'
@@ -27,13 +28,21 @@ export default async function LoginPage({
     if (signupError === 'email_exists') return t('signupErrorEmailExists')
     if (signupError === 'weak_password') return t('signupErrorWeakPassword')
     if (signupError === 'email_invalid') return t('signupErrorEmailInvalid')
+    if (signupError === 'rut_exists') return t('signupErrorRutExists')
     if (signupError === 'generic') return t('signupErrorGeneric')
     return null
   })()
+  const loginErrorMessage = (() => {
+    if (loginError === 'invalid_credentials') return t('loginErrorInvalidCredentials')
+    if (loginError === 'email_not_confirmed') return t('loginErrorEmailNotConfirmed')
+    if (loginError === 'generic') return t('loginErrorGeneric')
+    return null
+  })()
   const isFullNameError = signupError === 'full_name'
-  const isRutError = signupError === 'rut'
+  const isRutError = signupError === 'rut' || signupError === 'rut_exists'
   const showSignupError = activeTab === 'register' && signupErrorMessage
   const showSignupSuccess = activeTab === 'register' && signupSuccess
+  const showLoginError = activeTab === 'login' && loginErrorMessage
   const tabButtonBase =
     'w-full h-10 rounded-full text-xs font-black uppercase tracking-widest transition-colors'
 
@@ -90,6 +99,9 @@ export default async function LoginPage({
                 <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('password')}</label>
                 <Input id="password" name="password" type="password" autoComplete="current-password" required />
               </div>
+              {showLoginError && (
+                <p className="text-xs font-semibold text-red-500">{loginErrorMessage}</p>
+              )}
               <Button formAction={login} className="bg-slate-900 text-white font-bold uppercase text-xs tracking-widest h-12">
                 {t('signIn')}
               </Button>

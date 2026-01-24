@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useCart } from "@/hooks/use-cart"
@@ -13,6 +12,7 @@ import { PointsRedemption } from "@/components/checkout/points-redemption"
 import { ShippingOptions } from "@/components/checkout/shipping-options"
 import { useTranslations } from "next-intl"
 import { formatClp, formatRut, getPriceBreakdown, isValidRut } from "@calmar/utils"
+import { useUserMode } from "@/hooks/use-user-mode"
 
 interface ShippingOption {
   code: string
@@ -20,6 +20,21 @@ interface ShippingOption {
   price: number
   finalWeight: string
   estimatedDays?: string
+}
+
+interface B2BProspect {
+  id: string
+  company_name?: string | null
+  contact_name?: string | null
+  email?: string | null
+  tax_id?: string | null
+  credit_limit?: number | null
+  is_b2b_active?: boolean | null
+  payment_terms_days?: number | null
+  address?: string | null
+  city?: string | null  // Se usa como región
+  comuna?: string | null
+  shipping_address?: string | null
 }
 
 interface CheckoutFormProps {
@@ -34,7 +49,7 @@ interface CheckoutFormProps {
     comuna?: string | null
     region?: string | null
   } | null
-  b2bProspect: any
+  b2bProspect: B2BProspect | null
   b2bPriceMap?: Record<string, number>
   initialNewsletterDiscount?: number | null
 }
@@ -42,11 +57,16 @@ interface CheckoutFormProps {
 export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, initialNewsletterDiscount }: CheckoutFormProps) {
   const t = useTranslations("Checkout")
   const { items, updateQuantity, removeItem } = useCart()
+  const { mode } = useUserMode()
   const [isMounted, setIsMounted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'flow' | 'credit'>('flow')
   const [rutTouched, setRutTouched] = useState(false)
   
+  const isBusinessMode = mode === 'business'
+  const isB2BActive = isBusinessMode && Boolean(b2bProspect?.is_b2b_active)
+  const isShippingExempt = Boolean(userProfile?.shipping_fee_exempt)
+
   const [formData, setFormData] = useState({
     name: userProfile?.full_name || user?.user_metadata?.full_name || "",
     email: user?.email || "",
@@ -57,6 +77,35 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
     comuna: userProfile?.comuna || "",
     region: userProfile?.region || "",
   })
+
+  // Update form data when mode changes
+  useEffect(() => {
+    if (isBusinessMode && b2bProspect) {
+      // Para modo empresa: cargar datos del prospect B2B
+      // Si faltan datos de dirección en el prospect, usar los del perfil del usuario
+      setFormData({
+        name: b2bProspect.company_name || b2bProspect.contact_name || userProfile?.full_name || "",
+        email: b2bProspect.email || user?.email || "",
+        rut: b2bProspect.tax_id || userProfile?.rut || "",
+        address: b2bProspect.address || userProfile?.address || "",
+        addressNumber: userProfile?.address_number || "", // Prospects no tiene este campo, usar del perfil
+        addressExtra: userProfile?.address_extra || "", // Prospects no tiene este campo, usar del perfil
+        comuna: b2bProspect.comuna || userProfile?.comuna || "",
+        region: b2bProspect.city || userProfile?.region || "", // 'city' en prospects = región
+      })
+    } else {
+      setFormData({
+        name: userProfile?.full_name || user?.user_metadata?.full_name || "",
+        email: user?.email || "",
+        rut: userProfile?.rut || "",
+        address: userProfile?.address || "",
+        addressNumber: userProfile?.address_number || "",
+        addressExtra: userProfile?.address_extra || "",
+        comuna: userProfile?.comuna || "",
+        region: userProfile?.region || "",
+      })
+    }
+  }, [isBusinessMode, b2bProspect, userProfile, user])
 
   const [pointsToRedeem, setPointsToRedeem] = useState(0)
   const [newsletterDiscountPercent, setNewsletterDiscountPercent] = useState<number | null>(initialNewsletterDiscount || null)
@@ -74,8 +123,6 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
   const [isLoggingIn, setIsLoggingIn] = useState(false)
   const [loginError, setLoginError] = useState("")
 
-  const isB2BActive = Boolean(b2bProspect?.is_b2b_active)
-  const isShippingExempt = Boolean(userProfile?.shipping_fee_exempt)
   const getUnitPrice = (item: any) => {
     if (isB2BActive) {
       const b2bPrice = b2bPriceMap?.[item.product.id]
@@ -149,6 +196,12 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
     }
   }, [user?.email])
 
+  useEffect(() => {
+    if (isMounted && !isBusinessMode && paymentMethod === 'credit') {
+      setPaymentMethod('flow')
+    }
+  }, [isBusinessMode, isMounted, paymentMethod])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
@@ -219,7 +272,7 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
         items,
         total: resolvedSubtotal,
         customerInfo: formData,
-        pointsToRedeem,
+        pointsToRedeem: isBusinessMode ? 0 : pointsToRedeem,
         paymentMethod,
         shippingCost: selectedShipping?.price || 0,
         shippingServiceCode: selectedShipping?.code?.toString(),
@@ -227,6 +280,7 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
         discountCodeId: appliedDiscount?.id || null,
         discountAmount: appliedDiscount?.amount || 0,
         discountCode: appliedDiscount?.code || null,
+        isBusinessOrder: isBusinessMode,
       })
 
       if (result.success && result.redirectUrl) {
@@ -323,7 +377,7 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
   const appliedDiscountAmount = appliedDiscount?.amount || 0
   const shippingCost = selectedShipping?.price || 0
   const subtotalAfterDiscounts = Math.max(0, resolvedSubtotal - appliedNewsletterDiscount - appliedDiscountAmount)
-  const finalTotal = Math.max(0, subtotalAfterDiscounts - pointsToRedeem + shippingCost)
+  const finalTotal = Math.max(0, subtotalAfterDiscounts - (isBusinessMode ? 0 : pointsToRedeem) + shippingCost)
   const { net: subtotalNet, iva: subtotalIva } = getPriceBreakdown(resolvedSubtotal)
   const { net: finalNet, iva: finalIva } = getPriceBreakdown(finalTotal)
 
@@ -595,7 +649,7 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
                 <div className={`w-4 h-4 rounded-full border-4 ${paymentMethod === 'flow' ? 'border-calmar-ocean' : 'border-slate-300'}`} />
               </label>
 
-              {b2bProspect?.is_b2b_active && (
+              {isBusinessMode && b2bProspect?.is_b2b_active && (
                 <label className={`relative flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'credit' ? 'border-calmar-ocean bg-calmar-ocean/5 ring-1 ring-calmar-ocean' : 'border-slate-200'}`}>
                   <input type="radio" name="payment" value="credit" checked={paymentMethod === 'credit'} onChange={() => setPaymentMethod('credit')} className="hidden" />
                   <div className="flex-1">
@@ -690,7 +744,9 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
               </div>
 
               <div className="space-y-3 pt-6 border-t border-slate-100">
-                <PointsRedemption cartTotal={subtotalAfterDiscounts} onRedeem={handleRedeem} disabled={isSubmitting} />
+                {!isBusinessMode && (
+                  <PointsRedemption cartTotal={subtotalAfterDiscounts} onRedeem={handleRedeem} disabled={isSubmitting} />
+                )}
 
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-bold uppercase text-slate-600">
@@ -770,7 +826,7 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
                   </div>
                 )}
 
-                {pointsToRedeem > 0 && (
+                {pointsToRedeem > 0 && !isBusinessMode && (
                   <div className="flex justify-between text-sm text-indigo-600 font-bold">
                     <span>{t("summary.calmarPoints")}</span>
                     <span>-${pointsToRedeem.toLocaleString('es-CL')}</span>

@@ -24,6 +24,7 @@ const REGION_ZONES: Record<BlueExpressZone, string[]> = {
     'nuble',
     'biobio',
     'la araucania',
+    'araucania',
     'los rios',
     'los lagos',
   ],
@@ -117,7 +118,7 @@ export const getBlueExpressSize = (params: {
   for (const limit of SIZE_LIMITS) {
     const fitsWeight = weight <= limit.maxWeightKg
     const fitsDims = fitsDimensions(dimensions, limit.maxDimsCm)
-    if (fitsWeight || fitsDims) {
+    if (fitsWeight && fitsDims) {
       return limit.size
     }
   }

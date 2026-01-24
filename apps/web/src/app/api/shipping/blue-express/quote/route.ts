@@ -45,8 +45,9 @@ export async function POST(request: NextRequest) {
     })
 
     if (!result) {
+      console.error('[Blue Express] No result for:', { region, weightKg, dimensions })
       return NextResponse.json(
-        { error: 'No se pudo calcular el envío con los datos entregados' },
+        { error: `No se pudo calcular el envío para la región "${region}". Por favor verifica los datos o contacta soporte.` },
         { status: 400 }
       )
     }

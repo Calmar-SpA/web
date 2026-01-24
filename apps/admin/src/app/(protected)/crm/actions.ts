@@ -25,6 +25,7 @@ export async function createProspect(data: {
   requesting_rut?: string
   shipping_address?: string
   notes?: string
+  user_id?: string
 }) {
   const supabase = await createClient()
   const crmService = new CRMService(supabase)
@@ -32,7 +33,7 @@ export async function createProspect(data: {
   const requestingRut = normalizeRut(data.requesting_rut)
   const phoneCountry = data.phone_country || '56'
   const phoneFormatted = data.phone ? formatPhoneIntl(phoneCountry, data.phone) : undefined
-  const { phone_country: _phoneCountry, ...prospectData } = data
+  const { phone_country: _phoneCountry, user_id: manualUserId, ...prospectData } = data
 
   if (!taxId || !isValidRut(taxId)) {
     throw new Error('El RUT no es válido')
@@ -59,21 +60,24 @@ export async function createProspect(data: {
     ...prospectData,
     tax_id: formattedTaxId,
     requesting_rut: requestingRut ? formatRut(requestingRut) : undefined,
-    phone: phoneFormatted
+    phone: phoneFormatted,
+    user_id: manualUserId
   })
 
-  // Vincular con usuario existente si coincide el email
-  const { data: existingUser } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', data.email)
-    .maybeSingle()
+  // Si no se pasó un user_id manual, intentar vincular con usuario existente si coincide el email
+  if (!manualUserId) {
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', data.email)
+      .maybeSingle()
 
-  if (existingUser) {
-    await supabase
-      .from('prospects')
-      .update({ user_id: existingUser.id })
-      .eq('id', prospect.id)
+    if (existingUser) {
+      await supabase
+        .from('prospects')
+        .update({ user_id: existingUser.id })
+        .eq('id', prospect.id)
+    }
   }
 
   await sendProspectAdminNotification({
@@ -153,7 +157,7 @@ export async function toggleProspectB2BActive(prospectId: string, currentIsActiv
 
   let userId = prospect.user_id
 
-  // Si se está activando y no tiene usuario vinculado, buscar por email o crear invitación
+  // Si se está activando y no tiene usuario vinculado, buscar por email
   if (!currentIsActive && !userId) {
     const { data: userByEmail } = await supabase
       .from('users')
@@ -163,30 +167,6 @@ export async function toggleProspectB2BActive(prospectId: string, currentIsActiv
 
     if (userByEmail) {
       userId = userByEmail.id
-      await supabase
-        .from('prospects')
-        .update({ user_id: userId })
-        .eq('id', prospectId)
-    } else {
-      // Crear invitación en Supabase Auth
-      const supabaseAdmin = createAdminClient()
-      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-        prospect.email,
-        {
-          data: {
-            full_name: prospect.contact_name,
-            rut: prospect.tax_id,
-            role: 'b2b'
-          }
-        }
-      )
-
-      if (inviteError) {
-        console.error('Error inviting user:', inviteError)
-        throw new Error(`Error al invitar al usuario: ${inviteError.message}`)
-      }
-
-      userId = inviteData.user.id
       await supabase
         .from('prospects')
         .update({ user_id: userId })
@@ -313,7 +293,7 @@ export async function activateProspect(prospectId: string) {
 
   let userId = prospect.user_id
 
-  // Si no tiene usuario vinculado, buscar por email o crear invitación
+  // Si no tiene usuario vinculado, buscar por email
   if (!userId) {
     const { data: userByEmail } = await supabase
       .from('users')
@@ -323,29 +303,6 @@ export async function activateProspect(prospectId: string) {
 
     if (userByEmail) {
       userId = userByEmail.id
-      await supabase
-        .from('prospects')
-        .update({ user_id: userId })
-        .eq('id', prospectId)
-    } else {
-      // Crear invitación en Supabase Auth
-      const supabaseAdmin = createAdminClient()
-      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-        prospect.email,
-        {
-          data: {
-            full_name: prospect.contact_name,
-            rut: prospect.tax_id,
-          }
-        }
-      )
-
-      if (inviteError) {
-        console.error('Error inviting user:', inviteError)
-        throw new Error(`Error al invitar al usuario: ${inviteError.message}`)
-      }
-
-      userId = inviteData.user.id
       await supabase
         .from('prospects')
         .update({ user_id: userId })
@@ -496,6 +453,7 @@ export async function updateProspect(prospectId: string, formData: FormData) {
     requesting_rut: requestingRut ? formatRut(requestingRut) : null,
     shipping_address: (formData.get('shipping_address') as string)?.trim() || null,
     notes: (formData.get('notes') as string)?.trim() || null,
+    user_id: (formData.get('user_id') as string) || null,
   }
 
   if (!payload.contact_name || !payload.email) {
@@ -525,6 +483,19 @@ export async function deleteProspect(prospectId: string) {
 
   revalidatePath('/crm/prospects')
   revalidatePath('/crm')
+}
+
+export async function searchUsers(query: string) {
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, email, full_name')
+    .or(`email.ilike.%${query}%,full_name.ilike.%${query}%`)
+    .limit(10)
+
+  if (error) throw error
+  return data
 }
 
 export async function createInteraction(data: {

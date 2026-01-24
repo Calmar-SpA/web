@@ -57,6 +57,13 @@ export function ShippingOptions({
           }),
         })
 
+        const contentType = response.headers.get("content-type")
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text()
+          console.error('[ShippingOptions] Non-JSON response:', text)
+          throw new Error('Error de servidor al calcular envío. Por favor intenta de nuevo.')
+        }
+
         const data = await response.json()
 
         if (!response.ok) {

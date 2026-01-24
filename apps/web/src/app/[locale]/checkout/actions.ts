@@ -46,6 +46,7 @@ interface CheckoutData {
   discountCodeId?: string | null;
   discountAmount?: number;
   discountCode?: string | null;
+  isBusinessOrder?: boolean;
 }
 
 export async function checkNewsletterDiscount(email: string) {
@@ -216,7 +217,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
   let b2bPriceMap = new Map<string, number>()
   let b2bProspect: any = null
   let isActiveB2B = false
-  if (user) {
+  if (user && data.isBusinessOrder) {
     const crmService = new CRMService(supabase)
     b2bProspect = await crmService.getProspectByUserId(user.id)
     isActiveB2B = Boolean(b2bProspect?.type === 'b2b' && b2bProspect?.is_b2b_active)
@@ -296,8 +297,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
   }
 
   // 4. Create Order in Database
-  // Generate order number
-  const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+  // order_number is now generated automatically by a database trigger
   
   // Calculate subtotal using final unit prices
   const subtotal = data.items.reduce((sum, item) => {
@@ -327,7 +327,6 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
-      order_number: orderNumber,
       user_id: user?.id,
       prospect_id: prospectId,
       email: data.customerInfo.email,
@@ -338,6 +337,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
       discount_code_id: discountCodeId,
       total_amount: totalWithShipping,
       status: data.paymentMethod === 'credit' || totalWithShipping === 0 ? 'paid' : 'pending_payment',
+      is_business_order: data.isBusinessOrder || false,
       shipping_address: {
         name: data.customerInfo.name,
         rut: prospectRutFormatted,
@@ -383,6 +383,37 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
 
     if (updateProfileError) {
       console.error('Profile update error:', updateProfileError)
+    }
+
+    // Actualizar datos del prospect B2B si faltan campos de dirección
+    if (data.isBusinessOrder && b2bProspect?.id) {
+      const prospectUpdateData: Record<string, string | null> = {}
+      
+      // Solo actualizar campos que estén vacíos en el prospect
+      if (!b2bProspect.address && data.customerInfo.address) {
+        prospectUpdateData.address = data.customerInfo.address
+      }
+      if (!b2bProspect.comuna && data.customerInfo.comuna) {
+        prospectUpdateData.comuna = data.customerInfo.comuna
+      }
+      if (!b2bProspect.city && data.customerInfo.region) {
+        prospectUpdateData.city = data.customerInfo.region // 'city' = región en prospects
+      }
+      if (!b2bProspect.contact_name && data.customerInfo.name) {
+        prospectUpdateData.contact_name = data.customerInfo.name
+      }
+
+      // Solo hacer update si hay campos que actualizar
+      if (Object.keys(prospectUpdateData).length > 0) {
+        const { error: updateProspectError } = await supabase
+          .from('prospects')
+          .update(prospectUpdateData)
+          .eq('id', b2bProspect.id)
+
+        if (updateProspectError) {
+          console.error('Prospect update error:', updateProspectError)
+        }
+      }
     }
   }
 
@@ -441,7 +472,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
         status: 'completed',
       })
 
-    if (user && totalWithShipping > 0) {
+    if (user && totalWithShipping > 0 && !data.isBusinessOrder) {
       const loyaltyService = new LoyaltyService(supabase)
       await loyaltyService.awardPoints(user.id, order.id, totalWithShipping)
     }
@@ -475,7 +506,10 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
 
     await notifyLowInventoryIfNeeded(supabase, orderItems)
 
-    const successParams = new URLSearchParams({ orderId: order.id })
+    const successParams = new URLSearchParams({ 
+      orderId: order.id,
+      orderNumber: order.order_number 
+    })
     if (didUpdateRut) {
       successParams.set('rutUpdated', '1')
     }
@@ -487,26 +521,81 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
   }
 
   if (data.paymentMethod === 'credit') {
-    // 1. Deduct from credit limit
-    await supabase
-      .from('prospects')
-      .update({ credit_limit: Number(b2bProspect.credit_limit) - totalWithShipping })
-      .eq('id', b2bProspect.id)
+    // 1. Deduct from credit limit usando función RPC con SECURITY DEFINER
+    console.log('[Checkout Credit] Deducting credit:', {
+      prospectId: b2bProspect.id,
+      currentCreditLimit: b2bProspect.credit_limit,
+      totalWithShipping
+    })
+    
+    const { data: creditResult, error: creditError } = await supabase
+      .rpc('deduct_prospect_credit', {
+        p_prospect_id: b2bProspect.id,
+        p_amount: totalWithShipping
+      })
 
-    // 2. Record payment
-    await supabase
+    if (creditError) {
+      console.error('[Checkout Credit] RPC Error:', creditError)
+      throw new Error('Error al procesar el crédito')
+    }
+
+    if (!creditResult?.success) {
+      console.error('[Checkout Credit] Deduction failed:', creditResult)
+      throw new Error(creditResult?.error || 'Error al descontar crédito')
+    }
+
+    console.log('[Checkout Credit] Credit deducted successfully:', creditResult)
+
+    // 2. Record payment as pending (credit sale)
+    const { error: paymentInsertError } = await supabase
       .from('payments')
       .insert({
         order_id: order.id,
-        payment_method: 'transfer', // Using 'transfer' as proxy for internal credit for now
+        payment_method: 'transfer',
         payment_provider: 'internal_credit',
         amount: totalWithShipping,
-        status: 'completed',
+        status: 'pending', // Pending until paid
+      })
+    
+    if (paymentInsertError) {
+      console.error('[Checkout Credit] Error inserting payment:', paymentInsertError)
+    }
+
+    // 3. Create product_movement for debt tracking usando función RPC
+    const paymentTermsDays = b2bProspect.payment_terms_days || 30
+    const dueDate = new Date()
+    dueDate.setDate(dueDate.getDate() + paymentTermsDays)
+
+    const movementItems = orderItems.map(item => ({
+      product_id: item.product_id,
+      variant_id: item.variant_id || null,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+    }))
+
+    const { data: movementResult, error: movementError } = await supabase
+      .rpc('create_credit_sale_movement', {
+        p_prospect_id: b2bProspect.id,
+        p_customer_user_id: user!.id,
+        p_items: movementItems,
+        p_total_amount: totalWithShipping,
+        p_due_date: dueDate.toISOString().split('T')[0],
+        p_order_number: order.order_number
       })
 
-    // 3. Award points even for credit orders
-    const loyaltyService = new LoyaltyService(supabase)
-    await loyaltyService.awardPoints(user!.id, order.id, totalWithShipping)
+    if (movementError) {
+      console.error('[Checkout Credit] Error creating movement:', movementError)
+    } else if (!movementResult?.success) {
+      console.error('[Checkout Credit] Movement creation failed:', movementResult)
+    } else {
+      console.log('[Checkout Credit] Movement created:', movementResult)
+    }
+
+    // 4. Award points only for personal orders
+    if (!data.isBusinessOrder) {
+      const loyaltyService = new LoyaltyService(supabase)
+      await loyaltyService.awardPoints(user!.id, order.id, totalWithShipping)
+    }
 
     const shippingSummary = `${data.customerInfo.address}, ${data.customerInfo.comuna}, ${data.customerInfo.region}`
     const emailItems = orderItems.map(item => ({
@@ -537,8 +626,11 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
 
     await notifyLowInventoryIfNeeded(supabase, orderItems)
 
-    // 4. Return success for redirect (client-side will handle navigation)
-    const successParams = new URLSearchParams({ orderId: order.id })
+    // 5. Return success for redirect (client-side will handle navigation)
+    const successParams = new URLSearchParams({ 
+      orderId: order.id,
+      orderNumber: order.order_number 
+    })
     if (didUpdateRut) {
       successParams.set('rutUpdated', '1')
     }

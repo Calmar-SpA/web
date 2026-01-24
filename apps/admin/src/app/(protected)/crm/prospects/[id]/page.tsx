@@ -7,12 +7,13 @@ import { CRMService } from '@calmar/database'
 import { ArrowLeft, Mail, Phone, Building2, Plus, Package, DollarSign, Calendar, User, ShieldCheck } from 'lucide-react'
 import { Button, Input, RutInput } from '@calmar/ui'
 import Link from 'next/link'
-import { activateProspect, createInteraction, resendActivationEmail, toggleProspectB2BActive, updateProspect, updateProspectStage } from '../../actions'
+import { activateProspect, createInteraction, resendActivationEmail, toggleProspectB2BActive, updateProspect, updateProspectStage, searchUsers } from '../../actions'
 import { toast } from 'sonner'
 import { isValidPhoneIntl, isValidRut, parsePhoneIntl } from '@calmar/utils'
 import { formatClp } from '@calmar/utils'
 import { ApproveB2BModal } from '../approve-b2b-modal'
 import { CompleteDataModal, getMissingProspectFields } from '../complete-data-modal'
+import { Search, X } from 'lucide-react'
 
 const STAGES = [
   { id: 'contact', label: 'Contacto' },
@@ -44,6 +45,10 @@ export default function ProspectDetailPage() {
   const [requestingRutValue, setRequestingRutValue] = useState('')
   const [phoneValue, setPhoneValue] = useState('')
   const [phoneCountry, setPhoneCountry] = useState('56')
+  const [userQuery, setUserQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<any>(null)
   const [interactionForm, setInteractionForm] = useState({
     interaction_type: 'note' as 'call' | 'email' | 'meeting' | 'note' | 'sample_sent' | 'quote_sent' | 'other',
     subject: '',
@@ -58,6 +63,20 @@ export default function ProspectDetailPage() {
     try {
       const prospectData = await crmService.getProspectById(prospectId)
       setProspect(prospectData)
+      
+      if (prospectData.user_id) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id, email, full_name')
+          .eq('id', prospectData.user_id)
+          .single()
+        
+        if (userData) {
+          setSelectedUser(userData)
+        }
+      } else {
+        setSelectedUser(null)
+      }
     } catch (error: any) {
       console.error('Error loading prospect:', error?.message || error)
       toast.error('Error al cargar el prospecto')
@@ -105,6 +124,32 @@ export default function ProspectDetailPage() {
       setPhoneCountry(parsedPhone.countryCode || '56')
     }
   }, [prospect])
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (userQuery.length >= 3) {
+        setIsSearching(true)
+        try {
+          const results = await searchUsers(userQuery)
+          setSearchResults(results)
+        } catch (error) {
+          console.error('Error searching users:', error)
+        } finally {
+          setIsSearching(false)
+        }
+      } else {
+        setSearchResults([])
+      }
+    }, 300)
+
+    return () => clearTimeout(delayDebounceFn)
+  }, [userQuery])
+
+  const handleSelectUser = (user: any) => {
+    setSelectedUser(user)
+    setUserQuery('')
+    setSearchResults([])
+  }
 
   const isTaxIdValid = !taxIdValue || isValidRut(taxIdValue)
   const isRequestingRutValid = !requestingRutValue || isValidRut(requestingRutValue)
@@ -376,6 +421,15 @@ export default function ProspectDetailPage() {
                   <span className="text-sm font-medium">Dirección de despacho: {prospect.shipping_address}</span>
                 </div>
               )}
+              {selectedUser && (
+                <div className="flex items-center gap-3 pt-2 border-t border-slate-50">
+                  <User className="w-5 h-5 text-calmar-ocean" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Usuario Vinculado</span>
+                    <span className="text-sm font-bold text-slate-900">{selectedUser.full_name || 'Sin nombre'} ({selectedUser.email})</span>
+                  </div>
+                </div>
+              )}
             </div>
             {showEditForm && (
               <div className="mt-6 border-t border-slate-100 pt-6">
@@ -516,7 +570,68 @@ export default function ProspectDetailPage() {
                       className="w-full px-3 py-2 rounded-xl border-2 border-slate-200 focus:border-calmar-ocean focus:outline-none text-sm resize-none"
                     />
                   </div>
-                  <div className="md:col-span-2 flex justify-end">
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Vincular Usuario
+                    </label>
+                    <input type="hidden" name="user_id" value={selectedUser?.id || ''} />
+                    {!selectedUser ? (
+                      <div className="relative">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <Input
+                            value={userQuery}
+                            onChange={(e) => setUserQuery(e.target.value)}
+                            placeholder="Buscar usuario por email o nombre..."
+                            className="pl-10 h-11 bg-white"
+                          />
+                        </div>
+                        
+                        {isSearching && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border-2 border-slate-100 rounded-xl p-4 shadow-lg text-center">
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 animate-pulse">Buscando...</p>
+                          </div>
+                        )}
+                        
+                        {searchResults.length > 0 && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-lg overflow-hidden">
+                            {searchResults.map((user) => (
+                              <button
+                                key={user.id}
+                                type="button"
+                                onClick={() => handleSelectUser(user)}
+                                className="w-full p-3 text-left hover:bg-slate-50 flex flex-col border-b border-slate-50 last:border-0"
+                              >
+                                <span className="text-sm font-bold text-slate-900">{user.full_name || 'Sin nombre'}</span>
+                                <span className="text-xs text-slate-500">{user.email}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {userQuery.length >= 3 && !isSearching && searchResults.length === 0 && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border-2 border-slate-100 rounded-xl p-4 shadow-lg text-center">
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">No se encontraron usuarios</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between p-3 bg-white border-2 border-calmar-ocean/20 rounded-xl">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-slate-900">{selectedUser.full_name || 'Sin nombre'}</span>
+                          <span className="text-xs text-slate-500">{selectedUser.email}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedUser(null)}
+                          className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2 md:col-span-2 flex justify-end">
                     <Button
                       type="submit"
                       disabled={!isFormValid || isUpdating}

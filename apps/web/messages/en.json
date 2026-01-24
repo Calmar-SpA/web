@@ -261,6 +261,22 @@
       "marketing": "Receive marketing emails and offers",
       "transactional": "Receive transactional emails (Required)",
       "save": "Save changes"
+    },
+    "debt": {
+      "title": "Credit to Pay",
+      "totalPending": "Total Pending Balance",
+      "pendingItems": "Pending Items",
+      "upcomingPayments": "Upcoming Payments",
+      "noDueDate": "No due date",
+      "overdue": "Overdue by {days} days",
+      "dueToday": "Due today",
+      "dueTomorrow": "Due tomorrow",
+      "dueInDays": "Due in {days} days",
+      "dueOn": "Due on {date}",
+      "hasOverdue": "{count} overdue",
+      "viewAll": "View all ({count})",
+      "noDebt": "No pending balance!",
+      "noDebtDesc": "You don't have any credits to pay at this moment."
     }
   },
   "Shop": {
@@ -293,8 +309,12 @@
     "signupErrorEmailExists": "This email is already registered. Please sign in.",
     "signupErrorWeakPassword": "The password is too short. Use at least 6 characters.",
     "signupErrorEmailInvalid": "The email is invalid.",
+    "signupErrorRutExists": "This RUT is already registered. If you already have an account, please sign in.",
     "signupErrorGeneric": "We couldn't create your account. Please try again.",
     "signupSuccessCheckEmail": "Check your email to confirm your account.",
+    "loginErrorInvalidCredentials": "Invalid email or password.",
+    "loginErrorEmailNotConfirmed": "Please confirm your email before signing in. Check your inbox.",
+    "loginErrorGeneric": "We couldn't sign you in. Please try again.",
     "terms": "By continuing, you agree to our terms and conditions."
   },
   "ProfileCompletion": {

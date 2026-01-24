@@ -167,13 +167,9 @@
 .sidebar-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
-}
-
-.sidebar-scroll::-webkit-scrollbar {
+}.sidebar-scroll::-webkit-scrollbar {
   width: 4px;
-}
-
-.sidebar-scroll::-webkit-scrollbar-track {
+}.sidebar-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 

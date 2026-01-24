@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createProspect } from '../../actions'
+import { createProspect, searchUsers } from '../../actions'
 import { Button, Input, RutInput } from '@calmar/ui'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Save, Search, User, X } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { isValidPhoneIntl, isValidRut } from '@calmar/utils'
@@ -12,6 +12,10 @@ import { isValidPhoneIntl, isValidRut } from '@calmar/utils'
 export default function NewProspectPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [userQuery, setUserQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<any>(null)
   const [formData, setFormData] = useState({
     type: 'b2b' as 'b2b' | 'b2c',
     company_name: '',
@@ -29,6 +33,38 @@ export default function NewProspectPage() {
     shipping_address: '',
     notes: ''
   })
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (userQuery.length >= 3) {
+        setIsSearching(true)
+        try {
+          const results = await searchUsers(userQuery)
+          setSearchResults(results)
+        } catch (error) {
+          console.error('Error searching users:', error)
+        } finally {
+          setIsSearching(false)
+        }
+      } else {
+        setSearchResults([])
+      }
+    }, 300)
+
+    return () => clearTimeout(delayDebounceFn)
+  }, [userQuery])
+
+  const handleSelectUser = (user: any) => {
+    setSelectedUser(user)
+    setUserQuery('')
+    setSearchResults([])
+    // Opcionalmente pre-llenar campos si están vacíos
+    setFormData(prev => ({
+      ...prev,
+      contact_name: prev.contact_name || user.full_name || '',
+      email: prev.email || user.email || ''
+    }))
+  }
 
   const isTaxIdValid = formData.tax_id ? isValidRut(formData.tax_id) : false
   const isRequestingRutValid = !formData.requesting_rut || isValidRut(formData.requesting_rut)
@@ -73,7 +109,8 @@ export default function NewProspectPage() {
         business_activity: formData.business_activity || undefined,
         requesting_rut: formData.requesting_rut || undefined,
         shipping_address: formData.shipping_address || undefined,
-        notes: formData.notes || undefined
+        notes: formData.notes || undefined,
+        user_id: selectedUser?.id
       })
       
       toast.success('Prospecto creado exitosamente')
@@ -106,6 +143,73 @@ export default function NewProspectPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl border-2 border-slate-100 shadow-sm space-y-6">
+        {/* User Selection */}
+        <div className="p-6 bg-slate-50 rounded-2xl border-2 border-slate-100 space-y-4">
+          <div className="flex items-center gap-2 text-calmar-ocean">
+            <User className="w-5 h-5" />
+            <h3 className="text-sm font-black uppercase tracking-wider">Vincular Usuario</h3>
+          </div>
+          
+          {!selectedUser ? (
+            <div className="relative">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  value={userQuery}
+                  onChange={(e) => setUserQuery(e.target.value)}
+                  placeholder="Buscar usuario por email o nombre..."
+                  className="pl-10 h-11 bg-white"
+                />
+              </div>
+              
+              {isSearching && (
+                <div className="absolute z-10 w-full mt-1 bg-white border-2 border-slate-100 rounded-xl p-4 shadow-lg text-center">
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400 animate-pulse">Buscando...</p>
+                </div>
+              )}
+              
+              {searchResults.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-lg overflow-hidden">
+                  {searchResults.map((user) => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      onClick={() => handleSelectUser(user)}
+                      className="w-full p-3 text-left hover:bg-slate-50 flex flex-col border-b border-slate-50 last:border-0"
+                    >
+                      <span className="text-sm font-bold text-slate-900">{user.full_name || 'Sin nombre'}</span>
+                      <span className="text-xs text-slate-500">{user.email}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {userQuery.length >= 3 && !isSearching && searchResults.length === 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border-2 border-slate-100 rounded-xl p-4 shadow-lg text-center">
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">No se encontraron usuarios</p>
+                </div>
+              )}
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-2">
+                Opcional: Vincula este prospecto a una cuenta de usuario existente.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between p-3 bg-white border-2 border-calmar-ocean/20 rounded-xl">
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-slate-900">{selectedUser.full_name || 'Sin nombre'}</span>
+                <span className="text-xs text-slate-500">{selectedUser.email}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedUser(null)}
+                className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Type Selection */}
         <div>
           <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-3">

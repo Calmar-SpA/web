@@ -206,12 +206,14 @@ calmar-ecommerce/
 - **Gestión de proveedores** con datos tributarios y direcciones de retiro
 - **Sistema de categorías** jerárquico
 
-### 👤 Gestión de Usuarios
+### 👤 Gestión de Usuarios e Identidades
 
+- **Separación de Identidades**: El sistema distingue claramente entre la persona natural (Usuario) y la entidad legal (Empresa/Prospecto).
+- **Datos Independientes**: Un usuario puede tener un RUT y Email personal, mientras que su empresa vinculada puede tener un RUT (Tax ID) y Email corporativo diferentes.
 - **Registro e inicio de sesión** con Supabase Auth
 - **Confirmación por email**
 - **Roles de usuario**: Customer, Admin, B2B
-- **Perfil de usuario** con historial de pedidos
+- **Perfil de usuario** con historial de pedidos segmentado (Personal vs Empresa)
 - **Identificación por RUT** para vincular compras con CRM
 - **Gestión de direcciones** de envío y facturación
 - **Exención de pago de envíos** por usuario desde admin
@@ -248,8 +250,9 @@ calmar-ecommerce/
 
 - **Flujo de estados**: Pendiente → Pagado → En preparación → Enviado →
   Entregado
+- **Generación de números de orden**: Formato amigable y correlativo perpetuo (ej: ORD-1001)
 - **Seguimiento de envíos** con tracking
-- **Historial de pedidos** para clientes
+- **Historial de pedidos** para clientes con visualización unificada de compras web y movimientos CRM
 - **Notificaciones** por email
 
 ### 🌍 Internacionalización

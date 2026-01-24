@@ -38,12 +38,15 @@ export async function POST(request: NextRequest) {
       
       const { data: order } = await supabase
         .from('orders')
-        .select('shipping_address')
+        .select('order_number, shipping_address')
         .eq('id', status.commerceOrder)
         .single()
 
       const rutUpdated = Boolean((order?.shipping_address as any)?.rut_updated)
-      const successParams = new URLSearchParams({ orderId: status.commerceOrder })
+      const successParams = new URLSearchParams({ 
+        orderId: status.commerceOrder,
+        orderNumber: order?.order_number || ''
+      })
       if (rutUpdated) {
         successParams.set('rutUpdated', '1')
       }

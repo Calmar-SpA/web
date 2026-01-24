@@ -5,14 +5,19 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { normalizeRut, isValidRut } from '@calmar/utils'
 
+function getRedirectPath(formData: FormData, defaultPath: string = 'account/settings'): string {
+  const locale = String(formData.get('locale') || '').trim()
+  const redirectTo = String(formData.get('redirect_to') || defaultPath).trim()
+  return locale ? `/${locale}/${redirectTo}` : `/${redirectTo}`
+}
+
 export async function updateProfile(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const redirectPath = getRedirectPath(formData, 'account')
 
   if (!user) {
-    const locale = String(formData.get('locale') || '').trim()
-    const settingsPath = locale ? `/${locale}/account/settings` : '/account/settings'
-    redirect(`${settingsPath}?error=Sesión%20inválida`)
+    redirect(`${redirectPath}?error=Sesión%20inválida`)
   }
 
   const fullName = String(formData.get('full_name') || '').trim()
@@ -21,15 +26,11 @@ export async function updateProfile(formData: FormData) {
   const rut = normalizeRut(rutInput)
 
   if (!rut || !isValidRut(rut)) {
-    const locale = String(formData.get('locale') || '').trim()
-    const settingsPath = locale ? `/${locale}/account/settings` : '/account/settings'
-    redirect(`${settingsPath}?error=El%20RUT%20no%20es%20válido`)
+    redirect(`${redirectPath}?error=El%20RUT%20no%20es%20válido`)
   }
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    const locale = String(formData.get('locale') || '').trim()
-    const settingsPath = locale ? `/${locale}/account/settings` : '/account/settings'
-    redirect(`${settingsPath}?error=El%20email%20no%20es%20válido`)
+    redirect(`${redirectPath}?error=El%20email%20no%20es%20válido`)
   }
 
   const { data: existingUser } = await supabase
@@ -40,7 +41,7 @@ export async function updateProfile(formData: FormData) {
     .single()
 
   if (existingUser) {
-    throw new Error('Este RUT ya está asociado a otra cuenta')
+    redirect(`${redirectPath}?error=Este%20RUT%20ya%20está%20asociado%20a%20otra%20cuenta`)
   }
 
   if (email !== user.email) {
@@ -52,16 +53,12 @@ export async function updateProfile(formData: FormData) {
       .single()
 
     if (existingEmail) {
-      const locale = String(formData.get('locale') || '').trim()
-      const settingsPath = locale ? `/${locale}/account/settings` : '/account/settings'
-      redirect(`${settingsPath}?error=Este%20email%20ya%20está%20asociado%20a%20otra%20cuenta`)
+      redirect(`${redirectPath}?error=Este%20email%20ya%20está%20asociado%20a%20otra%20cuenta`)
     }
 
     const { error: emailError } = await supabase.auth.updateUser({ email })
     if (emailError) {
-      const locale = String(formData.get('locale') || '').trim()
-      const settingsPath = locale ? `/${locale}/account/settings` : '/account/settings'
-      redirect(`${settingsPath}?error=No%20se%20pudo%20actualizar%20el%20email`)
+      redirect(`${redirectPath}?error=No%20se%20pudo%20actualizar%20el%20email`)
     }
   }
 
@@ -75,14 +72,11 @@ export async function updateProfile(formData: FormData) {
     .eq('id', user.id)
 
   if (error) {
-    const locale = String(formData.get('locale') || '').trim()
-    const settingsPath = locale ? `/${locale}/account/settings` : '/account/settings'
-    redirect(`${settingsPath}?error=No%20se%20pudo%20actualizar%20el%20perfil`)
+    redirect(`${redirectPath}?error=No%20se%20pudo%20actualizar%20el%20perfil`)
   }
 
-  const locale = String(formData.get('locale') || '').trim()
-  const settingsPath = locale ? `/${locale}/account/settings` : '/account/settings'
-  revalidatePath(settingsPath)
+  revalidatePath(redirectPath)
+  revalidatePath(getRedirectPath(formData, 'account/settings'))
 }
 
 export async function updatePassword(formData: FormData) {

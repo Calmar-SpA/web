@@ -11,12 +11,16 @@ function CheckoutSuccessContent() {
   const { clearCart } = useCart()
   const searchParams = useSearchParams()
   const orderId = searchParams.get('orderId')
+  const orderNumber = searchParams.get('orderNumber')
   const rutUpdated = searchParams.get('rutUpdated') === '1'
 
   useEffect(() => {
     // Clear cart on successful checkout
     clearCart()
   }, [clearCart])
+
+  // Mostrar orderNumber si existe, sino usar parte del orderId como fallback
+  const displayOrderNumber = orderNumber || (orderId ? orderId.slice(0, 8) : null)
 
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 text-center space-y-8 max-w-2xl mx-auto">
@@ -29,10 +33,10 @@ function CheckoutSuccessContent() {
         <p className="text-slate-500 text-lg">
           Hemos recibido tu pedido correctamente. Te enviaremos un correo con los detalles del despacho a la brevedad.
         </p>
-        {orderId && (
+        {displayOrderNumber && (
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 inline-block">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Número de Pedido</p>
-            <p className="font-mono font-bold text-calmar-ocean">#{orderId.slice(0, 8)}</p>
+            <p className="font-mono font-bold text-calmar-ocean">#{displayOrderNumber}</p>
           </div>
         )}
         {rutUpdated && (
