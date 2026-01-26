@@ -33,10 +33,10 @@ export function Footer() {
           </nav>
         </div>
         <div className="space-y-4">
-          <h4 className="font-bold text-xs uppercase tracking-widest text-white">Legal</h4>
+          <h4 className="font-bold text-xs uppercase tracking-widest text-white">{t('legal.title')}</h4>
           <nav className="flex flex-col gap-2 text-sm text-white/70">
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacidad</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Términos</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">{t('legal.privacy')}</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">{t('legal.terms')}</Link>
           </nav>
         </div>
         <div className="space-y-4">

@@ -425,7 +425,12 @@
       "error": "An error occurred. Please try again.",
       "invalidEmail": "Invalid email."
     },
-    "rights": "© 2026 Calmar SpA • All rights reserved"
+    "rights": "© 2026 Calmar SpA • All rights reserved",
+    "legal": {
+      "title": "Legal",
+      "privacy": "Privacy Policy",
+      "terms": "Terms & Conditions"
+    }
   },
   "Privacy": {
     "hero": {
