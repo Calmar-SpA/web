@@ -1,7 +1,7 @@
 "use client"
 
 import { Link, usePathname } from "@/navigation"
-import { Button, Input, RutInput, Sheet, SheetContent, SheetTitle, SheetTrigger } from "@calmar/ui"
+import { Button, Input, RutInput, Sheet, SheetContent, SheetTitle, SheetTrigger, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@calmar/ui"
 import { useTranslations } from "next-intl"
 import dynamic from 'next/dynamic'
 import { useActionState, useEffect, useState } from "react"
@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client"
 import { completeProfile, type CompleteProfileState } from "@/actions/complete-profile"
 import { logout } from "@/app/[locale]/login/actions"
 import { useUserMode, type UserMode } from "@/hooks/use-user-mode"
-import { User, Building2 } from "lucide-react"
+import { User, Building2, ChevronDown } from "lucide-react"
 
 const LanguageSwitcher = dynamic(() => import("./language-switcher").then(mod => ({ default: mod.LanguageSwitcher })), {
   ssr: false,
@@ -47,6 +47,12 @@ export function Header() {
     { name: capitalize(t("shop")), href: "/shop" },
     { name: capitalize(t("about")), href: "/about" },
     { name: capitalize(t("contact")), href: "/contact" },
+  ]
+
+  const footerT = useTranslations("Footer")
+  const legalLinks = [
+    { name: footerT("legal.privacy"), href: "/privacy" },
+    { name: footerT("legal.terms"), href: "/terms" },
   ]
 
   useEffect(() => {
@@ -158,6 +164,26 @@ export function Header() {
               {link.name}
             </Link>
           ))}
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1 text-base font-bold text-foreground/80 hover:text-primary transition-colors outline-none capitalize" style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}>
+              {footerT("legal.title").toLowerCase()}
+              <ChevronDown className="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-white/95 backdrop-blur-md border-primary/10 rounded-xl shadow-xl p-2 min-w-[200px]">
+              {legalLinks.map((link) => (
+                <DropdownMenuItem key={link.href} asChild className="focus:bg-slate-50 rounded-lg cursor-pointer">
+                  <Link 
+                    href={link.href}
+                    className="w-full px-3 py-2 text-sm font-bold text-slate-600 hover:text-primary transition-colors tracking-tight"
+                    style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
+                  >
+                    {link.name}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
         {/* Actions */}
@@ -298,6 +324,20 @@ export function Header() {
                       key={link.href}
                       href={link.href}
                       className="text-lg font-bold text-foreground/90 hover:text-primary transition-colors"
+                      style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {link.name}
+                    </Link>
+                  ))}
+
+                  <div className="h-px w-full bg-slate-100 my-2" />
+                  
+                  {legalLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="text-sm font-bold text-slate-400 hover:text-primary transition-colors tracking-tight"
                       style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
