@@ -3,6 +3,39 @@ import { Link } from "@/navigation";
 import { Button } from "@calmar/ui";
 import { Heart, Zap, ShieldCheck, ArrowRight, Sparkles } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
+import { Metadata } from "next";
+import { locales } from "@/i18n/config";
+
+const baseUrl = "https://calmar.cl";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  
+  const title = locale === "es" 
+    ? "Sobre Nosotros - Nuestra Historia y Misión"
+    : "About Us - Our Story and Mission";
+  
+  const description = locale === "es"
+    ? "Conoce la historia de CALMAR. Nuestra misión es ofrecer hidratación premium con agua de mar y vertiente, rica en minerales esenciales."
+    : "Discover the story of CALMAR. Our mission is to provide premium hydration with sea and spring water, rich in essential minerals.";
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${baseUrl}/${locale}/about`,
+      languages: Object.fromEntries(
+        locales.map((l) => [l, `${baseUrl}/${l}/about`])
+      ),
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${baseUrl}/${locale}/about`,
+      locale: locale === "es" ? "es_CL" : "en_US",
+    },
+  };
+}
 
 export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

@@ -2,8 +2,41 @@ import { createClient } from '@/lib/supabase/server'
 import { ProductService } from '@calmar/database'
 import { ProductWithDetails } from '@calmar/types'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { Metadata } from 'next'
+import { locales } from '@/i18n/config'
 
 export const revalidate = 60;
+
+const baseUrl = "https://calmar.cl";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  
+  const title = locale === "es" 
+    ? "Tienda - Productos de Hidratación Premium"
+    : "Shop - Premium Hydration Products";
+  
+  const description = locale === "es"
+    ? "Explora nuestra colección de agua de mar y vertiente. Hidratación premium con minerales esenciales para tu bienestar."
+    : "Explore our collection of sea and spring water. Premium hydration with essential minerals for your wellness.";
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${baseUrl}/${locale}/shop`,
+      languages: Object.fromEntries(
+        locales.map((l) => [l, `${baseUrl}/${l}/shop`])
+      ),
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${baseUrl}/${locale}/shop`,
+      locale: locale === "es" ? "es_CL" : "en_US",
+    },
+  };
+}
 
 export default async function ShopPage({ params }: { params: Promise<{ locale: string }> }) {
 

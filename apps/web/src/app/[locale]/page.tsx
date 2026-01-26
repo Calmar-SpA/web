@@ -8,8 +8,41 @@ import { Reveal } from "@/components/ui/reveal";
 import { ProductCardWithCart } from "@/components/product/product-card-with-cart";
 import { DiscountInitializer } from "@/components/product/discount-initializer";
 import { VideoHero } from "@/components/hero/video-hero";
+import { Metadata } from "next";
+import { locales } from "@/i18n/config";
 
 export const revalidate = 60;
+
+const baseUrl = "https://calmar.cl";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  
+  const title = locale === "es" 
+    ? "CALMAR | Hidratación Premium - Agua de Mar y Vertiente"
+    : "CALMAR | Premium Hydration - Sea and Spring Water";
+  
+  const description = locale === "es"
+    ? "Cambia tu agua, cambia tu vida. Descubre nuestra agua de mar y vertiente con minerales esenciales para una hidratación óptima."
+    : "Change your water, change your life. Discover our sea and spring water with essential minerals for optimal hydration.";
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${baseUrl}/${locale}`,
+      languages: Object.fromEntries(
+        locales.map((l) => [l, `${baseUrl}/${l}`])
+      ),
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${baseUrl}/${locale}`,
+      locale: locale === "es" ? "es_CL" : "en_US",
+    },
+  };
+}
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
 

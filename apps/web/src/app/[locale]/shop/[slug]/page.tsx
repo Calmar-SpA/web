@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { ProductService } from '@calmar/database'
-import { Button } from '@calmar/ui'
 import { notFound } from 'next/navigation'
 import { AddToCart } from './add-to-cart'
 import { Metadata } from 'next'
@@ -10,6 +9,8 @@ import { DiscountInitializer } from '@/components/product/discount-initializer'
 import { formatClp, getPriceBreakdown } from '@calmar/utils'
 
 export const revalidate = 60 // Revalidate once per minute
+
+const baseUrl = "https://calmar.cl"
 
 type Props = {
   params: Promise<{ slug: string; locale: string }>
@@ -39,33 +40,87 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   
   try {
     const product = await productService.getProductBySku(slug) as any
-    // Manually handle localization/fallback if productService doesn't return localized fields directly (it likely does if initialized correctly or handled manually)
-    // Assuming product has fields populated or we use a helper. 
-    // Looking at previous ProductService usage, it takes locale in getProducts but getProductBySku might not have it or returns raw.
-    // Let's assume normalized product or raw.
     
-    // Actually, looking at Home page, ProductService needs instantiation.
-    // If getProductBySku doesn't take locale, we might need to manually pick translation. 
-    // But for now let's use name/description.
+    const title = product?.name || "Producto"
+    const description = product?.description || product?.short_description || "Hidratación Premium con minerales esenciales"
     
     return {
-      title: `${product?.name} | Calmar`,
-      description: product?.description || product?.short_description || "Hidratación Premium",
+      title,
+      description,
+      alternates: {
+        canonical: `${baseUrl}/${locale}/shop/${slug}`,
+        languages: Object.fromEntries(
+          locales.map((l) => [l, `${baseUrl}/${l}/shop/${slug}`])
+        ),
+      },
       openGraph: {
-        title: product?.name,
-        description: product?.description || product?.short_description,
+        title: `${title} | CALMAR`,
+        description,
+        url: `${baseUrl}/${locale}/shop/${slug}`,
+        type: "website",
+        locale: locale === "es" ? "es_CL" : "en_US",
+        images: product?.image_url ? [
+          {
+            url: product.image_url,
+            width: 800,
+            height: 800,
+            alt: product.name,
+          }
+        ] : [],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: `${title} | CALMAR`,
+        description,
         images: product?.image_url ? [product.image_url] : [],
-      }
+      },
     }
   } catch (e) {
     return {
-      title: 'Producto no encontrado | Calmar'
+      title: 'Producto no encontrado',
+      robots: { index: false },
     }
   }
 }
 
+// JSON-LD Structured Data for Product
+function ProductJsonLd({ product, locale }: { product: any; locale: string }) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description || product.short_description,
+    image: product.image_url,
+    sku: product.sku,
+    brand: {
+      "@type": "Brand",
+      name: "CALMAR",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `${baseUrl}/${locale}/shop/${product.sku}`,
+      priceCurrency: "CLP",
+      price: product.base_price,
+      availability: product.stock > 0 
+        ? "https://schema.org/InStock" 
+        : "https://schema.org/OutOfStock",
+      seller: {
+        "@type": "Organization",
+        name: "CALMAR",
+      },
+    },
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  )
+}
+
 export default async function ProductDetailPage({ params }: Props) {
-  const { slug } = await params
+  const { slug, locale } = await params
   const supabase = await createClient(true)  // Static client for products (cacheable)
   const authSupabase = await createClient()  // Auth client for user detection
   const productService = new ProductService(supabase)
@@ -96,8 +151,10 @@ export default async function ProductDetailPage({ params }: Props) {
     : (product.image_url || "/placeholder.png");
 
   return (
-    <main className="min-h-screen bg-white">
-      <DiscountInitializer discount={newsletterDiscount} />
+    <>
+      <ProductJsonLd product={product} locale={locale} />
+      <main className="min-h-screen bg-white">
+        <DiscountInitializer discount={newsletterDiscount} />
       <div className="w-[90%] max-w-7xl mx-auto py-12 grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Product Image */}
         <div className="bg-slate-50 rounded-3xl p-12 flex items-center justify-center">
@@ -173,6 +230,7 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
-    </main>
+      </main>
+    </>
   )
 }

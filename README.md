@@ -272,9 +272,15 @@ calmar-ecommerce/
 
 ### 📱 SEO y Performance
 
-- **Sitemap automático** dinámico
-- **Robots.txt** configurado
-- **Meta tags** optimizados por página
+- **Sitemap automático** dinámico con productos e idiomas
+- **Robots.txt** configurado con exclusiones para áreas privadas
+- **Meta tags completos** por página (title, description, keywords)
+- **Open Graph** para compartir en redes sociales (Facebook, LinkedIn)
+- **Twitter Cards** para compartir en Twitter/X
+- **JSON-LD Structured Data** para productos (Google Rich Snippets)
+- **Alternates hreflang** para SEO multiidioma (ES/EN)
+- **Canonical URLs** para evitar contenido duplicado
+- **Web App Manifest** para PWA básica
 - **Generación estática** de páginas donde sea posible
 - **Aviso de nueva versión** con botón para actualizar la web
 
