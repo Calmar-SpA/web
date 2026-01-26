@@ -4,17 +4,16 @@ import { useActionState, useEffect, useRef } from 'react'
 import { Button, Input } from '@calmar/ui'
 import { Shield } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { ActionState } from '@/app/[locale]/account/settings/actions'
+import { updatePassword } from '@/app/[locale]/account/settings/actions'
 import { toast } from 'sonner'
 
 interface PasswordFormProps {
   locale: string
-  action: (prevState: ActionState | null, formData: FormData) => Promise<ActionState>
 }
 
-export function PasswordForm({ locale, action }: PasswordFormProps) {
+export function PasswordForm({ locale }: PasswordFormProps) {
   const t = useTranslations('Account.settings')
-  const [state, formAction, isPending] = useActionState(action, null)
+  const [state, formAction, isPending] = useActionState(updatePassword, null)
   const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {

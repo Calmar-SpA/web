@@ -4,7 +4,7 @@ import { useMemo, useState, useActionState, useEffect } from 'react'
 import { Button, Input, RutInput } from '@calmar/ui'
 import { useTranslations } from 'next-intl'
 import { isValidRut } from '@calmar/utils'
-import { ActionState } from '@/app/[locale]/account/settings/actions'
+import { updateProfile, type ActionState } from '@/app/[locale]/account/settings/actions'
 import { toast } from 'sonner'
 
 interface ProfileFormProps {
@@ -12,12 +12,11 @@ interface ProfileFormProps {
   fullName: string
   email: string
   rut: string
-  action: (prevState: ActionState | null, formData: FormData) => Promise<ActionState>
 }
 
-export function ProfileForm({ locale, fullName, email, rut, action }: ProfileFormProps) {
+export function ProfileForm({ locale, fullName, email, rut }: ProfileFormProps) {
   const t = useTranslations('Account.settings')
-  const [state, formAction, isPending] = useActionState(action, null)
+  const [state, formAction, isPending] = useActionState(updateProfile, null)
   
   const [rutValue, setRutValue] = useState(state?.values?.rut || rut)
   const [touched, setTouched] = useState(false)

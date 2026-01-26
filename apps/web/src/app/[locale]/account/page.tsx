@@ -8,7 +8,6 @@ import { ShoppingBag, Building2, User } from 'lucide-react'
 import { Button } from '@calmar/ui'
 import { getTranslations } from 'next-intl/server'
 import { formatRut } from '@calmar/utils'
-import { updateProfile } from './settings/actions'
 
 export default async function AccountPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
@@ -134,7 +133,6 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
             fullName={profile?.full_name || ''}
             email={user.email || ''}
             rut={profile?.rut || ''}
-            action={updateProfile}
           />
 
           <LoyaltyCard balance={profile?.points_balance || 0} />

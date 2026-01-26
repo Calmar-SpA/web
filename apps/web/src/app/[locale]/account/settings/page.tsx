@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { Button } from '@calmar/ui'
 import { getTranslations } from 'next-intl/server'
 import { User, Shield, Bell, Save } from 'lucide-react'
-import { updateProfile, updatePassword, updateNewsletterPreference } from './actions'
+import { updateNewsletterPreference } from './actions'
 import { ProfileForm } from '@/components/account/profile-form'
 import { PasswordForm } from '@/components/account/password-form'
 import { logout } from '../../login/actions'
@@ -68,7 +68,6 @@ export default async function SettingsPage({
             fullName={profile?.full_name || ''}
             email={profile?.email || user.email || ''}
             rut={profile?.rut || ''}
-            action={updateProfile}
           />
         </section>
 
@@ -84,7 +83,6 @@ export default async function SettingsPage({
           <div className="space-y-4">
             <PasswordForm 
               locale={locale}
-              action={updatePassword}
             />
 
             <form action={logout}>

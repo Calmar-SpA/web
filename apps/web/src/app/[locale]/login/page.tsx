@@ -90,18 +90,15 @@ export default async function LoginPage({
         </CardContent>
         <CardFooter>
           <p className="text-[10px] text-center w-full text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-            {t.rich('terms', {
-              terms: (chunks) => (
-                <Link href="/terms" className="text-calmar-ocean hover:underline">
-                  {tFooter('legal.terms')}
-                </Link>
-              ),
-              privacy: (chunks) => (
-                <Link href="/privacy" className="text-calmar-ocean hover:underline">
-                  {tFooter('legal.privacy')}
-                </Link>
-              )
-            })}
+            {locale === 'es' ? 'Al continuar, aceptas nuestros ' : 'By continuing, you agree to our '}
+            <Link href="/terms" className="text-calmar-ocean hover:underline">
+              {tFooter('legal.terms')}
+            </Link>
+            {locale === 'es' ? ' y nuestra ' : ' and our '}
+            <Link href="/privacy" className="text-calmar-ocean hover:underline">
+              {tFooter('legal.privacy')}
+            </Link>
+            .
           </p>
         </CardFooter>
       </Card>

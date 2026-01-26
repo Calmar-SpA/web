@@ -5,6 +5,7 @@ import { Button, Input, RutInput } from '@calmar/ui'
 import { useTranslations } from 'next-intl'
 import { isValidRut, formatRut } from '@calmar/utils'
 import { Pencil, X, Save, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { updateProfile } from '@/app/[locale]/account/settings/actions'
 
 export type ActionState = {
   success: boolean
@@ -18,12 +19,11 @@ interface PersonalDataCardProps {
   fullName: string
   email: string
   rut: string
-  action: (prevState: ActionState | null, formData: FormData) => Promise<ActionState>
 }
 
-export function PersonalDataCard({ locale, fullName, email, rut, action }: PersonalDataCardProps) {
+export function PersonalDataCard({ locale, fullName, email, rut }: PersonalDataCardProps) {
   const t = useTranslations('Account.settings')
-  const [state, formAction, isPending] = useActionState(action, null)
+  const [state, formAction, isPending] = useActionState(updateProfile, null)
   const [isEditing, setIsEditing] = useState(false)
   const [rutValue, setRutValue] = useState(rut)
   const [touched, setTouched] = useState(false)
