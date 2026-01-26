@@ -25,4 +25,6 @@ export const flow = {
     getFlowService().createPayment(...args),
   getStatus: (...args: Parameters<FlowService['getStatus']>) => 
     getFlowService().getStatus(...args),
+  getStatusByCommerceId: (...args: Parameters<FlowService['getStatusByCommerceId']>) => 
+    getFlowService().getStatusByCommerceId(...args),
 };

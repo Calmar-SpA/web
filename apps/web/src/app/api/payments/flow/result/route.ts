@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { flow } from '@/lib/flow'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // Default locale
 const DEFAULT_LOCALE = 'es'
@@ -30,14 +30,19 @@ export async function POST(request: NextRequest) {
 
   if (!token) {
     console.error('[Flow Result] No token received')
-    return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout?error=no_token`)
+    return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout?error=no_token`, 303)
   }
 
   try {
+    console.log('[Flow Result] Getting payment status from Flow...')
     const status = await flow.getStatus(token)
-    const supabase = await createClient()
+    console.log('[Flow Result] Flow status received:', JSON.stringify(status))
+    
+    // Use admin client to bypass RLS (this is a server callback, not user-initiated)
+    const supabase = createAdminClient()
 
     // Update payment status in DB
+    console.log(`[Flow Result] Updating payment for token: ${token}`)
     const { error: paymentError } = await supabase
       .from('payments')
       .update({
@@ -46,12 +51,25 @@ export async function POST(request: NextRequest) {
       })
       .eq('provider_transaction_id', token)
 
+    if (paymentError) {
+      console.error('[Flow Result] Payment update error:', paymentError)
+    } else {
+      console.log('[Flow Result] Payment updated successfully')
+    }
+
     // Update order status
     if (status.status === 2) {
-      await supabase
+      console.log(`[Flow Result] Updating order ${status.commerceOrder} to paid`)
+      const { error: orderError } = await supabase
         .from('orders')
         .update({ status: 'paid' })
         .eq('id', status.commerceOrder)
+
+      if (orderError) {
+        console.error('[Flow Result] Order update error:', orderError)
+      } else {
+        console.log('[Flow Result] Order updated successfully')
+      }
       
       const { data: order } = await supabase
         .from('orders')
@@ -62,20 +80,24 @@ export async function POST(request: NextRequest) {
       const rutUpdated = Boolean((order?.shipping_address as any)?.rut_updated)
       const successParams = new URLSearchParams({ 
         orderId: status.commerceOrder,
-        orderNumber: order?.order_number || ''
       })
+      // Only add orderNumber if it exists (avoid empty string in URL)
+      if (order?.order_number) {
+        successParams.set('orderNumber', order.order_number)
+      }
       if (rutUpdated) {
         successParams.set('rutUpdated', '1')
       }
 
-      return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout/success?${successParams.toString()}`)
+      // Use 303 status to force GET request (avoids 405 error on success page)
+      return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout/success?${successParams.toString()}`, 303)
     } else {
-      return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout/error?orderId=${status.commerceOrder}`)
+      return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout/error?orderId=${status.commerceOrder}`, 303)
     }
 
   } catch (error) {
     console.error('Flow Result Error:', error)
-    return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout/error`)
+    return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout/error`, 303)
   }
 }
 
@@ -85,7 +107,7 @@ export async function GET(request: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
   
   if (!token) {
-    return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout?error=no_token`)
+    return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout?error=no_token`, 303)
   }
   
   // Create form data and call POST handler

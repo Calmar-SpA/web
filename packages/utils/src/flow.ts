@@ -112,4 +112,12 @@ export class FlowService {
   public async getStatus(token: string) {
     return this.request('payment/getStatus', 'GET', { token });
   }
+
+  /**
+   * Status of a payment by commerceId (order ID).
+   * Useful as a fallback to verify payment status directly.
+   */
+  public async getStatusByCommerceId(commerceId: string) {
+    return this.request('payment/getStatusByCommerceId', 'GET', { commerceId });
+  }
 }

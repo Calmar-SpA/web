@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { flow } from '@/lib/flow'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { sendOrderPaidAdminEmail, sendOrderPaidCustomerEmail } from '@/lib/mail'
 import { notifyLowInventoryIfNeeded } from '@/lib/inventory-alerts'
 import { LoyaltyService } from '@calmar/database'
@@ -24,7 +24,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('[Flow Confirm] POST request received')
+  const startTime = Date.now()
+  console.log('[Flow Confirm] POST request received at', new Date().toISOString())
   
   const formData = await request.formData()
   const token = formData.get('token') as string
@@ -37,8 +38,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    console.log('[Flow Confirm] Getting payment status from Flow...')
     const status = await flow.getStatus(token)
-    const supabase = await createClient()
+    console.log('[Flow Confirm] Flow status received:', JSON.stringify(status))
+    
+    // Use admin client since this is a server-to-server callback (no cookies, need to bypass RLS)
+    const supabase = createAdminClient()
 
     // Log the confirmation for debugging
     console.log(`[Flow Confirm] Order: ${status.commerceOrder}, Status: ${status.status}, Token: ${token}`)
@@ -101,8 +106,10 @@ export async function POST(request: NextRequest) {
         : 'Sin direccion registrada'
 
       // Send customer email
+      console.log(`[Flow Confirm] Preparing to send customer email to: ${order.email}`)
       if (order.email) {
         try {
+          console.log(`[Flow Confirm] Sending customer email...`)
           const customerEmailResult = await sendOrderPaidCustomerEmail({
             email: order.email,
             customerName,
@@ -117,15 +124,17 @@ export async function POST(request: NextRequest) {
               subtotal: Number(item.subtotal),
             })),
           })
-          console.log(`[Flow Confirm] Customer email result:`, customerEmailResult)
-        } catch (emailError) {
-          console.error('[Flow Confirm] Customer email error:', emailError)
+          console.log(`[Flow Confirm] Customer email result:`, JSON.stringify(customerEmailResult))
+        } catch (emailError: any) {
+          console.error('[Flow Confirm] Customer email error:', emailError?.message || emailError)
+          console.error('[Flow Confirm] Customer email error stack:', emailError?.stack)
         }
       } else {
         console.error('[Flow Confirm] No email found for order:', order.id)
       }
 
       // Send admin email
+      console.log(`[Flow Confirm] Sending admin email...`)
       try {
         const adminEmailResult = await sendOrderPaidAdminEmail({
           orderNumber: order.order_number,
@@ -135,9 +144,10 @@ export async function POST(request: NextRequest) {
           paymentMethod: 'Flow',
           shippingSummary,
         })
-        console.log(`[Flow Confirm] Admin email result:`, adminEmailResult)
-      } catch (emailError) {
-        console.error('[Flow Confirm] Admin email error:', emailError)
+        console.log(`[Flow Confirm] Admin email result:`, JSON.stringify(adminEmailResult))
+      } catch (emailError: any) {
+        console.error('[Flow Confirm] Admin email error:', emailError?.message || emailError)
+        console.error('[Flow Confirm] Admin email error stack:', emailError?.stack)
       }
 
       // Check inventory
@@ -150,10 +160,14 @@ export async function POST(request: NextRequest) {
       console.log(`[Flow Confirm] Payment not completed. Status: ${status.status}`)
     }
 
+    const elapsedTime = Date.now() - startTime
+    console.log(`[Flow Confirm] Completed in ${elapsedTime}ms`)
     return new Response('OK', { status: 200, headers: corsHeaders })
 
-  } catch (error) {
-    console.error('[Flow Confirm] Critical error:', error)
+  } catch (error: any) {
+    const elapsedTime = Date.now() - startTime
+    console.error(`[Flow Confirm] Critical error after ${elapsedTime}ms:`, error?.message || error)
+    console.error('[Flow Confirm] Error stack:', error?.stack)
     return new Response('Error', { status: 500, headers: corsHeaders })
   }
 }

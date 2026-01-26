@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { OrderService } from '@calmar/database'
 import { Button, Card, CardHeader, CardTitle, CardContent } from "@calmar/ui"
-import { Package, ChevronLeft, MapPin, CreditCard, Receipt } from "lucide-react"
+import { Package, ChevronLeft, MapPin, CreditCard, Receipt, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { notFound, redirect } from 'next/navigation'
 import { formatClp, getPriceBreakdown } from '@calmar/utils'
+import { syncOrderPaymentStatus } from './actions'
 
 export default async function OrderDetailPage({ params }: { params: { id: string } }) {
   const { id } = await params
@@ -15,11 +16,19 @@ export default async function OrderDetailPage({ params }: { params: { id: string
     redirect('/login')
   }
 
+  // First, sync payment status with Flow (in case callback didn't arrive)
+  const syncResult = await syncOrderPaymentStatus(id)
+  
   const orderService = new OrderService(supabase)
   const order = await orderService.getOrderById(id)
 
   if (!order || order.user_id !== user.id) {
     notFound()
+  }
+  
+  // Use synced status if it was updated
+  if (syncResult.wasUpdated) {
+    order.status = syncResult.currentStatus
   }
 
   const steps = [
@@ -48,6 +57,14 @@ export default async function OrderDetailPage({ params }: { params: { id: string
         <p className="text-slate-500 text-sm mt-2">
           Realizado el {new Date(order.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
+        {syncResult.wasUpdated && (
+          <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+            <RefreshCw className="w-4 h-4 text-green-600" />
+            <p className="text-sm text-green-700">
+              El estado del pago ha sido actualizado automáticamente.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Progress Tracker */}

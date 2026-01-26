@@ -1,26 +1,53 @@
 "use client"
 
-import { useEffect, Suspense } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useCart } from "@/hooks/use-cart"
 import { Button } from "@calmar/ui"
 import { CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 function CheckoutSuccessContent() {
   const { clearCart } = useCart()
   const searchParams = useSearchParams()
   const orderId = searchParams.get('orderId')
-  const orderNumber = searchParams.get('orderNumber')
+  const orderNumberParam = searchParams.get('orderNumber')
   const rutUpdated = searchParams.get('rutUpdated') === '1'
+  
+  const [displayOrderNumber, setDisplayOrderNumber] = useState<string | null>(orderNumberParam)
+  const [isLoading, setIsLoading] = useState(!orderNumberParam && !!orderId)
 
   useEffect(() => {
     // Clear cart on successful checkout
     clearCart()
   }, [clearCart])
 
-  // Mostrar orderNumber si existe, sino usar parte del orderId como fallback
-  const displayOrderNumber = orderNumber || (orderId ? orderId.slice(0, 8) : null)
+  // Fetch order_number from database if not provided in URL
+  useEffect(() => {
+    async function fetchOrderNumber() {
+      if (!orderNumberParam && orderId) {
+        try {
+          const supabase = createClient()
+          const { data: order } = await supabase
+            .from('orders')
+            .select('order_number')
+            .eq('id', orderId)
+            .single()
+          
+          if (order?.order_number) {
+            setDisplayOrderNumber(order.order_number)
+          }
+        } catch (error) {
+          console.error('Error fetching order number:', error)
+        } finally {
+          setIsLoading(false)
+        }
+      }
+    }
+    
+    fetchOrderNumber()
+  }, [orderId, orderNumberParam])
 
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 text-center space-y-8 max-w-2xl mx-auto">
@@ -33,10 +60,14 @@ function CheckoutSuccessContent() {
         <p className="text-slate-500 text-lg">
           Hemos recibido tu pedido correctamente. Te enviaremos un correo con los detalles del despacho a la brevedad.
         </p>
-        {displayOrderNumber && (
+        {(displayOrderNumber || isLoading) && (
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 inline-block">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Número de Pedido</p>
-            <p className="font-mono font-bold text-calmar-ocean">#{displayOrderNumber}</p>
+            {isLoading ? (
+              <div className="h-6 w-24 bg-slate-200 rounded animate-pulse" />
+            ) : (
+              <p className="font-mono font-bold text-calmar-ocean">{displayOrderNumber}</p>
+            )}
           </div>
         )}
         {rutUpdated && (
