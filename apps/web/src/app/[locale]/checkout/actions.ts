@@ -646,7 +646,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
   
   const flowPayment = await flow.createPayment({
     commerceOrder: order.id,
-    subject: `Pedido #${order.id.slice(0, 8)} - Calmar`,
+    subject: `Pedido #${order.order_number} - Calmar`,
     currency: 'CLP',
     amount: totalWithShipping,
     email: data.customerInfo.email,
