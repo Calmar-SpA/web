@@ -19,9 +19,12 @@
         "supabase:migrate": "supabase db reset"
     },
     "devDependencies": {
-        "turbo": "^2.3.0",
-        "typescript": "^5.7.2",
         "eslint": "^9.16.0",
-        "prettier": "^3.4.2"
+        "prettier": "^3.4.2",
+        "turbo": "^2.3.0",
+        "typescript": "^5.7.2"
+    },
+    "dependencies": {
+        "@next/third-parties": "^16.1.4"
     }
 }

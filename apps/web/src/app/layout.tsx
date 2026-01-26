@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Zalando_Sans_Expanded } from "next/font/google";
+import { GoogleAnalytics } from '@next/third-parties/google';
 import "./globals.css";
 
 const zalando = Zalando_Sans_Expanded({
@@ -91,6 +92,9 @@ export default function RootLayout({
         className={`${zalando.variable} ${inter.variable} antialiased min-h-screen flex flex-col font-sans`}
       >
         {children}
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        )}
       </body>
     </html>
   );
