@@ -320,7 +320,7 @@
     "orContinueWith": "or continue with",
     "googleLogin": "Continue with Google",
     "resetSuccess": "Your password has been updated successfully.",
-    "terms": "By continuing, you agree to our terms and conditions."
+    "terms": "By continuing, you agree to our {terms} and our {privacy}."
   },
   "ForgotPassword": {
     "title": "Recover password",

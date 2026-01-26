@@ -2,6 +2,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import Image from 'next/image'
 import { LoginFormClient } from './LoginFormClient'
+import { Link } from '@/navigation'
 
 export default async function LoginPage({
   params,
@@ -14,6 +15,7 @@ export default async function LoginPage({
   const resolvedSearchParams = await searchParams
   setRequestLocale(locale)
   const t = await getTranslations('Login')
+  const tFooter = await getTranslations('Footer')
   
   const signupSuccess = resolvedSearchParams?.signup_success === 'true'
   const activeTab = resolvedSearchParams?.tab === 'register' ? 'register' : 'login'
@@ -36,10 +38,10 @@ export default async function LoginPage({
     signupErrorEmailInvalid: t('signupErrorEmailInvalid'),
     signupErrorRutExists: t('signupErrorRutExists'),
     signupErrorGeneric: t('signupErrorGeneric'),
+    signupSuccessCheckEmail: t('signupSuccessCheckEmail'),
     loginErrorInvalidCredentials: t('loginErrorInvalidCredentials'),
     loginErrorEmailNotConfirmed: t('loginErrorEmailNotConfirmed'),
     loginErrorGeneric: t('loginErrorGeneric'),
-    signupSuccessCheckEmail: t('signupSuccessCheckEmail'),
     forgotPassword: t('forgotPassword'),
     orContinueWith: t('orContinueWith'),
     googleLogin: t('googleLogin'),
@@ -87,8 +89,19 @@ export default async function LoginPage({
           />
         </CardContent>
         <CardFooter>
-          <p className="text-[10px] text-center w-full text-slate-400 font-bold uppercase tracking-widest">
-            {t('terms')}
+          <p className="text-[10px] text-center w-full text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+            {t.rich('terms', {
+              terms: (chunks) => (
+                <Link href="/terms" className="text-calmar-ocean hover:underline">
+                  {tFooter('legal.terms')}
+                </Link>
+              ),
+              privacy: (chunks) => (
+                <Link href="/privacy" className="text-calmar-ocean hover:underline">
+                  {tFooter('legal.privacy')}
+                </Link>
+              )
+            })}
           </p>
         </CardFooter>
       </Card>

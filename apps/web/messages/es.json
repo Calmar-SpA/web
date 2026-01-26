@@ -320,7 +320,7 @@
     "orContinueWith": "o continúa con",
     "googleLogin": "Continuar con Google",
     "resetSuccess": "Tu contraseña ha sido actualizada con éxito.",
-    "terms": "Al continuar, aceptas nuestros términos y condiciones."
+    "terms": "Al continuar, aceptas nuestros {terms} y nuestra {privacy}."
   },
   "ForgotPassword": {
     "title": "Recuperar contraseña",
