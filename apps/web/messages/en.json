@@ -315,7 +315,31 @@
     "loginErrorInvalidCredentials": "Invalid email or password.",
     "loginErrorEmailNotConfirmed": "Please confirm your email before signing in. Check your inbox.",
     "loginErrorGeneric": "We couldn't sign you in. Please try again.",
+    "loginErrorGoogleFailed": "Error signing in with Google. Please try again.",
+    "forgotPassword": "Forgot your password?",
+    "orContinueWith": "or continue with",
+    "googleLogin": "Continue with Google",
+    "resetSuccess": "Your password has been updated successfully.",
     "terms": "By continuing, you agree to our terms and conditions."
+  },
+  "ForgotPassword": {
+    "title": "Recover password",
+    "description": "Enter your email and we'll send you a link to reset your password.",
+    "email": "Email",
+    "submit": "Send link",
+    "success": "If the email exists, you will receive a recovery link.",
+    "backToLogin": "Back to login",
+    "errorGeneric": "We couldn't process your request. Please try again."
+  },
+  "ResetPassword": {
+    "title": "New password",
+    "description": "Enter your new password.",
+    "password": "New password",
+    "confirmPassword": "Confirm password",
+    "submit": "Change password",
+    "error": "Could not update your password.",
+    "mismatch": "Passwords do not match.",
+    "tooShort": "Password must be at least 8 characters long."
   },
   "ProfileCompletion": {
     "title": "Complete your profile",
@@ -402,6 +426,64 @@
       "invalidEmail": "Invalid email."
     },
     "rights": "© 2026 Calmar SpA • All rights reserved"
+  },
+  "Privacy": {
+    "hero": {
+      "title": "Privacy",
+      "subtitle": "Your trust is our priority"
+    },
+    "sections": {
+      "dataCollection": {
+        "title": "Data Collection",
+        "content": "We collect information necessary to process your orders and improve your experience, including name, RUT (Tax ID), email, shipping address, and billing details."
+      },
+      "dataUse": {
+        "title": "Use of Information",
+        "content": "We use your data to process purchases, manage shipments, accumulate points in your account, and, if authorized, send you personalized offers."
+      },
+      "cookies": {
+        "title": "Cookie Policy",
+        "content": "We use cookies to remember your preferences, keep your session active, and analyze site traffic to improve our platform."
+      },
+      "thirdParties": {
+        "title": "Third Parties and Security",
+        "content": "We share strictly necessary data with payment processors (Flow) and logistics services (Chilexpress, Blue Express) to complete your order."
+      },
+      "rights": {
+        "title": "Your Rights",
+        "content": "You can request access, rectification, or deletion of your personal data at any time through your account panel or by contacting us directly."
+      }
+    },
+    "lastUpdated": "Last updated: January 26, 2026"
+  },
+  "Terms": {
+    "hero": {
+      "title": "Terms",
+      "subtitle": "Conditions of our service"
+    },
+    "sections": {
+      "acceptance": {
+        "title": "Acceptance",
+        "content": "By accessing and using this website, you agree to comply with these terms and conditions of service."
+      },
+      "purchases": {
+        "title": "Purchases and Payments",
+        "content": "All transactions are processed securely. Prices are in Chilean Pesos (CLP) and include VAT where applicable."
+      },
+      "shipping": {
+        "title": "Shipping",
+        "content": "We ship throughout Chile through certified logistics operators. Delivery times vary by region and are reported at checkout."
+      },
+      "returns": {
+        "title": "Returns",
+        "content": "You have 10 days to withdraw from your purchase and 90 days of legal guarantee for manufacturing defects, provided the product is sealed and in its original packaging."
+      },
+      "loyalty": {
+        "title": "Calmar Points",
+        "content": "Our loyalty program allows you to accumulate points for each purchase, which can be redeemed for discounts on future orders according to current rates."
+      }
+    },
+    "lastUpdated": "Last updated: January 26, 2026"
   },
   "ComingSoon": {
     "badge": "Coming Soon",

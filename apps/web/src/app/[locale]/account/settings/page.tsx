@@ -1,11 +1,12 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Button, Input } from '@calmar/ui'
+import { Button } from '@calmar/ui'
 import { getTranslations } from 'next-intl/server'
 import { User, Shield, Bell, Save } from 'lucide-react'
 import { updateProfile, updatePassword, updateNewsletterPreference } from './actions'
 import { ProfileForm } from '@/components/account/profile-form'
+import { PasswordForm } from '@/components/account/password-form'
 import { logout } from '../../login/actions'
 
 export default async function SettingsPage({
@@ -81,23 +82,10 @@ export default async function SettingsPage({
           </div>
           
           <div className="space-y-4">
-            <form action={updatePassword} className="space-y-4">
-              <input type="hidden" name="locale" value={locale} />
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{t("changePassword")}</label>
-                <Input name="new_password" type="password" placeholder="••••••••" className="bg-slate-50" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Confirmar contraseña</label>
-                <Input name="confirm_password" type="password" placeholder="••••••••" className="bg-slate-50" />
-              </div>
-              <div className="flex justify-end">
-                <Button type="submit" className="bg-slate-900 hover:bg-calmar-ocean text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2">
-                  <Shield className="w-4 h-4" />
-                  {t("changePassword")}
-                </Button>
-              </div>
-            </form>
+            <PasswordForm 
+              locale={locale}
+              action={updatePassword}
+            />
 
             <form action={logout}>
               <Button type="submit" variant="destructive" className="w-full font-bold text-xs uppercase tracking-widest bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 shadow-none">

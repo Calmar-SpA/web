@@ -1,10 +1,7 @@
-import { login, signup } from './actions'
-import { Button } from '@calmar/ui'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@calmar/ui'
-import { Input, RutInput } from '@calmar/ui'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import Image from 'next/image'
-import { Link } from '@/navigation'
+import { LoginFormClient } from './LoginFormClient'
 
 export default async function LoginPage({
   params,
@@ -17,34 +14,37 @@ export default async function LoginPage({
   const resolvedSearchParams = await searchParams
   setRequestLocale(locale)
   const t = await getTranslations('Login')
-  const signupError = resolvedSearchParams?.signup_error
-  const loginError = resolvedSearchParams?.login_error
+  
   const signupSuccess = resolvedSearchParams?.signup_success === 'true'
   const activeTab = resolvedSearchParams?.tab === 'register' ? 'register' : 'login'
   const loginPath = locale ? `/${locale}/login` : '/login'
-  const signupErrorMessage = (() => {
-    if (signupError === 'full_name') return t('fullNameRequired')
-    if (signupError === 'rut') return t('rutInvalid')
-    if (signupError === 'email_exists') return t('signupErrorEmailExists')
-    if (signupError === 'weak_password') return t('signupErrorWeakPassword')
-    if (signupError === 'email_invalid') return t('signupErrorEmailInvalid')
-    if (signupError === 'rut_exists') return t('signupErrorRutExists')
-    if (signupError === 'generic') return t('signupErrorGeneric')
-    return null
-  })()
-  const loginErrorMessage = (() => {
-    if (loginError === 'invalid_credentials') return t('loginErrorInvalidCredentials')
-    if (loginError === 'email_not_confirmed') return t('loginErrorEmailNotConfirmed')
-    if (loginError === 'generic') return t('loginErrorGeneric')
-    return null
-  })()
-  const isFullNameError = signupError === 'full_name'
-  const isRutError = signupError === 'rut' || signupError === 'rut_exists'
-  const showSignupError = activeTab === 'register' && signupErrorMessage
-  const showSignupSuccess = activeTab === 'register' && signupSuccess
-  const showLoginError = activeTab === 'login' && loginErrorMessage
-  const tabButtonBase =
-    'w-full h-10 rounded-full text-xs font-black uppercase tracking-widest transition-colors'
+  const resetSuccess = resolvedSearchParams?.reset_success === 'true'
+
+  const translations = {
+    email: t('email'),
+    password: t('password'),
+    fullName: t('fullName'),
+    fullNamePlaceholder: t('fullNamePlaceholder'),
+    rut: t('rut'),
+    rutPlaceholder: t('rutPlaceholder'),
+    signIn: t('signIn'),
+    signUp: t('signUp'),
+    fullNameRequired: t('fullNameRequired'),
+    rutInvalid: t('rutInvalid'),
+    signupErrorEmailExists: t('signupErrorEmailExists'),
+    signupErrorWeakPassword: t('signupErrorWeakPassword'),
+    signupErrorEmailInvalid: t('signupErrorEmailInvalid'),
+    signupErrorRutExists: t('signupErrorRutExists'),
+    signupErrorGeneric: t('signupErrorGeneric'),
+    loginErrorInvalidCredentials: t('loginErrorInvalidCredentials'),
+    loginErrorEmailNotConfirmed: t('loginErrorEmailNotConfirmed'),
+    loginErrorGeneric: t('loginErrorGeneric'),
+    signupSuccessCheckEmail: t('signupSuccessCheckEmail'),
+    forgotPassword: t('forgotPassword'),
+    orContinueWith: t('orContinueWith'),
+    googleLogin: t('googleLogin'),
+    resetSuccess: t('resetSuccess'),
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--background)] relative overflow-hidden">
@@ -66,94 +66,25 @@ export default async function LoginPage({
             {t('description')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid grid-cols-2 rounded-full bg-slate-100 p-1">
-            <Button
-              asChild
-              variant="ghost"
-              className={`${tabButtonBase} ${activeTab === 'login' ? 'bg-slate-900 text-white hover:bg-slate-900' : 'text-slate-500 hover:text-slate-900'}`}
-            >
-              <Link href={loginPath} aria-current={activeTab === 'login' ? 'page' : undefined}>
-                {t('signIn')}
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant="ghost"
-              className={`${tabButtonBase} ${activeTab === 'register' ? 'bg-slate-900 text-white hover:bg-slate-900' : 'text-slate-500 hover:text-slate-900'}`}
-            >
-              <Link href={`${loginPath}?tab=register`} aria-current={activeTab === 'register' ? 'page' : undefined}>
-                {t('signUp')}
-              </Link>
-            </Button>
-          </div>
-
-          {activeTab === 'login' ? (
-            <form className="grid gap-4">
-              <input type="hidden" name="locale" value={locale} />
-              <div className="grid gap-2">
-                <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('email')}</label>
-                <Input id="email" name="email" type="email" placeholder="hola@ejemplo.cl" autoComplete="email" required />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('password')}</label>
-                <Input id="password" name="password" type="password" autoComplete="current-password" required />
-              </div>
-              {showLoginError && (
-                <p className="text-xs font-semibold text-red-500">{loginErrorMessage}</p>
-              )}
-              <Button formAction={login} className="bg-slate-900 text-white font-bold uppercase text-xs tracking-widest h-12">
-                {t('signIn')}
-              </Button>
-            </form>
-          ) : (
-            <form className="grid gap-4">
-              <input type="hidden" name="locale" value={locale} />
-              <div className="grid gap-2">
-                <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('email')}</label>
-                <Input id="email" name="email" type="email" placeholder="hola@ejemplo.cl" autoComplete="email" required />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="full_name" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('fullName')}</label>
-                <Input
-                  id="full_name"
-                  name="full_name"
-                  type="text"
-                  placeholder={t('fullNamePlaceholder')}
-                  autoComplete="name"
-                  aria-invalid={isFullNameError}
-                  className={isFullNameError ? "border-red-500 focus-visible:ring-red-500/20" : undefined}
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="rut" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('rut')}</label>
-                <RutInput
-                  id="rut"
-                  name="rut"
-                  placeholder={t('rutPlaceholder')}
-                  aria-invalid={isRutError}
-                  className={isRutError ? "border-red-500 focus-visible:ring-red-500/20" : undefined}
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('password')}</label>
-                <Input id="password" name="password" type="password" autoComplete="new-password" required />
-              </div>
-              {showSignupError && (
-                <p className="text-xs font-semibold text-red-500">{signupErrorMessage}</p>
-              )}
-              {showSignupSuccess && (
-                <p className="text-xs font-semibold text-emerald-600">
-                  {t('signupSuccessCheckEmail')}
-                </p>
-              )}
-              <Button formAction={signup} className="bg-slate-900 text-white font-bold uppercase text-xs tracking-widest h-12">
-                {t('signUp')}
-              </Button>
-            </form>
+        <CardContent>
+          {signupSuccess && activeTab === 'register' && (
+            <div className="mb-4 p-3 rounded-lg bg-emerald-50 text-emerald-600 text-xs font-semibold text-center">
+              {t('signupSuccessCheckEmail')}
+            </div>
           )}
+          
+          {resetSuccess && (
+            <div className="mb-4 p-3 rounded-lg bg-emerald-50 text-emerald-600 text-xs font-semibold text-center uppercase tracking-tight">
+              {t('resetSuccess')}
+            </div>
+          )}
+          
+          <LoginFormClient 
+            locale={locale}
+            activeTab={activeTab}
+            loginPath={loginPath}
+            translations={translations}
+          />
         </CardContent>
         <CardFooter>
           <p className="text-[10px] text-center w-full text-slate-400 font-bold uppercase tracking-widest">

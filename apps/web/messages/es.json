@@ -315,7 +315,31 @@
     "loginErrorInvalidCredentials": "Email o contraseña incorrectos.",
     "loginErrorEmailNotConfirmed": "Debes confirmar tu email antes de ingresar. Revisa tu bandeja de entrada.",
     "loginErrorGeneric": "No pudimos iniciar sesión. Intenta nuevamente.",
+    "loginErrorGoogleFailed": "Error al iniciar sesión con Google. Intenta nuevamente.",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "orContinueWith": "o continúa con",
+    "googleLogin": "Continuar con Google",
+    "resetSuccess": "Tu contraseña ha sido actualizada con éxito.",
     "terms": "Al continuar, aceptas nuestros términos y condiciones."
+  },
+  "ForgotPassword": {
+    "title": "Recuperar contraseña",
+    "description": "Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.",
+    "email": "Email",
+    "submit": "Enviar enlace",
+    "success": "Si el email existe, recibirás un enlace de recuperación.",
+    "backToLogin": "Volver al login",
+    "errorGeneric": "No pudimos procesar tu solicitud. Intenta nuevamente."
+  },
+  "ResetPassword": {
+    "title": "Nueva contraseña",
+    "description": "Ingresa tu nueva contraseña.",
+    "password": "Nueva contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "submit": "Cambiar contraseña",
+    "error": "No se pudo actualizar tu contraseña.",
+    "mismatch": "Las contraseñas no coinciden.",
+    "tooShort": "La contraseña debe tener al menos 8 caracteres."
   },
   "ProfileCompletion": {
     "title": "Completa tu perfil",
@@ -402,6 +426,64 @@
       "invalidEmail": "Email inválido."
     },
     "rights": "© 2026 Calmar SpA • Todos los derechos reservados"
+  },
+  "Privacy": {
+    "hero": {
+      "title": "Privacidad",
+      "subtitle": "Tu confianza es nuestra prioridad"
+    },
+    "sections": {
+      "dataCollection": {
+        "title": "Recopilación de Datos",
+        "content": "Recopilamos información necesaria para procesar tus pedidos y mejorar tu experiencia, incluyendo nombre, RUT, correo electrónico, dirección de envío y datos de facturación."
+      },
+      "dataUse": {
+        "title": "Uso de la Información",
+        "content": "Utilizamos tus datos para procesar compras, gestionar envíos, acumular puntos en tu cuenta y, si lo autorizas, enviarte ofertas personalizadas."
+      },
+      "cookies": {
+        "title": "Política de Cookies",
+        "content": "Utilizamos cookies para recordar tus preferencias, mantener tu sesión activa y analizar el tráfico del sitio para mejorar nuestra plataforma."
+      },
+      "thirdParties": {
+        "title": "Terceros y Seguridad",
+        "content": "Compartimos datos estrictamente necesarios con procesadores de pago (Flow) y servicios de logística (Chilexpress, Blue Express) para completar tu pedido."
+      },
+      "rights": {
+        "title": "Tus Derechos",
+        "content": "Puedes solicitar el acceso, rectificación o eliminación de tus datos personales en cualquier momento a través de tu panel de cuenta o contactándonos directamente."
+      }
+    },
+    "lastUpdated": "Última actualización: 26 de enero de 2026"
+  },
+  "Terms": {
+    "hero": {
+      "title": "Términos",
+      "subtitle": "Condiciones de nuestro servicio"
+    },
+    "sections": {
+      "acceptance": {
+        "title": "Aceptación",
+        "content": "Al acceder y utilizar este sitio web, aceptas cumplir con estos términos y condiciones de servicio."
+      },
+      "purchases": {
+        "title": "Compras y Pagos",
+        "content": "Todas las transacciones se procesan de forma segura. Los precios están en pesos chilenos (CLP) e incluyen IVA cuando corresponde."
+      },
+      "shipping": {
+        "title": "Envíos",
+        "content": "Realizamos envíos a todo Chile a través de operadores logísticos certificados. Los tiempos de entrega varían según la región y se informan al momento del checkout."
+      },
+      "returns": {
+        "title": "Devoluciones",
+        "content": "Cuentas con 10 días para retractarte de tu compra y 90 días de garantía legal por fallas de fabricación, siempre que el producto esté sellado y en su empaque original."
+      },
+      "loyalty": {
+        "title": "Puntos Calmar",
+        "content": "Nuestro programa de fidelización permite acumular puntos por cada compra, los cuales pueden ser canjeados por descuentos en futuros pedidos según las tasas vigentes."
+      }
+    },
+    "lastUpdated": "Última actualización: 26 de enero de 2026"
   },
   "ComingSoon": {
     "badge": "Próximamente",

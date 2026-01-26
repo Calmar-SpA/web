@@ -1,22 +1,34 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useActionState, useEffect } from 'react'
 import { Button, Input, RutInput } from '@calmar/ui'
 import { useTranslations } from 'next-intl'
 import { isValidRut } from '@calmar/utils'
+import { ActionState } from '@/app/[locale]/account/settings/actions'
+import { toast } from 'sonner'
 
 interface ProfileFormProps {
   locale: string
   fullName: string
   email: string
   rut: string
-  action: (formData: FormData) => void | Promise<void>
+  action: (prevState: ActionState | null, formData: FormData) => Promise<ActionState>
 }
 
 export function ProfileForm({ locale, fullName, email, rut, action }: ProfileFormProps) {
   const t = useTranslations('Account.settings')
-  const [rutValue, setRutValue] = useState(rut)
+  const [state, formAction, isPending] = useActionState(action, null)
+  
+  const [rutValue, setRutValue] = useState(state?.values?.rut || rut)
   const [touched, setTouched] = useState(false)
+
+  useEffect(() => {
+    if (state?.success) {
+      toast.success(state.message || 'Perfil actualizado')
+    } else if (state?.error) {
+      toast.error(state.error)
+    }
+  }, [state])
 
   const isRutValid = useMemo(() => {
     if (!rutValue) return false
@@ -26,27 +38,26 @@ export function ProfileForm({ locale, fullName, email, rut, action }: ProfileFor
   const showRutError = touched && !isRutValid
 
   return (
-    <form
-      action={action}
-      onSubmit={(event) => {
-        if (!isValidRut(rutValue)) {
-          event.preventDefault()
-          setTouched(true)
-          return
-        }
-        setTouched(true)
-      }}
-    >
+    <form action={formAction}>
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="redirect_to" value="account/settings" />
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-2">
           <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('fullName')}</label>
-          <Input name="full_name" defaultValue={fullName} className="bg-slate-50" />
+          <Input 
+            name="full_name" 
+            defaultValue={state?.values?.full_name || fullName} 
+            className="bg-slate-50" 
+          />
         </div>
         <div className="space-y-2">
           <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('email')}</label>
-          <Input name="email" type="email" defaultValue={email} className="bg-slate-50" />
+          <Input 
+            name="email" 
+            type="email" 
+            defaultValue={state?.values?.email || email} 
+            className="bg-slate-50" 
+          />
           <p className="text-xs text-slate-500">
             Si cambias tu correo, necesitarás confirmarlo para finalizar.
           </p>
@@ -81,10 +92,10 @@ export function ProfileForm({ locale, fullName, email, rut, action }: ProfileFor
       <div className="mt-6 flex justify-end">
         <Button
           type="submit"
-          disabled={!isRutValid}
+          disabled={!isRutValid || isPending}
           className="bg-slate-900 hover:bg-calmar-ocean text-white font-bold text-xs uppercase tracking-widest disabled:opacity-50"
         >
-          {t('update')}
+          {isPending ? '...' : t('update')}
         </Button>
       </div>
     </form>

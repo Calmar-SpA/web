@@ -5,32 +5,41 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { normalizeRut, isValidRut } from '@calmar/utils'
 
+export type ActionState = {
+  success: boolean
+  error?: string | null
+  message?: string | null
+  values?: Record<string, string>
+}
+
 function getRedirectPath(formData: FormData, defaultPath: string = 'account/settings'): string {
   const locale = String(formData.get('locale') || '').trim()
   const redirectTo = String(formData.get('redirect_to') || defaultPath).trim()
   return locale ? `/${locale}/${redirectTo}` : `/${redirectTo}`
 }
 
-export async function updateProfile(formData: FormData) {
+export async function updateProfile(prevState: ActionState | null, formData: FormData): Promise<ActionState> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const redirectPath = getRedirectPath(formData, 'account')
-
-  if (!user) {
-    redirect(`${redirectPath}?error=Sesión%20inválida`)
-  }
 
   const fullName = String(formData.get('full_name') || '').trim()
   const rutInput = String(formData.get('rut') || '').trim()
   const email = String(formData.get('email') || '').trim().toLowerCase()
   const rut = normalizeRut(rutInput)
 
+  const values = { full_name: fullName, rut: rutInput, email }
+
+  if (!user) {
+    return { success: false, error: 'Sesión inválida', values }
+  }
+
   if (!rut || !isValidRut(rut)) {
-    redirect(`${redirectPath}?error=El%20RUT%20no%20es%20válido`)
+    return { success: false, error: 'El RUT no es válido', values }
   }
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    redirect(`${redirectPath}?error=El%20email%20no%20es%20válido`)
+    return { success: false, error: 'El email no es válido', values }
   }
 
   const { data: existingUser } = await supabase
@@ -38,10 +47,10 @@ export async function updateProfile(formData: FormData) {
     .select('id')
     .eq('rut', rut)
     .neq('id', user.id)
-    .single()
+    .maybeSingle()
 
   if (existingUser) {
-    redirect(`${redirectPath}?error=Este%20RUT%20ya%20está%20asociado%20a%20otra%20cuenta`)
+    return { success: false, error: 'Este RUT ya está asociado a otra cuenta', values }
   }
 
   if (email !== user.email) {
@@ -50,15 +59,15 @@ export async function updateProfile(formData: FormData) {
       .select('id')
       .eq('email', email)
       .neq('id', user.id)
-      .single()
+      .maybeSingle()
 
     if (existingEmail) {
-      redirect(`${redirectPath}?error=Este%20email%20ya%20está%20asociado%20a%20otra%20cuenta`)
+      return { success: false, error: 'Este email ya está asociado a otra cuenta', values }
     }
 
     const { error: emailError } = await supabase.auth.updateUser({ email })
     if (emailError) {
-      redirect(`${redirectPath}?error=No%20se%20pudo%20actualizar%20el%20email`)
+      return { success: false, error: 'No se pudo actualizar el email', values }
     }
   }
 
@@ -72,48 +81,42 @@ export async function updateProfile(formData: FormData) {
     .eq('id', user.id)
 
   if (error) {
-    redirect(`${redirectPath}?error=No%20se%20pudo%20actualizar%20el%20perfil`)
+    return { success: false, error: 'No se pudo actualizar el perfil', values }
   }
 
   revalidatePath(redirectPath)
   revalidatePath(getRedirectPath(formData, 'account/settings'))
+  return { success: true, message: 'Perfil actualizado con éxito', values }
 }
 
-export async function updatePassword(formData: FormData) {
+export async function updatePassword(prevState: ActionState | null, formData: FormData): Promise<ActionState> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    const locale = String(formData.get('locale') || '').trim()
-    const settingsPath = locale ? `/${locale}/account/settings` : '/account/settings'
-    redirect(`${settingsPath}?error=Sesión%20inválida`)
-  }
 
   const newPassword = String(formData.get('new_password') || '').trim()
   const confirmPassword = String(formData.get('confirm_password') || '').trim()
 
+  if (!user) {
+    return { success: false, error: 'Sesión inválida' }
+  }
+
   if (!newPassword || newPassword.length < 8) {
-    const locale = String(formData.get('locale') || '').trim()
-    const settingsPath = locale ? `/${locale}/account/settings` : '/account/settings'
-    redirect(`${settingsPath}?error=La%20contraseña%20debe%20tener%20al%20menos%208%20caracteres`)
+    return { success: false, error: 'La contraseña debe tener al menos 8 caracteres' }
   }
 
   if (newPassword !== confirmPassword) {
-    const locale = String(formData.get('locale') || '').trim()
-    const settingsPath = locale ? `/${locale}/account/settings` : '/account/settings'
-    redirect(`${settingsPath}?error=Las%20contraseñas%20no%20coinciden`)
+    return { success: false, error: 'Las contraseñas no coinciden' }
   }
 
   const { error } = await supabase.auth.updateUser({ password: newPassword })
   if (error) {
-    const locale = String(formData.get('locale') || '').trim()
-    const settingsPath = locale ? `/${locale}/account/settings` : '/account/settings'
-    redirect(`${settingsPath}?error=No%20se%20pudo%20actualizar%20la%20contraseña`)
+    return { success: false, error: 'No se pudo actualizar la contraseña' }
   }
 
   const locale = String(formData.get('locale') || '').trim()
   const settingsPath = locale ? `/${locale}/account/settings` : '/account/settings'
   revalidatePath(settingsPath)
+  return { success: true, message: 'Contraseña actualizada con éxito' }
 }
 
 export async function updateNewsletterPreference(formData: FormData) {
