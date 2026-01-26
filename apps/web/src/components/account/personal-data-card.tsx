@@ -1,46 +1,40 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useActionState, useEffect } from 'react'
 import { Button, Input, RutInput } from '@calmar/ui'
 import { useTranslations } from 'next-intl'
 import { isValidRut, formatRut } from '@calmar/utils'
-import { Pencil, X, Save, Loader2 } from 'lucide-react'
-import { useFormStatus } from 'react-dom'
+import { Pencil, X, Save, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+
+export type ActionState = {
+  success: boolean
+  error?: string | null
+  message?: string | null
+  values?: Record<string, string>
+}
 
 interface PersonalDataCardProps {
   locale: string
   fullName: string
   email: string
   rut: string
-  action: (formData: FormData) => void | Promise<void>
-}
-
-function SubmitButton() {
-  const { pending } = useFormStatus()
-  const t = useTranslations('Account.settings')
-  
-  return (
-    <Button
-      type="submit"
-      disabled={pending}
-      size="sm"
-      className="rounded-full font-bold uppercase text-[10px] tracking-widest bg-calmar-ocean hover:bg-calmar-primary text-white flex items-center gap-2"
-    >
-      {pending ? (
-        <Loader2 className="w-3 h-3 animate-spin" />
-      ) : (
-        <Save className="w-3 h-3" />
-      )}
-      {t('update')}
-    </Button>
-  )
+  action: (prevState: ActionState | null, formData: FormData) => Promise<ActionState>
 }
 
 export function PersonalDataCard({ locale, fullName, email, rut, action }: PersonalDataCardProps) {
   const t = useTranslations('Account.settings')
+  const [state, formAction, isPending] = useActionState(action, null)
   const [isEditing, setIsEditing] = useState(false)
   const [rutValue, setRutValue] = useState(rut)
   const [touched, setTouched] = useState(false)
+  
+  // Cerrar edición cuando la acción es exitosa
+  useEffect(() => {
+    if (state?.success) {
+      setIsEditing(false)
+      setTouched(false)
+    }
+  }, [state])
 
   const isRutValid = useMemo(() => {
     if (!rutValue) return false
@@ -52,12 +46,6 @@ export function PersonalDataCard({ locale, fullName, email, rut, action }: Perso
   const handleCancel = () => {
     setIsEditing(false)
     setRutValue(rut)
-    setTouched(false)
-  }
-
-  const handleAction = async (formData: FormData) => {
-    await action(formData)
-    setIsEditing(false)
     setTouched(false)
   }
 
@@ -110,7 +98,7 @@ export function PersonalDataCard({ locale, fullName, email, rut, action }: Perso
       </div>
 
       <form
-        action={handleAction}
+        action={formAction}
         onSubmit={(event) => {
           if (!isValidRut(rutValue)) {
             event.preventDefault()
@@ -171,8 +159,36 @@ export function PersonalDataCard({ locale, fullName, email, rut, action }: Perso
           </div>
         </div>
         
+        {/* Mensaje de error */}
+        {state?.error && (
+          <div className="mt-4 flex items-center gap-2 text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <p className="text-xs font-medium">{state.error}</p>
+          </div>
+        )}
+        
+        {/* Mensaje de éxito */}
+        {state?.success && (
+          <div className="mt-4 flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <p className="text-xs font-medium">{state.message}</p>
+          </div>
+        )}
+        
         <div className="mt-6 flex justify-end">
-          <SubmitButton />
+          <Button
+            type="submit"
+            disabled={isPending}
+            size="sm"
+            className="rounded-full font-bold uppercase text-[10px] tracking-widest bg-calmar-ocean hover:bg-calmar-primary text-white flex items-center gap-2"
+          >
+            {isPending ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Save className="w-3 h-3" />
+            )}
+            {t('update')}
+          </Button>
         </div>
       </form>
     </div>
