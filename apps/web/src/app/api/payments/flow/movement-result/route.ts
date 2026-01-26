@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { flow } from '@/lib/flow'
 
+// CORS headers for Flow callbacks
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// OPTIONS handler for CORS preflight
+export async function OPTIONS() {
+  return new Response(null, { status: 200, headers: corsHeaders })
+}
+
 // This route handles the return from Flow after payment
 // User is redirected here after completing (or cancelling) payment
 
 export async function GET(request: NextRequest) {
+  console.log('[Movement Flow Result] GET request received')
   const searchParams = request.nextUrl.searchParams
   const token = searchParams.get('token')
 
@@ -51,11 +64,14 @@ export async function GET(request: NextRequest) {
 
 // Flow might POST to this endpoint in some cases
 export async function POST(request: NextRequest) {
+  console.log('[Movement Flow Result] POST request received')
+  
   // Parse form data and extract token
   const formData = await request.formData()
   const token = formData.get('token') as string
 
   if (!token) {
+    console.error('[Movement Flow Result] No token received')
     return NextResponse.redirect(new URL('/account/orders?payment=error', request.url))
   }
 

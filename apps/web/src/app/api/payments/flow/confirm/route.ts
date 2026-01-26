@@ -5,18 +5,35 @@ import { sendOrderPaidAdminEmail, sendOrderPaidCustomerEmail } from '@/lib/mail'
 import { notifyLowInventoryIfNeeded } from '@/lib/inventory-alerts'
 import { LoyaltyService } from '@calmar/database'
 
+// CORS headers for Flow callbacks
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// OPTIONS handler for CORS preflight
+export async function OPTIONS() {
+  return new Response(null, { status: 200, headers: corsHeaders })
+}
+
 // GET handler for URL verification (Flow/Transbank checks this endpoint is accessible)
 export async function GET() {
-  return new Response('OK', { status: 200 })
+  console.log('[Flow Confirm] GET verification request received')
+  return new Response('OK', { status: 200, headers: corsHeaders })
 }
 
 export async function POST(request: NextRequest) {
+  console.log('[Flow Confirm] POST request received')
+  
   const formData = await request.formData()
   const token = formData.get('token') as string
 
+  console.log('[Flow Confirm] Token received:', token ? 'yes' : 'no')
+
   if (!token) {
     console.error('[Flow Confirm] No token received')
-    return new Response('No token', { status: 400 })
+    return new Response('No token', { status: 400, headers: corsHeaders })
   }
 
   try {
@@ -54,7 +71,7 @@ export async function POST(request: NextRequest) {
 
       if (!order) {
         console.error(`[Flow Confirm] Order not found: ${status.commerceOrder}`)
-        return new Response('OK', { status: 200 })
+        return new Response('OK', { status: 200, headers: corsHeaders })
       }
 
       console.log(`[Flow Confirm] Order found: ${order.order_number}, Email: ${order.email}`)
@@ -133,10 +150,10 @@ export async function POST(request: NextRequest) {
       console.log(`[Flow Confirm] Payment not completed. Status: ${status.status}`)
     }
 
-    return new Response('OK', { status: 200 })
+    return new Response('OK', { status: 200, headers: corsHeaders })
 
   } catch (error) {
     console.error('[Flow Confirm] Critical error:', error)
-    return new Response('Error', { status: 500 })
+    return new Response('Error', { status: 500, headers: corsHeaders })
   }
 }

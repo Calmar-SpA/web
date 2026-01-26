@@ -2,18 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { flow } from '@/lib/flow'
 import { createClient } from '@/lib/supabase/server'
 
+// CORS headers for Flow callbacks
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// OPTIONS handler for CORS preflight
+export async function OPTIONS() {
+  return new Response(null, { status: 200, headers: corsHeaders })
+}
+
 // GET handler for URL verification (Flow checks this endpoint is accessible)
 export async function GET() {
-  return new Response('OK', { status: 200 })
+  console.log('[Movement Flow Confirm] GET verification request received')
+  return new Response('OK', { status: 200, headers: corsHeaders })
 }
 
 export async function POST(request: NextRequest) {
+  console.log('[Movement Flow Confirm] POST request received')
+  
   const formData = await request.formData()
   const token = formData.get('token') as string
 
   if (!token) {
     console.error('[Movement Flow Confirm] No token received')
-    return new Response('No token', { status: 400 })
+    return new Response('No token', { status: 400, headers: corsHeaders })
   }
 
   try {
@@ -62,10 +77,10 @@ export async function POST(request: NextRequest) {
       console.log(`[Movement Flow Confirm] Payment not completed. Status: ${status.status}`)
     }
 
-    return new Response('OK', { status: 200 })
+    return new Response('OK', { status: 200, headers: corsHeaders })
 
   } catch (error) {
     console.error('[Movement Flow Confirm] Critical error:', error)
-    return new Response('Error', { status: 500 })
+    return new Response('Error', { status: 500, headers: corsHeaders })
   }
 }

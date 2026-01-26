@@ -188,6 +188,7 @@ export async function initiateMovementPayment(movementId: string): Promise<Actio
     const flowPayment = await flow.createPayment({
       commerceOrder: `MOV-${movementId}`,
       subject: `Pago ${movement.movement_number || movementId.slice(0, 8)} - Calmar`,
+      currency: 'CLP',
       amount: remainingBalance,
       email: profile.email,
       urlConfirmation: `${baseUrl}/api/payments/flow/movement-confirm`,

@@ -5,14 +5,31 @@ import { createClient } from '@/lib/supabase/server'
 // Default locale
 const DEFAULT_LOCALE = 'es'
 
+// CORS headers for Flow callbacks
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// OPTIONS handler for CORS preflight
+export async function OPTIONS() {
+  return new Response(null, { status: 200, headers: corsHeaders })
+}
+
 export async function POST(request: NextRequest) {
+  console.log('[Flow Result] POST request received')
+  
   const formData = await request.formData()
   const token = formData.get('token') as string
+  
+  console.log('[Flow Result] Token received:', token ? 'yes' : 'no')
   
   // Get base URL for production redirects (ensure HTTPS)
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
 
   if (!token) {
+    console.error('[Flow Result] No token received')
     return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/checkout?error=no_token`)
   }
 
