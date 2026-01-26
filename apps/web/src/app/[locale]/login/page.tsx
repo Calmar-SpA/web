@@ -8,7 +8,7 @@ export default async function LoginPage({
   searchParams
 }: {
   params: Promise<{ locale: string }>
-  searchParams?: Promise<{ signup_error?: string; signup_success?: string; tab?: string; login_error?: string }>
+  searchParams?: Promise<{ signup_error?: string; signup_success?: string; tab?: string; login_error?: string; reset_success?: string }>
 }) {
   const { locale } = await params
   const resolvedSearchParams = await searchParams
