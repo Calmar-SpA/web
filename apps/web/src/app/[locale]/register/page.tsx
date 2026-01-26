@@ -1,7 +1,7 @@
-import { signup } from '../login/actions'
-import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Input, RutInput } from '@calmar/ui'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@calmar/ui'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import Image from 'next/image'
+import { RegisterFormClient } from './RegisterFormClient'
 
 export default async function RegisterPage({
   params,
@@ -32,8 +32,12 @@ export default async function RegisterPage({
     notes: resolvedSearchParams?.notes || ''
   }
 
-  const readOnlyClass =
-    'bg-slate-100 text-slate-700 border-slate-200 focus-visible:ring-0 focus-visible:ring-offset-0'
+  const translations = {
+    email: t('email'),
+    fullName: t('fullName'),
+    rut: t('rut'),
+    password: t('password'),
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--background)] relative overflow-hidden">
@@ -55,127 +59,11 @@ export default async function RegisterPage({
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <form className="grid gap-4">
-            <input type="hidden" name="locale" value={locale} />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <label htmlFor="type" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Tipo
-                </label>
-                <Input id="type" defaultValue={prefill.type} readOnly className={readOnlyClass} />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  {t('email')}
-                </label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  defaultValue={prefill.email}
-                  readOnly
-                  required
-                  className={readOnlyClass}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="full_name" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  {t('fullName')}
-                </label>
-                <Input
-                  id="full_name"
-                  name="full_name"
-                  type="text"
-                  defaultValue={prefill.contact_name}
-                  readOnly
-                  required
-                  className={readOnlyClass}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="rut" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  {t('rut')}
-                </label>
-                <RutInput
-                  id="rut"
-                  name="rut"
-                  defaultValue={prefill.tax_id}
-                  readOnly
-                  required
-                  className={readOnlyClass}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="company_name" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Razón Social
-                </label>
-                <Input id="company_name" defaultValue={prefill.company_name} readOnly className={readOnlyClass} />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="contact_role" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Cargo del Contacto
-                </label>
-                <Input id="contact_role" defaultValue={prefill.contact_role} readOnly className={readOnlyClass} />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="phone" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Teléfono
-                </label>
-                <Input id="phone" defaultValue={prefill.phone} readOnly className={readOnlyClass} />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="address" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Dirección empresa
-                </label>
-                <Input id="address" defaultValue={prefill.address} readOnly className={readOnlyClass} />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="city" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Ciudad
-                </label>
-                <Input id="city" defaultValue={prefill.city} readOnly className={readOnlyClass} />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="comuna" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Comuna
-                </label>
-                <Input id="comuna" defaultValue={prefill.comuna} readOnly className={readOnlyClass} />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="business_activity" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Giro
-                </label>
-                <Input id="business_activity" defaultValue={prefill.business_activity} readOnly className={readOnlyClass} />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="requesting_rut" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  RUT solicita
-                </label>
-                <Input id="requesting_rut" defaultValue={prefill.requesting_rut} readOnly className={readOnlyClass} />
-              </div>
-              <div className="grid gap-2 md:col-span-2">
-                <label htmlFor="shipping_address" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Dirección de despacho
-                </label>
-                <Input id="shipping_address" defaultValue={prefill.shipping_address} readOnly className={readOnlyClass} />
-              </div>
-              <div className="grid gap-2 md:col-span-2">
-                <label htmlFor="notes" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Notas
-                </label>
-                <Input id="notes" defaultValue={prefill.notes} readOnly className={readOnlyClass} />
-              </div>
-              <div className="grid gap-2 md:col-span-2">
-                <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  {t('password')}
-                </label>
-                <Input id="password" name="password" type="password" required />
-              </div>
-            </div>
-            <Button formAction={signup} className="bg-slate-900 text-white font-bold uppercase text-xs tracking-widest h-12">
-              Crear cuenta
-            </Button>
-          </form>
+          <RegisterFormClient 
+            locale={locale}
+            prefill={prefill}
+            translations={translations}
+          />
         </CardContent>
         <CardFooter>
           <p className="text-[10px] text-center w-full text-slate-400 font-bold uppercase tracking-widest">
