@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client"
 import { completeProfile, type CompleteProfileState } from "@/actions/complete-profile"
 import { logout } from "@/app/[locale]/login/actions"
 import { useUserMode, type UserMode } from "@/hooks/use-user-mode"
-import { User, Building2, ChevronDown } from "lucide-react"
+import { User, Building2, ChevronDown, Package, Settings, LogOut } from "lucide-react"
 
 const LanguageSwitcher = dynamic(() => import("./language-switcher").then(mod => ({ default: mod.LanguageSwitcher })), {
   ssr: false,
@@ -47,6 +47,11 @@ export function Header() {
     { name: capitalize(t("shop")), href: "/shop" },
     { name: capitalize(t("about")), href: "/about" },
     { name: capitalize(t("contact")), href: "/contact" },
+  ]
+
+  const collaborateLinks = [
+    { name: t("sponsorships"), href: "/sponsorship" },
+    { name: t("b2bProgram"), href: "/b2b-apply" },
   ]
 
   const footerT = useTranslations("Footer")
@@ -167,6 +172,26 @@ export function Header() {
           
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-1 text-base font-bold text-foreground/80 hover:text-primary transition-colors outline-none capitalize" style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}>
+              {t("collaborate")}
+              <ChevronDown className="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-white/95 backdrop-blur-md border-primary/10 rounded-xl shadow-xl p-2 min-w-[200px]">
+              {collaborateLinks.map((link) => (
+                <DropdownMenuItem key={link.href} asChild className="focus:bg-slate-50 rounded-lg cursor-pointer">
+                  <Link 
+                    href={link.href}
+                    className="w-full px-3 py-2 text-sm font-bold text-slate-600 hover:text-primary transition-colors tracking-tight"
+                    style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
+                  >
+                    {link.name}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1 text-base font-bold text-foreground/80 hover:text-primary transition-colors outline-none capitalize" style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}>
               {footerT("legal.title").toLowerCase()}
               <ChevronDown className="w-4 h-4" />
             </DropdownMenuTrigger>
@@ -219,12 +244,12 @@ export function Header() {
           <LanguageSwitcher />
           
           {hasUser ? (
-            <>
-              <Link href="/account" className="hidden sm:flex items-center gap-3 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="hidden sm:flex items-center gap-3 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors outline-none">
                 <div className="w-8 h-8 rounded-full bg-calmar-primary/10 flex items-center justify-center text-calmar-primary text-xs font-bold">
                   {initials || "U"}
                 </div>
-                <div className="leading-tight">
+                <div className="leading-tight text-left">
                   <span className="block text-xs font-bold text-foreground">
                     {displayName}
                   </span>
@@ -232,18 +257,50 @@ export function Header() {
                     {userEmail}
                   </span>
                 </div>
-              </Link>
-              <form action={logout} className="hidden sm:block">
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  className="text-base font-bold text-red-600 hover:text-red-700 hover:bg-red-50"
-                  style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
-                >
-                  {t("logout")}
-                </Button>
-              </form>
-            </>
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-white/95 backdrop-blur-md border-primary/10 rounded-xl shadow-xl p-2 min-w-[200px]">
+                <DropdownMenuItem asChild className="focus:bg-slate-50 rounded-lg cursor-pointer">
+                  <Link 
+                    href="/account"
+                    className="w-full px-3 py-2 text-sm font-bold text-slate-600 hover:text-primary transition-colors tracking-tight flex items-center gap-3"
+                  >
+                    <User className="w-4 h-4" />
+                    {t("account")}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="focus:bg-slate-50 rounded-lg cursor-pointer">
+                  <Link 
+                    href="/account/orders"
+                    className="w-full px-3 py-2 text-sm font-bold text-slate-600 hover:text-primary transition-colors tracking-tight flex items-center gap-3"
+                  >
+                    <Package className="w-4 h-4" />
+                    {t("myOrders")}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="focus:bg-slate-50 rounded-lg cursor-pointer">
+                  <Link 
+                    href="/account/settings"
+                    className="w-full px-3 py-2 text-sm font-bold text-slate-600 hover:text-primary transition-colors tracking-tight flex items-center gap-3"
+                  >
+                    <Settings className="w-4 h-4" />
+                    {t("settings")}
+                  </Link>
+                </DropdownMenuItem>
+                <div className="h-px w-full bg-slate-100 my-2" />
+                <DropdownMenuItem asChild className="focus:bg-red-50 rounded-lg cursor-pointer">
+                  <form action={logout} className="w-full">
+                    <button
+                      type="submit"
+                      className="w-full px-3 py-2 text-sm font-bold text-red-600 hover:text-red-700 transition-colors tracking-tight flex items-center gap-3"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      {t("logout")}
+                    </button>
+                  </form>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Link href="/login" className="hidden sm:block">
               <Button variant="ghost" className="text-base font-bold hover:text-primary" style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}>
@@ -324,6 +381,21 @@ export function Header() {
                       key={link.href}
                       href={link.href}
                       className="text-lg font-bold text-foreground/90 hover:text-primary transition-colors"
+                      style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {link.name}
+                    </Link>
+                  ))}
+
+                  <div className="h-px w-full bg-slate-100 my-2" />
+
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">{t("collaborate")}</p>
+                  {collaborateLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="text-base font-bold text-foreground/70 hover:text-primary transition-colors tracking-tight pl-2"
                       style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >

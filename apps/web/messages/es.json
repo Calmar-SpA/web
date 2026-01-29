@@ -36,7 +36,12 @@
     "account": "Mi Cuenta",
     "b2b": "Programa B2B",
     "logout": "Cerrar Sesión",
-    "search": "Buscar productos..."
+    "search": "Buscar productos...",
+    "collaborate": "Colaborar",
+    "sponsorships": "Patrocinios",
+    "b2bProgram": "Programa B2B",
+    "myOrders": "Mis Pedidos",
+    "settings": "Ajustes"
   },
   "Cart": {
     "title": "Tu Carrito",
@@ -149,6 +154,10 @@
     "rewardsTitle": "Centro de Recompensas",
     "soon": "Pronto: Canje por productos",
     "soonDesc": "Usa tus puntos para llevarte productos Calmar gratis.",
+    "personalTab": "Personal",
+    "businessTab": "Empresa",
+    "companyEmail": "Email de Empresa",
+    "active": "Activo",
     "ordersList": {
       "title": "Mis pedidos",
       "subtitle": "Gestiona y rastrea tus compras y entregas en Calmar.",

@@ -36,7 +36,12 @@
     "account": "My Account",
     "b2b": "B2B Program",
     "logout": "Log Out",
-    "search": "Search products..."
+    "search": "Search products...",
+    "collaborate": "Partner",
+    "sponsorships": "Sponsorships",
+    "b2bProgram": "B2B Program",
+    "myOrders": "My Orders",
+    "settings": "Settings"
   },
   "Cart": {
     "title": "Your Cart",
@@ -149,6 +154,10 @@
     "rewardsTitle": "Rewards Center",
     "soon": "Coming Soon: Product Redemption",
     "soonDesc": "Use your points to get Calmar products for free.",
+    "personalTab": "Personal",
+    "businessTab": "Business",
+    "companyEmail": "Company Email",
+    "active": "Active",
     "ordersList": {
       "title": "My orders",
       "subtitle": "Manage and track your purchases and deliveries at Calmar.",
