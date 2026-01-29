@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, Mail, Phone, Instagram, Youtube, ExternalLink, Calendar, User, Building2, DollarSign } from 'lucide-react'
 import Link from 'next/link'
@@ -30,7 +30,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   rejected: { label: 'Rechazado', color: 'bg-red-100 text-red-700 border-red-200' },
 }
 
-export default function SponsorshipDetailPage({ params }: { params: { id: string } }) {
+export default function SponsorshipDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const [request, setRequest] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [adminNotes, setAdminNotes] = useState('')
@@ -38,7 +39,7 @@ export default function SponsorshipDetailPage({ params }: { params: { id: string
 
   useEffect(() => {
     loadRequest()
-  }, [params.id])
+  }, [id])
 
   const loadRequest = async () => {
     setIsLoading(true)
@@ -48,7 +49,7 @@ export default function SponsorshipDetailPage({ params }: { params: { id: string
       const { data, error } = await supabase
         .from('sponsorship_requests')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', id)
         .single()
 
       if (error) throw error
@@ -64,7 +65,7 @@ export default function SponsorshipDetailPage({ params }: { params: { id: string
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await updateSponsorshipStatus(params.id, newStatus)
+      await updateSponsorshipStatus(id, newStatus)
       await loadRequest()
       toast.success('Estado actualizado')
     } catch (error: any) {
@@ -76,7 +77,7 @@ export default function SponsorshipDetailPage({ params }: { params: { id: string
   const handleSaveNotes = async () => {
     setIsSaving(true)
     try {
-      await updateSponsorshipNotes(params.id, adminNotes)
+      await updateSponsorshipNotes(id, adminNotes)
       await loadRequest()
       toast.success('Notas guardadas')
     } catch (error: any) {
