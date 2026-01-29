@@ -1,7 +1,7 @@
-
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { sendB2BApplicationAdminNotification, sendB2BApplicationReceivedEmail } from '@/lib/mail'
 import { normalizeRut, isValidRut, formatRut } from '@calmar/utils'
@@ -16,6 +16,7 @@ interface B2BApplicationData {
 
 export async function submitB2BApplication(data: B2BApplicationData) {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const taxId = normalizeRut(data.tax_id)
@@ -26,7 +27,7 @@ export async function submitB2BApplication(data: B2BApplicationData) {
   
   try {
     const formattedTaxId = formatRut(taxId)
-    const { data: existingProspect } = await supabase
+    const { data: existingProspect } = await adminClient
       .from('prospects')
       .select('id')
       .in('tax_id', [taxId, formattedTaxId])
@@ -36,7 +37,7 @@ export async function submitB2BApplication(data: B2BApplicationData) {
       return { success: false, error: 'Ya existe un prospecto con ese RUT' }
     }
 
-    const { error: insertError } = await supabase
+    const { error: insertError } = await adminClient
       .from('prospects')
       .insert({
         type: 'b2b',
