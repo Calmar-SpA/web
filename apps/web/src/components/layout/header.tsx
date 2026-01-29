@@ -288,8 +288,8 @@ export function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <div className="h-px w-full bg-slate-100 my-2" />
-                <DropdownMenuItem asChild className="focus:bg-red-50 rounded-lg cursor-pointer">
-                  <form action={logout} className="w-full">
+                <form action={logout}>
+                  <DropdownMenuItem asChild className="focus:bg-red-50 rounded-lg cursor-pointer">
                     <button
                       type="submit"
                       className="w-full px-3 py-2 text-sm font-bold text-red-600 hover:text-red-700 transition-colors tracking-tight flex items-center gap-3"
@@ -297,8 +297,8 @@ export function Header() {
                       <LogOut className="w-4 h-4" />
                       {t("logout")}
                     </button>
-                  </form>
-                </DropdownMenuItem>
+                  </DropdownMenuItem>
+                </form>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
