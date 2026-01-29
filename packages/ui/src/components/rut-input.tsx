@@ -32,7 +32,7 @@ export function RutInput({ value, defaultValue, onChange, ...props }: RutInputPr
     if (onChange) {
       const event = {
         ...e,
-        target: { ...e.target, value: formatted },
+        target: { ...e.target, name: e.target.name, value: formatted },
       } as React.ChangeEvent<HTMLInputElement>
       onChange(event)
     }
