@@ -133,12 +133,16 @@ export class OrderService {
         let customerName = 'N/A'
         let customerEmail = 'N/A'
         
-        if (movement.prospect) {
-          customerName = movement.prospect.company_name || movement.prospect.contact_name
-          customerEmail = movement.prospect.email
-        } else if (movement.customer) {
-          customerName = movement.customer.full_name || movement.customer.email
-          customerEmail = movement.customer.email
+        // Supabase returns relations as arrays, get first element
+        const prospect = Array.isArray(movement.prospect) ? movement.prospect[0] : movement.prospect
+        const customer = Array.isArray(movement.customer) ? movement.customer[0] : movement.customer
+        
+        if (prospect) {
+          customerName = prospect.company_name || prospect.contact_name
+          customerEmail = prospect.email
+        } else if (customer) {
+          customerName = customer.full_name || customer.email
+          customerEmail = customer.email
         }
 
         unified.push({

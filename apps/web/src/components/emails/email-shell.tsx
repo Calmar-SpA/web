@@ -124,6 +124,9 @@ export const baseStyles = {
     margin: "16px 0",
     borderLeft: `4px solid ${brand.primary}`,
   },
+  section: {
+    margin: "16px 0",
+  },
   listItem: {
     color: brand.text,
     fontSize: "14px",
