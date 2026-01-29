@@ -18,10 +18,6 @@ export async function submitB2BApplication(data: B2BApplicationData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
-    throw new Error('Debes iniciar sesión para postular como B2B')
-  }
-
   const taxId = normalizeRut(data.tax_id)
 
   if (!taxId || !isValidRut(taxId)) {
@@ -50,7 +46,7 @@ export async function submitB2BApplication(data: B2BApplicationData) {
         email: data.contact_email,
         phone: data.contact_phone,
         tax_id: formattedTaxId,
-        user_id: user.id,
+        user_id: user?.id ?? null,
         notes: 'Postulación B2B desde web'
       })
 
