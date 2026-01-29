@@ -507,5 +507,47 @@
     "cancel": "Cancel",
     "codeSuccess": "Access granted",
     "codeError": "Invalid code"
+  },
+  "Sponsorship": {
+    "hero": {
+      "title": "Sponsorships",
+      "subtitle": "Partner with us"
+    },
+    "info": {
+      "title": "Join the Calmar community",
+      "description": "We seek to collaborate with people and projects that share our vision: authentic mineral hydration and respect for nature.",
+      "benefit1": "Calmar products for your event or project",
+      "benefit2": "Exposure on our social networks",
+      "benefit3": "Long-term collaboration",
+      "benefit4": "Support for projects aligned with our values"
+    },
+    "form": {
+      "title": "Sponsorship Application",
+      "applicantType": "Applicant Type",
+      "name": "Event/Project Name",
+      "namePlaceholder": "e.g. Patagonia Marathon 2026",
+      "contactName": "Contact Person",
+      "contactNamePlaceholder": "Your name",
+      "phone": "Phone",
+      "email": "Email",
+      "socialMedia": "Social Media (optional)",
+      "socialOther": "Other social media or links",
+      "audienceSize": "Estimated Reach",
+      "audienceSizePlaceholder": "e.g. 500 attendees, 10k followers",
+      "proposal": "Collaboration Proposal",
+      "proposalPlaceholder": "Tell us about your project and how we could collaborate...",
+      "sponsorshipType": "Sponsorship Type",
+      "budget": "Requested Amount (optional)",
+      "budgetHint": "Indicate the amount in CLP if applicable",
+      "submit": "Submit Application",
+      "sending": "Sending...",
+      "success": "Application sent!",
+      "error": "Error submitting application. Please try again."
+    },
+    "success": {
+      "title": "Application Received!",
+      "description": "We have received your application. Our team will review it and get back to you within 5 to 7 business days.",
+      "button": "Back to shop"
+    }
   }
 }

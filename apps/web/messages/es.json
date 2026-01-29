@@ -507,5 +507,47 @@
     "cancel": "Cancelar",
     "codeSuccess": "Acceso concedido",
     "codeError": "Código inválido"
+  },
+  "Sponsorship": {
+    "hero": {
+      "title": "Patrocinios",
+      "subtitle": "Colabora con nosotros"
+    },
+    "info": {
+      "title": "Únete a la comunidad Calmar",
+      "description": "Buscamos colaborar con personas y proyectos que compartan nuestra visión: hidratación mineral auténtica y respeto por la naturaleza.",
+      "benefit1": "Productos Calmar para tu evento o proyecto",
+      "benefit2": "Exposición en nuestras redes sociales",
+      "benefit3": "Colaboración a largo plazo",
+      "benefit4": "Apoyo a proyectos alineados con nuestros valores"
+    },
+    "form": {
+      "title": "Solicitud de Patrocinio",
+      "applicantType": "Tipo de Solicitante",
+      "name": "Nombre del Evento/Proyecto",
+      "namePlaceholder": "Ej: Maratón Patagonia 2026",
+      "contactName": "Persona de Contacto",
+      "contactNamePlaceholder": "Tu nombre",
+      "phone": "Teléfono",
+      "email": "Email",
+      "socialMedia": "Redes Sociales (opcional)",
+      "socialOther": "Otras redes o links",
+      "audienceSize": "Alcance Estimado",
+      "audienceSizePlaceholder": "Ej: 500 asistentes, 10k seguidores",
+      "proposal": "Propuesta de Colaboración",
+      "proposalPlaceholder": "Cuéntanos sobre tu proyecto y cómo podríamos colaborar...",
+      "sponsorshipType": "Modalidad de Auspicio",
+      "budget": "Monto Solicitado (opcional)",
+      "budgetHint": "Indica el monto en CLP si aplica",
+      "submit": "Enviar Solicitud",
+      "sending": "Enviando...",
+      "success": "¡Solicitud enviada!",
+      "error": "Error al enviar la solicitud. Intenta nuevamente."
+    },
+    "success": {
+      "title": "¡Solicitud Recibida!",
+      "description": "Hemos recibido tu solicitud. Nuestro equipo la revisará y te responderá en un plazo de 5 a 7 días hábiles.",
+      "button": "Volver a la tienda"
+    }
   }
 }

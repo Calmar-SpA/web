@@ -19,7 +19,8 @@ import {
   Receipt,
   ChevronLeft,
   ChevronRight,
-  Settings
+  Settings,
+  Sparkles
 } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
@@ -51,6 +52,7 @@ export function Sidebar() {
     { href: "/suppliers", label: "Proveedores", icon: Truck, color: "text-calmar-mint" },
     { href: "/discount-codes", label: "Códigos", icon: Tag, color: "text-calmar-mint" },
     { href: "/crm", label: "CRM", icon: UsersRound, color: "text-calmar-accent" },
+    { href: "/sponsorships", label: "Patrocinios", icon: Sparkles, color: "text-yellow-400" },
     { href: "/media", label: "Media", icon: Film, color: "text-calmar-accent" },
     { href: "/users", label: "Usuarios", icon: Users, color: "text-calmar-mint" },
     { href: "/email-tests", label: "Emails", icon: Mail, color: "text-calmar-primary" },

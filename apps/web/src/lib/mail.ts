@@ -12,6 +12,8 @@ import InventoryLowAdminEmail, {
   LowInventoryItem,
 } from '@/components/emails/inventory-low-admin';
 import RefundAdminNotificationEmail from '@/components/emails/refund-admin-notification';
+import SponsorshipAdminNotificationEmail from '@/components/emails/sponsorship-admin-notification';
+import SponsorshipReceivedEmail from '@/components/emails/sponsorship-received';
 
 const DEFAULT_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'notificaciones@calmar.cl';
 const DEFAULT_FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Notificaciones Calmar';
@@ -330,6 +332,80 @@ export async function sendRefundAdminNotification(params: {
     return { success: true };
   } catch (error: any) {
     console.error('Exception sending refund notification email:', error);
+    return { success: false, error: error?.message || error };
+  }
+}
+
+export async function sendSponsorshipAdminNotification(params: {
+  applicantType: string;
+  name: string;
+  contactName: string;
+  email: string;
+  phone?: string;
+  socialInstagram?: string;
+  socialTiktok?: string;
+  socialYoutube?: string;
+  socialOther?: string;
+  audienceSize?: string;
+  proposal: string;
+  sponsorshipType: string;
+  budgetRequested?: number;
+}) {
+  try {
+    const html = await render(
+      SponsorshipAdminNotificationEmail({
+        applicantType: params.applicantType,
+        name: params.name,
+        contactName: params.contactName,
+        email: params.email,
+        phone: params.phone,
+        socialInstagram: params.socialInstagram,
+        socialTiktok: params.socialTiktok,
+        socialYoutube: params.socialYoutube,
+        socialOther: params.socialOther,
+        audienceSize: params.audienceSize,
+        proposal: params.proposal,
+        sponsorshipType: params.sponsorshipType,
+        budgetRequested: params.budgetRequested,
+      })
+    );
+
+    await sendEmail({
+      to: ADMIN_EMAIL,
+      subject: 'Nueva solicitud de patrocinio',
+      html,
+      replyTo: params.email,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Exception sending sponsorship admin notification email:', error);
+    return { success: false, error: error?.message || error };
+  }
+}
+
+export async function sendSponsorshipReceivedEmail(params: {
+  contactName: string;
+  name: string;
+  contactEmail: string;
+}) {
+  try {
+    const html = await render(
+      SponsorshipReceivedEmail({
+        contactName: params.contactName,
+        name: params.name,
+      })
+    );
+
+    await sendEmail({
+      to: params.contactEmail,
+      subject: 'Tu solicitud de patrocinio fue recibida',
+      html,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Exception sending sponsorship received email:', error);
     return { success: false, error: error?.message || error };
   }
 }

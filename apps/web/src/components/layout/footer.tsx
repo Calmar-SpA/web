@@ -30,6 +30,8 @@ export function Footer() {
             <Link href="/shop" className="hover:text-white transition-colors">{navigationT('shop')}</Link>
             <Link href="/about" className="hover:text-white transition-colors">{navigationT('about')}</Link>
             <Link href="/contact" className="hover:text-white transition-colors">{navigationT('contact')}</Link>
+            <Link href="/sponsorship" className="hover:text-white transition-colors">Patrocinios</Link>
+            <Link href="/b2b-apply" className="hover:text-white transition-colors">{navigationT('b2b')}</Link>
           </nav>
         </div>
         <div className="space-y-4">
