@@ -3,6 +3,63 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+export async function createProduct(formData: FormData) {
+  const supabase = await createClient()
+  
+  // Verificar autenticación y permisos admin
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'No autorizado' }
+  }
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'admin') {
+    return { error: 'No tienes permisos para realizar esta acción' }
+  }
+
+  // Extraer datos del formulario
+  const productData = {
+    sku: formData.get('sku') as string,
+    name: formData.get('name') as string,
+    short_description: formData.get('short_description') as string || null,
+    description: formData.get('description') as string || null,
+    base_price: parseFloat(formData.get('base_price') as string),
+    cost_price: formData.get('cost_price') ? parseFloat(formData.get('cost_price') as string) : null,
+    weight_grams: parseInt(formData.get('weight_grams') as string),
+    height_cm: parseInt(formData.get('height_cm') as string),
+    width_cm: parseInt(formData.get('width_cm') as string),
+    length_cm: parseInt(formData.get('length_cm') as string),
+    is_active: formData.get('is_active') === 'on',
+    is_featured: false,
+    requires_refrigeration: false,
+  }
+
+  // Validar campos requeridos
+  if (!productData.sku || !productData.name || !productData.base_price || !productData.weight_grams) {
+    return { error: 'Faltan campos requeridos' }
+  }
+
+  // Insertar producto
+  const { data, error } = await supabase
+    .from('products')
+    .insert(productData)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Create product error:', error)
+    return { error: 'Error al crear el producto: ' + error.message }
+  }
+
+  revalidatePath('/products')
+  return { success: true, product: data }
+}
+
 export async function uploadProductImage(productId: string, formData: FormData) {
   const supabase = await createClient()
   

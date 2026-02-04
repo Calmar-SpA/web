@@ -809,3 +809,71 @@ export async function rejectPayment(paymentId: string, reason: string) {
   }
   return { success: true }
 }
+
+export async function updateMovement(
+  movementId: string,
+  data: {
+    movement_type?: 'sample' | 'consignment' | 'sale_invoice' | 'sale_credit'
+    prospect_id?: string | null
+    customer_user_id?: string | null
+    items?: Array<{
+      product_id: string
+      variant_id?: string | null
+      quantity: number
+      unit_price: number
+    }>
+    total_amount?: number
+    due_date?: string | null
+    delivery_date?: string | null
+    notes?: string | null
+    sample_recipient_name?: string | null
+    sample_event_context?: string | null
+    status?: string
+  }
+) {
+  const supabase = await createClient()
+  const crmService = new CRMService(supabase)
+  
+  const movement = await crmService.updateMovement(movementId, data)
+  
+  revalidatePath('/crm/movements')
+  revalidatePath(`/crm/movements/${movementId}`)
+  revalidatePath('/crm/debts')
+  if (data.prospect_id) {
+    revalidatePath(`/crm/prospects/${data.prospect_id}`)
+  }
+  
+  return movement
+}
+
+export async function deleteMovement(movementId: string) {
+  const supabase = await createAdminClient()
+  
+  // First delete related payments
+  const { error: paymentsError } = await supabase
+    .from('movement_payments')
+    .delete()
+    .eq('movement_id', movementId)
+
+  if (paymentsError) {
+    console.error('Error deleting payments:', paymentsError)
+    throw new Error('Error al eliminar los pagos asociados')
+  }
+
+  // Then delete the movement
+  const { error } = await supabase
+    .from('product_movements')
+    .delete()
+    .eq('id', movementId)
+
+  if (error) {
+    console.error('Error deleting movement:', error)
+    throw new Error('Error al eliminar el movimiento')
+  }
+  
+  revalidatePath('/crm/movements')
+  revalidatePath('/crm/debts')
+  revalidatePath('/crm')
+  
+  return { success: true }
+}

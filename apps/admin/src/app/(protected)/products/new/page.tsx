@@ -1,7 +1,25 @@
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '@calmar/ui'
 import Link from 'next/link'
+import { createProduct } from '../actions'
+import { redirect } from 'next/navigation'
 
 export default function NewProductPage() {
+  async function handleCreate(formData: FormData) {
+    'use server'
+    
+    const result = await createProduct(formData)
+    
+    if (result.error) {
+      // En un caso real, podrías usar cookies o searchParams para pasar el error
+      throw new Error(result.error)
+    }
+    
+    if (result.product) {
+      // Redirigir a la página de edición donde se puede agregar la imagen
+      redirect(`/products/${result.product.id}/edit`)
+    }
+  }
+
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8 flex items-center gap-4">
@@ -11,7 +29,7 @@ export default function NewProductPage() {
         <h1 className="text-3xl font-bold tracking-tight">Nuevo producto</h1>
       </div>
 
-      <form className="space-y-6">
+      <form action={handleCreate} className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Información General</CardTitle>
@@ -31,6 +49,15 @@ export default function NewProductPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Descripción Corta</label>
               <Input name="short_description" placeholder="Bebida hidratante con agua de mar..." />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Descripción Completa</label>
+              <textarea 
+                name="description" 
+                className="w-full min-h-[150px] p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-calmar-ocean/20 transition-all text-sm"
+                placeholder="Descripción detallada del producto..."
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -71,12 +98,23 @@ export default function NewProductPage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>Nota sobre Imágenes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-600">
+              Después de crear el producto, serás redirigido a la página de edición donde podrás agregar imágenes.
+            </p>
+          </CardContent>
+        </Card>
+
         <div className="flex justify-end gap-4">
           <Link href="/products">
-            <Button variant="outline">Cancelar</Button>
+            <Button variant="outline" type="button">Cancelar</Button>
           </Link>
-          <Button className="bg-calmar-ocean hover:bg-calmar-ocean-dark text-white px-8">
-            Guardar Producto
+          <Button type="submit" className="bg-calmar-ocean hover:bg-calmar-ocean-dark text-white px-8">
+            Crear Producto
           </Button>
         </div>
       </form>

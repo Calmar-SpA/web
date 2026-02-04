@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { CRMService } from '@calmar/database'
-import { ArrowLeft, DollarSign, Calendar, Package, AlertCircle, CheckCircle, Plus, UserX, FileText, Upload, Trash2, ExternalLink, Eye, CheckCircle2, XCircle } from 'lucide-react'
+import { ArrowLeft, DollarSign, Calendar, Package, AlertCircle, CheckCircle, Plus, UserX, FileText, Upload, Trash2, ExternalLink, Eye, CheckCircle2, XCircle, Pencil, X } from 'lucide-react'
 import { Button, Input } from '@calmar/ui'
 import Link from 'next/link'
-import { updateMovementStatus, registerPayment, returnConsignment, convertConsignmentToSale, uploadMovementDocument, deleteMovementDocument, approvePayment, rejectPayment } from '../../actions'
+import { updateMovementStatus, registerPayment, returnConsignment, convertConsignmentToSale, uploadMovementDocument, deleteMovementDocument, approvePayment, rejectPayment, deleteMovement, updateMovement } from '../../actions'
 import { toast } from 'sonner'
 
 const STATUSES = {
@@ -27,12 +27,22 @@ export default function MovementDetailPage() {
   
   const [movement, setMovement] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
     payment_method: 'transfer' as 'cash' | 'transfer' | 'check' | 'credit_card' | 'other',
     payment_reference: '',
     notes: ''
+  })
+  const [editForm, setEditForm] = useState({
+    notes: '',
+    due_date: '',
+    delivery_date: '',
+    sample_recipient_name: '',
+    sample_event_context: ''
   })
 
   const loadMovement = async () => {
@@ -43,6 +53,14 @@ export default function MovementDetailPage() {
     try {
       const data = await crmService.getMovementById(movementId)
       setMovement(data)
+      // Initialize edit form with current values
+      setEditForm({
+        notes: data?.notes || '',
+        due_date: data?.due_date ? data.due_date.split('T')[0] : '',
+        delivery_date: data?.delivery_date ? data.delivery_date.split('T')[0] : '',
+        sample_recipient_name: data?.sample_recipient_name || '',
+        sample_event_context: data?.sample_event_context || ''
+      })
     } catch (error: any) {
       console.error('Error loading movement:', error)
       toast.error('Error al cargar movimiento')
@@ -158,6 +176,59 @@ export default function MovementDetailPage() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!confirm('¿Estás seguro de eliminar este movimiento? Esta acción eliminará también todos los pagos asociados y no se puede deshacer.')) {
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      await deleteMovement(movementId)
+      toast.success('Movimiento eliminado')
+      router.push('/crm/movements')
+    } catch (error: any) {
+      console.error('Error deleting movement:', error)
+      toast.error('Error al eliminar movimiento')
+      setIsDeleting(false)
+    }
+  }
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSaving(true)
+    
+    try {
+      await updateMovement(movementId, {
+        notes: editForm.notes || null,
+        due_date: editForm.due_date || null,
+        delivery_date: editForm.delivery_date || null,
+        sample_recipient_name: editForm.sample_recipient_name || null,
+        sample_event_context: editForm.sample_event_context || null
+      })
+      
+      toast.success('Movimiento actualizado')
+      setIsEditing(false)
+      await loadMovement()
+    } catch (error: any) {
+      console.error('Error updating movement:', error)
+      toast.error('Error al actualizar movimiento')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    // Reset form to current values
+    setEditForm({
+      notes: movement?.notes || '',
+      due_date: movement?.due_date ? movement.due_date.split('T')[0] : '',
+      delivery_date: movement?.delivery_date ? movement.delivery_date.split('T')[0] : '',
+      sample_recipient_name: movement?.sample_recipient_name || '',
+      sample_event_context: movement?.sample_event_context || ''
+    })
+    setIsEditing(false)
+  }
+
   if (isLoading) {
     return (
       <div className="p-8 text-center">
@@ -185,7 +256,7 @@ export default function MovementDetailPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col md:flex-row md:items-center gap-4">
         <Link href="/crm/movements">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -193,7 +264,7 @@ export default function MovementDetailPage() {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-4xl font-black uppercase tracking-tighter leading-none">
+          <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-none">
             {movement.movement_number}
           </h1>
           <p className="text-slate-500 mt-1 font-medium">
@@ -202,9 +273,36 @@ export default function MovementDetailPage() {
              movement.movement_type === 'sale_invoice' ? 'Venta Factura' : 'Venta Crédito'}
           </p>
         </div>
-        <span className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider ${statusInfo?.color || 'bg-slate-100 text-slate-700'}`}>
-          {statusInfo?.label || movement.status}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider ${statusInfo?.color || 'bg-slate-100 text-slate-700'}`}>
+            {statusInfo?.label || movement.status}
+          </span>
+          {!isEditing && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+              className="uppercase font-black tracking-wider"
+            >
+              <Pencil className="w-4 h-4 mr-2" />
+              Editar
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="uppercase font-black tracking-wider text-red-600 border-red-200 hover:bg-red-50"
+          >
+            {isDeleting ? (
+              <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin mr-2" />
+            ) : (
+              <Trash2 className="w-4 h-4 mr-2" />
+            )}
+            Eliminar
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -625,6 +723,120 @@ export default function MovementDetailPage() {
                   className="flex-1 uppercase font-black tracking-wider"
                 >
                   Registrar Pago
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {isEditing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 md:p-8 max-w-lg w-full space-y-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-black uppercase tracking-tight">Editar Movimiento</h2>
+              <button
+                onClick={handleCancelEdit}
+                className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              {/* Fecha de Entrega */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                  Fecha de Entrega
+                </label>
+                <Input
+                  type="date"
+                  value={editForm.delivery_date}
+                  onChange={(e) => setEditForm({ ...editForm, delivery_date: e.target.value })}
+                  className="h-12"
+                />
+              </div>
+
+              {/* Fecha de Vencimiento */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                  Fecha de Vencimiento
+                </label>
+                <Input
+                  type="date"
+                  value={editForm.due_date}
+                  onChange={(e) => setEditForm({ ...editForm, due_date: e.target.value })}
+                  className="h-12"
+                />
+              </div>
+
+              {/* Campos para muestras */}
+              {movement.movement_type === 'sample' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                      Nombre del Receptor
+                    </label>
+                    <Input
+                      value={editForm.sample_recipient_name}
+                      onChange={(e) => setEditForm({ ...editForm, sample_recipient_name: e.target.value })}
+                      placeholder="Nombre de quien recibe la muestra"
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                      Contexto / Evento
+                    </label>
+                    <Input
+                      value={editForm.sample_event_context}
+                      onChange={(e) => setEditForm({ ...editForm, sample_event_context: e.target.value })}
+                      placeholder="Ej: Feria de diseño, Reunión comercial..."
+                      className="h-12"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Notas */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                  Notas
+                </label>
+                <textarea
+                  value={editForm.notes}
+                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                  placeholder="Notas adicionales..."
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-calmar-ocean focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                  className="flex-1 uppercase font-black tracking-wider"
+                  disabled={isSaving}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 uppercase font-black tracking-wider"
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Guardando...
+                    </>
+                  ) : (
+                    'Guardar Cambios'
+                  )}
                 </Button>
               </div>
             </form>

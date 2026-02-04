@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { CRMService } from '@calmar/database'
-import { Search, Plus, Package, DollarSign, Calendar, AlertCircle, CheckCircle, UserX } from 'lucide-react'
+import { Search, Plus, Package, DollarSign, Calendar, AlertCircle, CheckCircle, UserX, Trash2 } from 'lucide-react'
+import { deleteMovement } from '../actions'
 import { Input, Button } from '@calmar/ui'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -31,6 +32,7 @@ export default function MovementsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const loadMovements = async () => {
     setIsLoading(true)
@@ -59,6 +61,27 @@ export default function MovementsPage() {
   useEffect(() => {
     loadMovements()
   }, [filterType, filterStatus])
+
+  const handleDelete = async (e: React.MouseEvent, movementId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!confirm('¿Estás seguro de eliminar este movimiento? Esta acción no se puede deshacer.')) {
+      return
+    }
+
+    setDeletingId(movementId)
+    try {
+      await deleteMovement(movementId)
+      toast.success('Movimiento eliminado')
+      await loadMovements()
+    } catch (error: any) {
+      console.error('Error deleting movement:', error)
+      toast.error('Error al eliminar movimiento')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const filteredMovements = movements.filter(m => {
     if (searchTerm) {
@@ -178,13 +201,12 @@ export default function MovementsPage() {
             const remainingBalance = Number(movement.total_amount) - Number(movement.amount_paid || 0)
             
             return (
-              <Link
+              <div
                 key={movement.id}
-                href={`/crm/movements/${movement.id}`}
-                className="block bg-white p-6 rounded-2xl border-2 border-slate-100 hover:border-calmar-ocean transition-all shadow-sm hover:shadow-md"
+                className="bg-white p-6 rounded-2xl border-2 border-slate-100 hover:border-calmar-ocean transition-all shadow-sm hover:shadow-md"
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex-1">
+                  <Link href={`/crm/movements/${movement.id}`} className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider ${typeInfo?.color || 'bg-slate-100 text-slate-700'}`}>
                         {typeInfo?.label || movement.movement_type}
@@ -227,41 +249,56 @@ export default function MovementsPage() {
                         </span>
                       )}
                     </div>
-                  </div>
+                  </Link>
                   
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="text-right">
-                      <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
-                        Total
-                      </p>
-                      <p className="text-2xl font-black text-slate-900">
-                        ${Number(movement.total_amount).toLocaleString('es-CL')}
-                      </p>
-                    </div>
-                    {movement.movement_type !== 'sample' && remainingBalance > 0 && (
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-end gap-2">
                       <div className="text-right">
-                        <p className="text-xs font-black uppercase tracking-wider text-orange-600 mb-1">
-                          Pendiente
+                        <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
+                          Total
                         </p>
-                        <p className="text-lg font-black text-orange-600">
-                          ${remainingBalance.toLocaleString('es-CL')}
+                        <p className="text-2xl font-black text-slate-900">
+                          ${Number(movement.total_amount).toLocaleString('es-CL')}
                         </p>
                       </div>
-                    )}
-                    {movement.due_date && (
-                      <div className="flex items-center gap-1 text-xs text-slate-500">
-                        <Calendar className="w-3 h-3" />
-                        <span>
-                          Vence: {new Date(movement.due_date).toLocaleDateString('es-CL')}
-                        </span>
-                        {new Date(movement.due_date) < new Date() && movement.status !== 'paid' && (
-                          <AlertCircle className="w-3 h-3 text-red-500" />
-                        )}
-                      </div>
-                    )}
+                      {movement.movement_type !== 'sample' && remainingBalance > 0 && (
+                        <div className="text-right">
+                          <p className="text-xs font-black uppercase tracking-wider text-orange-600 mb-1">
+                            Pendiente
+                          </p>
+                          <p className="text-lg font-black text-orange-600">
+                            ${remainingBalance.toLocaleString('es-CL')}
+                          </p>
+                        </div>
+                      )}
+                      {movement.due_date && (
+                        <div className="flex items-center gap-1 text-xs text-slate-500">
+                          <Calendar className="w-3 h-3" />
+                          <span>
+                            Vence: {new Date(movement.due_date).toLocaleDateString('es-CL')}
+                          </span>
+                          {new Date(movement.due_date) < new Date() && movement.status !== 'paid' && (
+                            <AlertCircle className="w-3 h-3 text-red-500" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <button
+                      onClick={(e) => handleDelete(e, movement.id)}
+                      disabled={deletingId === movement.id}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      title="Eliminar movimiento"
+                    >
+                      {deletingId === movement.id ? (
+                        <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Trash2 className="w-5 h-5" />
+                      )}
+                    </button>
                   </div>
                 </div>
-              </Link>
+              </div>
             )
           })}
         </div>

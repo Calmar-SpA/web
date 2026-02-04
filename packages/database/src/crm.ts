@@ -618,4 +618,53 @@ export class CRMService {
 
     if (upsertError) throw upsertError
   }
+
+  /**
+   * Update a product movement
+   */
+  async updateMovement(
+    id: string,
+    data: Partial<ProductMovementData> & { status?: string }
+  ) {
+    const updatePayload: any = {
+      ...data,
+      updated_at: new Date().toISOString()
+    }
+
+    if (data.items) {
+      updatePayload.items = data.items as any
+    }
+
+    const { data: movement, error } = await this.supabase
+      .from('product_movements')
+      .update(updatePayload)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return movement
+  }
+
+  /**
+   * Delete a product movement
+   */
+  async deleteMovement(id: string) {
+    // First delete related payments
+    const { error: paymentsError } = await this.supabase
+      .from('movement_payments')
+      .delete()
+      .eq('movement_id', id)
+
+    if (paymentsError) throw paymentsError
+
+    // Then delete the movement
+    const { error } = await this.supabase
+      .from('product_movements')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+    return { success: true }
+  }
 }
