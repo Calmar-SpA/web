@@ -5,9 +5,9 @@ export interface ProspectData {
   stage?: 'contact' | 'interested' | 'sample_sent' | 'negotiation' | 'converted' | 'lost'
   user_id?: string | null
   company_name?: string
-  contact_name: string
+  contact_name?: string
   contact_role?: string
-  email: string
+  email?: string
   phone?: string
   tax_id?: string
   address?: string

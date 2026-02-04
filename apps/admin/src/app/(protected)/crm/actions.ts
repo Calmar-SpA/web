@@ -12,9 +12,9 @@ type FixedPriceInput = { productId: string; fixedPrice: number }
 export async function createProspect(data: {
   type: 'b2b' | 'b2c'
   company_name?: string
-  contact_name: string
+  contact_name?: string
   contact_role?: string
-  email: string
+  email?: string
   phone?: string
   phone_country?: string
   tax_id?: string
@@ -29,13 +29,27 @@ export async function createProspect(data: {
 }) {
   const supabase = await createClient()
   const crmService = new CRMService(supabase)
-  const taxId = normalizeRut(data.tax_id)
+  const taxId = data.tax_id ? normalizeRut(data.tax_id) : null
   const requestingRut = normalizeRut(data.requesting_rut)
   const phoneCountry = data.phone_country || '56'
   const phoneFormatted = data.phone ? formatPhoneIntl(phoneCountry, data.phone) : undefined
   const { phone_country: _phoneCountry, user_id: manualUserId, ...prospectData } = data
 
-  if (!taxId || !isValidRut(taxId)) {
+  // Para B2C, validamos todos los campos obligatorios
+  if (data.type === 'b2c') {
+    if (!data.contact_name?.trim()) {
+      throw new Error('El nombre de contacto es obligatorio')
+    }
+    if (!data.email?.trim()) {
+      throw new Error('El email es obligatorio')
+    }
+    if (!taxId || !isValidRut(taxId)) {
+      throw new Error('El RUT no es válido')
+    }
+  }
+
+  // Para B2B, solo validamos si se proporcionan los datos
+  if (taxId && !isValidRut(taxId)) {
     throw new Error('El RUT no es válido')
   }
   if (data.requesting_rut && (!requestingRut || !isValidRut(requestingRut))) {
@@ -45,15 +59,19 @@ export async function createProspect(data: {
     throw new Error('El teléfono no es válido')
   }
 
-  const formattedTaxId = formatRut(taxId)
-  const { data: existingProspect } = await supabase
-    .from('prospects')
-    .select('id')
-    .in('tax_id', [taxId, formattedTaxId])
-    .maybeSingle()
+  // Solo verificamos duplicados si se proporciona RUT
+  let formattedTaxId: string | undefined = undefined
+  if (taxId) {
+    formattedTaxId = formatRut(taxId)
+    const { data: existingProspect } = await supabase
+      .from('prospects')
+      .select('id')
+      .in('tax_id', [taxId, formattedTaxId])
+      .maybeSingle()
 
-  if (existingProspect) {
-    throw new Error('Ya existe un prospecto con ese RUT')
+    if (existingProspect) {
+      throw new Error('Ya existe un prospecto con ese RUT')
+    }
   }
   
   const prospect = await crmService.createProspect({
@@ -64,8 +82,8 @@ export async function createProspect(data: {
     user_id: manualUserId
   })
 
-  // Si no se pasó un user_id manual, intentar vincular con usuario existente si coincide el email
-  if (!manualUserId) {
+  // Si no se pasó un user_id manual y hay email, intentar vincular con usuario existente
+  if (!manualUserId && data.email) {
     const { data: existingUser } = await supabase
       .from('users')
       .select('id')
@@ -456,8 +474,9 @@ export async function updateProspect(prospectId: string, formData: FormData) {
     user_id: (formData.get('user_id') as string) || null,
   }
 
-  if (!payload.contact_name || !payload.email) {
-    throw new Error('Nombre de contacto y email son obligatorios')
+  // Para B2C, nombre de contacto y email son obligatorios
+  if (payload.type === 'b2c' && (!payload.contact_name || !payload.email)) {
+    throw new Error('Nombre de contacto y email son obligatorios para B2C')
   }
 
   const { error } = await supabase

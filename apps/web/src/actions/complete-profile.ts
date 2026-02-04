@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { normalizeRut, isValidRut } from '@calmar/utils'
 
 export type CompleteProfileState = {
@@ -17,8 +18,30 @@ export async function completeProfile(
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
+  if (!user || !user.email) {
     return { success: false, error: 'session' }
+  }
+
+  console.log('[COMPLETE_PROFILE] Starting for user:', user.id, user.email)
+
+  // Usar cliente admin para bypasear RLS (usuarios con deleted_at no pueden verse a sí mismos)
+  const adminClient = createAdminClient()
+
+  // Verificar estado actual del usuario
+  const { data: currentUser, error: fetchError } = await adminClient
+    .from('users')
+    .select('id, deleted_at, full_name, rut')
+    .eq('id', user.id)
+    .single()
+
+  if (fetchError) {
+    console.error('[COMPLETE_PROFILE] Error fetching current user:', fetchError)
+  } else {
+    console.log('[COMPLETE_PROFILE] Current user state:', {
+      has_deleted_at: !!currentUser?.deleted_at,
+      has_full_name: !!currentUser?.full_name,
+      has_rut: !!currentUser?.rut
+    })
   }
 
   const fullNameInput = String(formData.get('full_name') || '').trim()
@@ -35,28 +58,151 @@ export async function completeProfile(
     return { success: false, error: 'rut' }
   }
 
-  const { data: existingUser } = await supabase
+  const { data: existingUser, error: checkError } = await adminClient
     .from('users')
     .select('id')
     .eq('rut', rut)
     .neq('id', user.id)
     .single()
 
+  if (checkError && checkError.code !== 'PGRST116') {
+    console.error('[COMPLETE_PROFILE] Error checking RUT:', checkError)
+  }
+
   if (existingUser) {
+    console.log('[COMPLETE_PROFILE] RUT already exists:', rut)
     return { success: false, error: 'rut_exists' }
   }
 
-  const { error: updateError } = await supabase
+  // Verificar si existe un registro con este email (puede tener ID diferente por re-registro)
+  const { data: existingByEmail } = await adminClient
     .from('users')
-    .update({
-      full_name: fullNameInput,
-      rut
-    })
-    .eq('id', user.id)
+    .select('id')
+    .eq('email', user.email)
+    .single()
 
-  if (updateError) {
-    return { success: false, error: 'server' }
+  if (existingByEmail) {
+    const oldId = existingByEmail.id
+    const newId = user.id
+
+    // El usuario existe por email pero con ID diferente - migrar referencias y actualizar
+    console.log('[COMPLETE_PROFILE] Found existing user by email with ID:', oldId, '-> migrating to:', newId)
+    
+    // Obtener datos completos del usuario antiguo para preservar role, points, etc.
+    const { data: oldUserData } = await adminClient
+      .from('users')
+      .select('role, points_balance, shipping_fee_exempt, address, address_number, address_extra, comuna, region')
+      .eq('id', oldId)
+      .single()
+
+    console.log('[COMPLETE_PROFILE] Old user data:', oldUserData ? 'found' : 'not found')
+
+    // PASO 1: Limpiar email y rut del usuario antiguo (para evitar conflictos de unique)
+    console.log('[COMPLETE_PROFILE] Step 1: Clearing unique fields from old user')
+    const { error: clearError } = await adminClient
+      .from('users')
+      .update({ 
+        email: `deleted_${oldId}@temp.local`,
+        rut: null 
+      })
+      .eq('id', oldId)
+
+    if (clearError) {
+      console.error('[COMPLETE_PROFILE] Error clearing old user fields:', clearError)
+      return { success: false, error: 'server' }
+    }
+
+    // PASO 2: Crear el nuevo registro de usuario con todos los datos
+    console.log('[COMPLETE_PROFILE] Step 2: Creating new user record')
+    const { error: insertError } = await adminClient
+      .from('users')
+      .insert({
+        id: newId,
+        email: user.email,
+        full_name: fullNameInput,
+        rut,
+        role: oldUserData?.role || 'customer',
+        points_balance: oldUserData?.points_balance || 0,
+        shipping_fee_exempt: oldUserData?.shipping_fee_exempt || false,
+        address: oldUserData?.address,
+        address_number: oldUserData?.address_number,
+        address_extra: oldUserData?.address_extra,
+        comuna: oldUserData?.comuna,
+        region: oldUserData?.region,
+        deleted_at: null
+      })
+
+    if (insertError) {
+      console.error('[COMPLETE_PROFILE] Error inserting new user:', insertError)
+      return { success: false, error: 'server' }
+    }
+
+    // PASO 2: Migrar todas las foreign keys al nuevo ID
+    console.log('[COMPLETE_PROFILE] Step 2: Migrating foreign keys')
+    const tablesToUpdate = [
+      { table: 'orders', column: 'user_id' },
+      { table: 'loyalty_points', column: 'user_id' },
+      { table: 'b2b_clients', column: 'user_id' },
+      { table: 'discount_code_usage', column: 'user_id' },
+      { table: 'discount_codes', column: 'user_id' },
+      { table: 'prospects', column: 'user_id' },
+      { table: 'prospect_interactions', column: 'created_by' },
+      { table: 'product_movements', column: 'customer_user_id' },
+      { table: 'product_movements', column: 'created_by' },
+      { table: 'movement_payments', column: 'created_by' },
+      { table: 'stock_entries', column: 'created_by' },
+      { table: 'stock_entry_history', column: 'changed_by' },
+      { table: 'purchase_orders', column: 'created_by' },
+    ]
+
+    for (const { table, column } of tablesToUpdate) {
+      const { error, count } = await adminClient
+        .from(table)
+        .update({ [column]: newId })
+        .eq(column, oldId)
+      
+      if (error) {
+        console.log(`[COMPLETE_PROFILE] ${table}.${column}: error -`, error.message)
+      } else {
+        console.log(`[COMPLETE_PROFILE] ${table}.${column}: migrated`)
+      }
+    }
+
+    // PASO 4: Eliminar el registro antiguo (ya no tiene referencias ni unique constraints)
+    console.log('[COMPLETE_PROFILE] Step 4: Deleting old user record')
+    const { error: deleteError } = await adminClient
+      .from('users')
+      .delete()
+      .eq('id', oldId)
+
+    if (deleteError) {
+      console.error('[COMPLETE_PROFILE] Error deleting old user:', deleteError)
+      // No es crítico, el usuario antiguo quedará como "fantasma" pero no afecta la operación
+    }
+
+    console.log('[COMPLETE_PROFILE] Migration complete')
+  } else {
+    // No existe, crear nuevo registro
+    console.log('[COMPLETE_PROFILE] Creating new user record')
+    
+    const { error: insertError } = await adminClient
+      .from('users')
+      .insert({
+        id: user.id,
+        email: user.email,
+        full_name: fullNameInput,
+        rut,
+        role: 'customer',
+        deleted_at: null
+      })
+
+    if (insertError) {
+      console.error('[COMPLETE_PROFILE] Error inserting user:', insertError)
+      return { success: false, error: 'server' }
+    }
   }
+
+  console.log('[COMPLETE_PROFILE] User created/updated in database')
 
   const { error: metadataError } = await supabase.auth.updateUser({
     data: {
@@ -66,8 +212,10 @@ export async function completeProfile(
   })
 
   if (metadataError) {
+    console.error('[COMPLETE_PROFILE] Error updating metadata:', metadataError)
     return { success: false, error: 'server' }
   }
 
+  console.log('[COMPLETE_PROFILE] Profile updated successfully')
   return { success: true, full_name: fullNameInput, rut }
 }

@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { UserProfile, UserRole, updateUserRole, updateUserShippingFeeExempt } from './actions'
-import { Shield, ShoppingBag, Building2, Loader2, Check } from 'lucide-react'
+import { UserProfile, UserRole, updateUserRole, updateUserShippingFeeExempt, deleteUser } from './actions'
+import { Shield, ShoppingBag, Building2, Loader2, Check, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface UsersTableProps {
   users: UserProfile[]
@@ -33,6 +34,7 @@ const roleConfig: Record<UserRole, { label: string; icon: typeof Shield; color: 
 export function UsersTable({ users, currentUserId }: UsersTableProps) {
   const [updatingRoleUser, setUpdatingRoleUser] = useState<string | null>(null)
   const [updatingShippingUser, setUpdatingShippingUser] = useState<string | null>(null)
+  const [deletingUser, setDeletingUser] = useState<string | null>(null)
   const [successUser, setSuccessUser] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -70,6 +72,28 @@ export function UsersTable({ users, currentUserId }: UsersTableProps) {
     }
   }
 
+  const handleDelete = async (userId: string, userEmail: string) => {
+    if (!confirm(`¿Estás seguro de eliminar al usuario ${userEmail}?\n\nEsta acción:\n- Eliminará su acceso de login\n- Conservará sus datos históricos (órdenes, puntos, etc.)\n- No se puede deshacer`)) {
+      return
+    }
+
+    setDeletingUser(userId)
+    setError(null)
+
+    const result = await deleteUser(userId)
+
+    setDeletingUser(null)
+
+    if (result.error) {
+      setError(result.error)
+      toast.error(result.error)
+      setTimeout(() => setError(null), 3000)
+    } else {
+      toast.success('Usuario eliminado correctamente')
+      // La página se recargará automáticamente por revalidatePath
+    }
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-CL', {
       year: 'numeric',
@@ -103,6 +127,7 @@ export function UsersTable({ users, currentUserId }: UsersTableProps) {
               <th className="py-4 px-4">Puntos</th>
               <th className="py-4 px-4">Envío gratis</th>
               <th className="py-4 px-4">Registrado</th>
+              <th className="py-4 px-4 text-center">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -110,6 +135,7 @@ export function UsersTable({ users, currentUserId }: UsersTableProps) {
               const isCurrentUser = user.id === currentUserId
               const isUpdatingRole = updatingRoleUser === user.id
               const isUpdatingShipping = updatingShippingUser === user.id
+              const isDeleting = deletingUser === user.id
               const showSuccess = successUser === user.id
               
               return (
@@ -186,6 +212,31 @@ export function UsersTable({ users, currentUserId }: UsersTableProps) {
                   </td>
                   <td className="py-4 px-4 text-slate-500">
                     {formatDate(user.created_at)}
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(user.id, user.email)}
+                        disabled={isCurrentUser || isDeleting}
+                        className={`
+                          p-2 rounded-lg transition-colors
+                          ${isCurrentUser 
+                            ? 'opacity-30 cursor-not-allowed text-slate-400' 
+                            : isDeleting
+                              ? 'opacity-50 cursor-wait text-slate-400'
+                              : 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                          }
+                        `}
+                        title={isCurrentUser ? 'No puedes eliminarte a ti mismo' : 'Eliminar usuario'}
+                      >
+                        {isDeleting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )

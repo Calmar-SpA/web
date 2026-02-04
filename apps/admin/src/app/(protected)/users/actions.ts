@@ -37,10 +37,11 @@ export async function getUsers(): Promise<{ users: UserProfile[]; error?: string
     return { users: [], error: 'No tienes permisos para ver usuarios' }
   }
 
-  // Obtener todos los usuarios
+  // Obtener todos los usuarios activos (excluir eliminados)
   const { data: users, error } = await supabase
     .from('users')
     .select('*')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -137,6 +138,89 @@ export async function updateUserShippingFeeExempt(
   return { success: true }
 }
 
+export async function deleteUser(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'No autorizado' }
+  }
+
+  // Verificar rol admin del usuario actual
+  const { data: currentUserProfile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (currentUserProfile?.role !== 'admin') {
+    return { success: false, error: 'No tienes permisos para eliminar usuarios' }
+  }
+
+  // Prevenir que un admin se elimine a sí mismo
+  if (userId === user.id) {
+    return { success: false, error: 'No puedes eliminarte a ti mismo' }
+  }
+
+  // Obtener el usuario a eliminar
+  const { data: userToDelete } = await supabase
+    .from('users')
+    .select('email')
+    .eq('id', userId)
+    .single()
+
+  if (!userToDelete) {
+    return { success: false, error: 'Usuario no encontrado' }
+  }
+
+  try {
+    // Importar el cliente admin para eliminar de auth
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const adminClient = createAdminClient()
+
+    console.log(`Intentando eliminar usuario ${userId} (${userToDelete.email})`)
+
+    // Verificar si el usuario existe en auth antes de intentar eliminarlo
+    const { data: authUser, error: getUserError } = await adminClient.auth.admin.getUserById(userId)
+    
+    if (getUserError) {
+      console.log(`Usuario no encontrado en auth.users:`, getUserError)
+      console.log(`Continuando solo con soft delete en la tabla users`)
+    } else if (authUser) {
+      console.log(`Usuario encontrado en auth.users, procediendo a eliminar`)
+      // Eliminar de auth.users (elimina el acceso de login)
+      const { error: authError } = await adminClient.auth.admin.deleteUser(userId)
+      
+      if (authError) {
+        console.error('Error deleting from auth:', authError)
+        return { success: false, error: 'Error al eliminar usuario de autenticación: ' + authError.message }
+      }
+      console.log(`Usuario eliminado exitosamente de auth.users`)
+    }
+
+    // Marcar como eliminado en la tabla users (soft delete)
+    const { error: dbError } = await supabase
+      .from('users')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', userId)
+
+    if (dbError) {
+      console.error('Error marking user as deleted:', dbError)
+      return { success: false, error: 'Error al marcar usuario como eliminado: ' + dbError.message }
+    }
+
+    console.log(`Usuario marcado como eliminado en tabla users`)
+    revalidatePath('/users')
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error deleting user:', error)
+    return { success: false, error: 'Error al eliminar usuario: ' + error.message }
+  }
+}
+
 export async function getUserStats(): Promise<{
   total: number
   admins: number
@@ -145,9 +229,11 @@ export async function getUserStats(): Promise<{
 }> {
   const supabase = await createClient()
   
+  // Obtener solo usuarios activos (no eliminados)
   const { data: users } = await supabase
     .from('users')
     .select('role')
+    .is('deleted_at', null)
 
   if (!users) {
     return { total: 0, admins: 0, customers: 0, b2b: 0 }

@@ -83,17 +83,37 @@ export function Header() {
 
       setUserEmail(user.email)
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('users')
-        .select('full_name, rut, role')
+        .select('full_name, rut, role, deleted_at')
         .eq('id', user.id)
         .single()
 
       if (isMounted) {
-        setUserName(profile?.full_name ?? null)
-        setUserRut(profile?.rut ?? null)
-        setIsB2B(profile?.role === 'b2b' || profile?.role === 'admin')
-        const needsProfile = !profile?.full_name || !profile?.rut
+        // Si no se encontró el perfil (usuario no existe en public.users), mostrar modal para crear
+        if (profileError || !profile) {
+          console.warn('[HEADER] No profile found, showing completion modal')
+          setUserName(null)
+          setUserRut(null)
+          setIsB2B(false)
+          setIsProfileModalOpen(true)
+          return
+        }
+
+        // Si el usuario está marcado como eliminado, mostrar modal para reactivar
+        if (profile.deleted_at) {
+          console.warn('[HEADER] User is marked as deleted, showing completion modal to reactivate')
+          setUserName(profile.full_name ?? null)
+          setUserRut(profile.rut ?? null)
+          setIsB2B(false)
+          setIsProfileModalOpen(true)
+          return
+        }
+
+        setUserName(profile.full_name ?? null)
+        setUserRut(profile.rut ?? null)
+        setIsB2B(profile.role === 'b2b' || profile.role === 'admin')
+        const needsProfile = !profile.full_name || !profile.rut
         setIsProfileModalOpen(needsProfile)
       }
     }
@@ -171,7 +191,7 @@ export function Header() {
           ))}
           
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-1 text-base font-bold text-foreground/80 hover:text-primary transition-colors outline-none capitalize" style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}>
+            <DropdownMenuTrigger suppressHydrationWarning className="flex items-center gap-1 text-base font-bold text-foreground/80 hover:text-primary transition-colors outline-none capitalize" style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}>
               {t("collaborate")}
               <ChevronDown className="w-4 h-4" />
             </DropdownMenuTrigger>
@@ -191,7 +211,7 @@ export function Header() {
           </DropdownMenu>
           
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-1 text-base font-bold text-foreground/80 hover:text-primary transition-colors outline-none capitalize" style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}>
+            <DropdownMenuTrigger suppressHydrationWarning className="flex items-center gap-1 text-base font-bold text-foreground/80 hover:text-primary transition-colors outline-none capitalize" style={{ fontFamily: 'var(--font-zalando), ui-sans-serif, system-ui, sans-serif' }}>
               {footerT("legal.title").toLowerCase()}
               <ChevronDown className="w-4 h-4" />
             </DropdownMenuTrigger>
@@ -245,7 +265,7 @@ export function Header() {
           
           {hasUser ? (
             <DropdownMenu>
-              <DropdownMenuTrigger className="hidden sm:flex items-center gap-3 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors outline-none">
+              <DropdownMenuTrigger suppressHydrationWarning className="hidden sm:flex items-center gap-3 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors outline-none">
                 <div className="w-8 h-8 rounded-full bg-calmar-primary/10 flex items-center justify-center text-calmar-primary text-xs font-bold">
                   {initials || "U"}
                 </div>
