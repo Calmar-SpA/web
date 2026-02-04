@@ -159,8 +159,8 @@ export async function sendB2BRejectedEmail(params: {
 }
 
 export async function sendProspectAdminNotification(params: {
-  contactName: string;
-  email: string;
+  contactName?: string | null;
+  email?: string | null;
   phone?: string | null;
   type: string;
   companyName?: string | null;
@@ -171,9 +171,9 @@ export async function sendProspectAdminNotification(params: {
   const content = `
     <div style="background:${brand.muted};padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid ${brand.primary};">
       <div><strong>Tipo:</strong> ${params.type}</div>
-      <div><strong>Contacto:</strong> ${params.contactName}</div>
+      ${params.contactName ? `<div><strong>Contacto:</strong> ${params.contactName}</div>` : ''}
       ${params.contactRole ? `<div><strong>Cargo:</strong> ${params.contactRole}</div>` : ''}
-      <div><strong>Email:</strong> ${params.email}</div>
+      ${params.email ? `<div><strong>Email:</strong> ${params.email}</div>` : ''}
       ${params.phone ? `<div><strong>Telefono:</strong> ${params.phone}</div>` : ''}
       ${params.companyName ? `<div><strong>Empresa:</strong> ${params.companyName}</div>` : ''}
       ${params.taxId ? `<div><strong>RUT:</strong> ${params.taxId}</div>` : ''}
@@ -187,7 +187,7 @@ export async function sendProspectAdminNotification(params: {
     to: ADMIN_EMAIL,
     subject: 'Nuevo prospecto registrado',
     html,
-    replyTo: params.email,
+    replyTo: params.email || ADMIN_EMAIL,
   });
 }
 
