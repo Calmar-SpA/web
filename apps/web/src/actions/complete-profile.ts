@@ -58,9 +58,17 @@ export async function completeProfile(
     return { success: false, error: 'rut' }
   }
 
-  const { data: existingUser, error: checkError } = await adminClient
+  // PRIMERO: Verificar si existe un registro con este email (puede tener ID diferente por re-registro)
+  const { data: existingByEmail } = await adminClient
     .from('users')
-    .select('id')
+    .select('id, rut, email')
+    .eq('email', user.email)
+    .single()
+
+  // Verificar si el RUT ya existe con OTRO usuario (diferente email)
+  const { data: existingUserByRut, error: checkError } = await adminClient
+    .from('users')
+    .select('id, email')
     .eq('rut', rut)
     .neq('id', user.id)
     .single()
@@ -69,24 +77,20 @@ export async function completeProfile(
     console.error('[COMPLETE_PROFILE] Error checking RUT:', checkError)
   }
 
-  if (existingUser) {
-    console.log('[COMPLETE_PROFILE] RUT already exists:', rut)
+  // Solo es error si el RUT pertenece a un usuario con DIFERENTE email
+  // Si es el mismo email, es un re-registro válido
+  if (existingUserByRut && existingUserByRut.email !== user.email) {
+    console.log('[COMPLETE_PROFILE] RUT already exists with different email:', rut, existingUserByRut.email)
     return { success: false, error: 'rut_exists' }
   }
 
-  // Verificar si existe un registro con este email (puede tener ID diferente por re-registro)
-  const { data: existingByEmail } = await adminClient
-    .from('users')
-    .select('id')
-    .eq('email', user.email)
-    .single()
-
-  if (existingByEmail) {
+  if (existingByEmail && existingByEmail.id !== user.id) {
+    // RE-REGISTRO: El usuario existe por email pero con ID diferente
+    // Migrar referencias del ID antiguo al nuevo ID de auth
     const oldId = existingByEmail.id
     const newId = user.id
 
-    // El usuario existe por email pero con ID diferente - migrar referencias y actualizar
-    console.log('[COMPLETE_PROFILE] Found existing user by email with ID:', oldId, '-> migrating to:', newId)
+    console.log('[COMPLETE_PROFILE] Re-registration detected. Old ID:', oldId, '-> New ID:', newId)
     
     // Obtener datos completos del usuario antiguo para preservar role, points, etc.
     const { data: oldUserData } = await adminClient
@@ -181,8 +185,25 @@ export async function completeProfile(
     }
 
     console.log('[COMPLETE_PROFILE] Migration complete')
+  } else if (existingByEmail && existingByEmail.id === user.id) {
+    // USUARIO EXISTENTE: Mismo ID, solo actualizar datos
+    console.log('[COMPLETE_PROFILE] Updating existing user record')
+    
+    const { error: updateError } = await adminClient
+      .from('users')
+      .update({
+        full_name: fullNameInput,
+        rut,
+        deleted_at: null
+      })
+      .eq('id', user.id)
+
+    if (updateError) {
+      console.error('[COMPLETE_PROFILE] Error updating user:', updateError)
+      return { success: false, error: 'server' }
+    }
   } else {
-    // No existe, crear nuevo registro
+    // NUEVO USUARIO: No existe, crear registro
     console.log('[COMPLETE_PROFILE] Creating new user record')
     
     const { error: insertError } = await adminClient
