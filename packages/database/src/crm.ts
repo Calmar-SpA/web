@@ -50,7 +50,7 @@ export interface ProductMovementData {
   total_amount: number
   due_date?: string | null
   delivery_date?: string | null
-  notes?: string
+  notes?: string | null
   // Fields for anonymous samples (events, fairs, etc.)
   sample_recipient_name?: string | null
   sample_event_context?: string | null
