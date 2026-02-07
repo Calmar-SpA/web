@@ -867,42 +867,6 @@ export default function MovementDetailPage() {
                   {new Date(movement.created_at).toLocaleDateString('es-CL')}
                 </p>
               </div>
-              {movement.invoice_date && (
-                <div>
-                  <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
-                    Fecha Factura
-                  </p>
-                  <p className="text-sm font-medium text-slate-900">
-                    {new Date(movement.invoice_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })}
-                  </p>
-                </div>
-              )}
-
-              {movement.invoice_date && movement.prospect?.payment_terms_days && (
-                <div>
-                  <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
-                    Plazo Máximo de Pago
-                  </p>
-                  <p className={`text-sm font-medium ${
-                    (() => {
-                        const invoiceDate = new Date(movement.invoice_date)
-                        const maxDate = new Date(invoiceDate)
-                        maxDate.setDate(maxDate.getDate() + movement.prospect.payment_terms_days)
-                        return maxDate < new Date() && remainingBalance > 0 ? 'text-red-600' : 'text-slate-900'
-                    })()
-                  }`}>
-                    {(() => {
-                        const invoiceDate = new Date(movement.invoice_date)
-                        const maxDate = new Date(invoiceDate)
-                        maxDate.setDate(maxDate.getDate() + movement.prospect.payment_terms_days)
-                        return maxDate.toLocaleDateString('es-CL', { timeZone: 'UTC' })
-                    })()}
-                    <span className="text-xs text-slate-500 ml-2 font-normal">
-                      ({movement.prospect.payment_terms_days} días)
-                    </span>
-                  </p>
-                </div>
-              )}
 
               {movement.delivery_date && (
                 <div>
@@ -914,10 +878,22 @@ export default function MovementDetailPage() {
                   </p>
                 </div>
               )}
+
+              {movement.invoice_date && (
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
+                    Fecha Factura
+                  </p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {new Date(movement.invoice_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })}
+                  </p>
+                </div>
+              )}
+
               {movement.due_date && (
                 <div>
                   <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
-                    Vencimiento
+                    Vencimiento Factura
                   </p>
                   <p className={`text-sm font-medium ${
                     new Date(movement.due_date) < new Date() && remainingBalance > 0
