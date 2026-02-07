@@ -164,6 +164,7 @@ export async function sendProspectAdminNotification(params: {
   phone?: string | null;
   type: string;
   companyName?: string | null;
+  fantasyName?: string | null;
   taxId?: string | null;
   contactRole?: string | null;
   notes?: string | null;
@@ -176,6 +177,7 @@ export async function sendProspectAdminNotification(params: {
       ${params.email ? `<div><strong>Email:</strong> ${params.email}</div>` : ''}
       ${params.phone ? `<div><strong>Telefono:</strong> ${params.phone}</div>` : ''}
       ${params.companyName ? `<div><strong>Empresa:</strong> ${params.companyName}</div>` : ''}
+      ${params.fantasyName ? `<div><strong>Nombre Fantasía:</strong> ${params.fantasyName}</div>` : ''}
       ${params.taxId ? `<div><strong>RUT:</strong> ${params.taxId}</div>` : ''}
     </div>
     ${params.notes ? `<p style="margin:12px 0;line-height:1.6;">Notas: ${params.notes}</p>` : ''}
