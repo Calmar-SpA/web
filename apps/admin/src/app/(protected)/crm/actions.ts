@@ -9,9 +9,61 @@ import { formatPhoneIntl, formatRut, isValidPhoneIntl, isValidRut, normalizeRut,
 
 type FixedPriceInput = { productId: string; fixedPrice: number }
 
+export async function checkDuplicateProspects(data: {
+  contact_name?: string
+  company_name?: string
+  tax_id?: string
+}) {
+  const supabase = await createClient()
+
+  let query = supabase
+    .from('prospects')
+    .select('id, contact_name, company_name, tax_id, fantasy_name, type, stage')
+
+  const conditions: string[] = []
+
+  if (data.contact_name?.trim()) {
+    conditions.push(`contact_name.ilike.%${data.contact_name.trim()}%`)
+  }
+  
+  if (data.company_name?.trim()) {
+    conditions.push(`company_name.ilike.%${data.company_name.trim()}%`)
+  }
+
+  if (data.tax_id) {
+    const normalizedRut = normalizeRut(data.tax_id)
+    if (normalizedRut) {
+      const formattedRut = formatRut(normalizedRut)
+      // Exact match for RUT
+      conditions.push(`tax_id.eq.${normalizedRut}`)
+      conditions.push(`tax_id.eq.${formattedRut}`)
+    }
+  }
+
+  if (conditions.length === 0) {
+    return []
+  }
+
+  const orCondition = conditions.join(',')
+  
+  if (orCondition) {
+    query = query.or(orCondition)
+  }
+
+  const { data: prospects, error } = await query.limit(5)
+
+  if (error) {
+    console.error('Error checking duplicates:', error)
+    return []
+  }
+
+  return prospects
+}
+
 export async function createProspect(data: {
   type: 'b2b' | 'b2c'
   company_name?: string
+  fantasy_name?: string
   contact_name?: string
   contact_role?: string
   email?: string
@@ -104,6 +156,7 @@ export async function createProspect(data: {
     phone: phoneFormatted,
     type: data.type,
     companyName: data.company_name,
+    fantasyName: data.fantasy_name,
     taxId: formattedTaxId,
     contactRole: data.contact_role,
     notes: data.notes,
@@ -254,6 +307,7 @@ export async function updateProspectStage(prospectId: string, stage: string) {
 const REQUIRED_PROSPECT_FIELDS = [
   { key: 'type', label: 'Tipo' },
   { key: 'company_name', label: 'Razón Social' },
+  { key: 'fantasy_name', label: 'Nombre de Fantasía' },
   { key: 'contact_name', label: 'Nombre de Contacto' },
   { key: 'contact_role', label: 'Cargo del Contacto' },
   { key: 'email', label: 'Email' },
@@ -459,6 +513,7 @@ export async function updateProspect(prospectId: string, formData: FormData) {
   const payload = {
     type: (formData.get('type') as string) || 'b2b',
     company_name: (formData.get('company_name') as string)?.trim() || null,
+    fantasy_name: (formData.get('fantasy_name') as string)?.trim() || null,
     contact_name: (formData.get('contact_name') as string)?.trim(),
     contact_role: (formData.get('contact_role') as string)?.trim() || null,
     email: (formData.get('email') as string)?.trim(),
@@ -470,6 +525,8 @@ export async function updateProspect(prospectId: string, formData: FormData) {
     business_activity: (formData.get('business_activity') as string)?.trim() || null,
     requesting_rut: requestingRut ? formatRut(requestingRut) : null,
     shipping_address: (formData.get('shipping_address') as string)?.trim() || null,
+    credit_limit: formData.get('credit_limit') ? Number(formData.get('credit_limit')) : undefined,
+    payment_terms_days: formData.get('payment_terms_days') ? Number(formData.get('payment_terms_days')) : undefined,
     notes: (formData.get('notes') as string)?.trim() || null,
     user_id: (formData.get('user_id') as string) || null,
   }
@@ -673,9 +730,24 @@ export async function uploadMovementDocument(formData: FormData) {
     // Update movement with document URL
     const updateField = documentType === 'invoice' ? 'invoice_url' : 'dispatch_order_url'
     
+    const updateData: any = { [updateField]: publicUrl }
+
+    if (documentType === 'invoice') {
+      // If invoice date is not set, set it to today
+      const { data: movement } = await supabase
+        .from('product_movements')
+        .select('invoice_date')
+        .eq('id', movementId)
+        .single()
+
+      if (!movement?.invoice_date) {
+        updateData.invoice_date = new Date().toISOString().split('T')[0]
+      }
+    }
+    
     const { error: updateError } = await supabase
       .from('product_movements')
-      .update({ [updateField]: publicUrl })
+      .update(updateData)
       .eq('id', movementId)
 
     if (updateError) {
@@ -844,6 +916,7 @@ export async function updateMovement(
     total_amount?: number
     due_date?: string | null
     delivery_date?: string | null
+    invoice_date?: string | null
     notes?: string | null
     sample_recipient_name?: string | null
     sample_event_context?: string | null
@@ -852,6 +925,23 @@ export async function updateMovement(
 ) {
   const supabase = await createClient()
   const crmService = new CRMService(supabase)
+  
+  // If invoice_date is updated, check if we need to update due_date based on prospect terms
+  if (data.invoice_date) {
+    const movement = await crmService.getMovementById(movementId)
+    
+    if (movement?.prospect?.payment_terms_days) {
+      const invoiceDate = new Date(data.invoice_date)
+      // Add days to invoice date
+      const dueDate = new Date(invoiceDate)
+      dueDate.setDate(dueDate.getDate() + movement.prospect.payment_terms_days)
+      
+      // Update due_date if not explicitly provided in this update
+      if (!data.due_date) {
+        data.due_date = dueDate.toISOString().split('T')[0]
+      }
+    }
+  }
   
   const movement = await crmService.updateMovement(movementId, data)
   

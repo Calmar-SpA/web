@@ -149,6 +149,7 @@ export default function ProspectsPage() {
     if (searchTerm) {
       const search = searchTerm.toLowerCase()
       return (
+        p.fantasy_name?.toLowerCase().includes(search) ||
         p.contact_name?.toLowerCase().includes(search) ||
         p.email?.toLowerCase().includes(search) ||
         p.company_name?.toLowerCase().includes(search) ||
@@ -311,7 +312,7 @@ export default function ProspectsPage() {
                     <td className="px-6 py-4">
                       <Link href={`/crm/prospects/${prospect.id}`} className="block">
                         <div className="font-black text-sm text-slate-900 group-hover:text-calmar-ocean transition-colors">
-                          {prospect.contact_name}
+                          {prospect.fantasy_name || prospect.contact_name}
                         </div>
                         {prospect.company_name && (
                           <div className="text-xs text-slate-500 font-bold flex items-center gap-1 mt-0.5">
@@ -442,7 +443,7 @@ function ProspectCard({
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
               <h4 className="font-black text-sm text-slate-900 mb-1">
-                {prospect.contact_name}
+                {prospect.fantasy_name || prospect.contact_name}
               </h4>
               {prospect.company_name && (
                 <div className="flex items-center gap-1 text-xs text-slate-600 mb-1">

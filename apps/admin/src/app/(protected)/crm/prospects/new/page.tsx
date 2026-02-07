@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createProspect, searchUsers } from '../../actions'
+import { createProspect, searchUsers, checkDuplicateProspects } from '../../actions'
 import { Button, Input, RutInput } from '@calmar/ui'
-import { ArrowLeft, Save, Search, User, X } from 'lucide-react'
+import { ArrowLeft, Save, Search, User, X, AlertTriangle, Building2 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { isValidPhoneIntl, isValidRut } from '@calmar/utils'
@@ -16,9 +16,12 @@ export default function NewProspectPage() {
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [duplicates, setDuplicates] = useState<any[]>([])
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false)
   const [formData, setFormData] = useState({
     type: 'b2b' as 'b2b' | 'b2c',
     company_name: '',
+    fantasy_name: '',
     contact_name: '',
     contact_role: '',
     email: '',
@@ -77,6 +80,39 @@ export default function NewProspectPage() {
   const formatLocalPhone = (value: string) =>
     value.replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ')
 
+  const executeCreateProspect = async () => {
+    try {
+      await createProspect({
+        type: formData.type,
+        company_name: formData.company_name || undefined,
+        fantasy_name: formData.fantasy_name || undefined,
+        contact_name: formData.contact_name,
+        contact_role: formData.contact_role || undefined,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        phone_country: formData.phone_country,
+        tax_id: formData.tax_id || undefined,
+        address: formData.address || undefined,
+        city: formData.city || undefined,
+        comuna: formData.comuna || undefined,
+        business_activity: formData.business_activity || undefined,
+        requesting_rut: formData.requesting_rut || undefined,
+        shipping_address: formData.shipping_address || undefined,
+        notes: formData.notes || undefined,
+        user_id: selectedUser?.id
+      })
+      
+      toast.success('Prospecto creado exitosamente')
+      router.push('/crm/prospects')
+    } catch (error: any) {
+      console.error('Error creating prospect:', error)
+      toast.error(error.message || 'Error al crear prospecto')
+    } finally {
+      setIsSubmitting(false)
+      setShowDuplicateModal(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -105,32 +141,24 @@ export default function NewProspectPage() {
     }
 
     try {
-      await createProspect({
-        type: formData.type,
-        company_name: formData.company_name || undefined,
+      const duplicatesFound = await checkDuplicateProspects({
         contact_name: formData.contact_name,
-        contact_role: formData.contact_role || undefined,
-        email: formData.email,
-        phone: formData.phone || undefined,
-        phone_country: formData.phone_country,
-        tax_id: formData.tax_id || undefined,
-        address: formData.address || undefined,
-        city: formData.city || undefined,
-        comuna: formData.comuna || undefined,
-        business_activity: formData.business_activity || undefined,
-        requesting_rut: formData.requesting_rut || undefined,
-        shipping_address: formData.shipping_address || undefined,
-        notes: formData.notes || undefined,
-        user_id: selectedUser?.id
+        company_name: formData.company_name,
+        tax_id: formData.tax_id
       })
-      
-      toast.success('Prospecto creado exitosamente')
-      router.push('/crm/prospects')
+
+      if (duplicatesFound.length > 0) {
+        setDuplicates(duplicatesFound)
+        setShowDuplicateModal(true)
+        setIsSubmitting(false)
+        return
+      }
+
+      await executeCreateProspect()
     } catch (error: any) {
-      console.error('Error creating prospect:', error)
-      toast.error(error.message || 'Error al crear prospecto')
-    } finally {
-      setIsSubmitting(false)
+      console.error('Error checking duplicates:', error)
+      // Si falla la verificación, intentamos crear igual (el backend validará unicidad de RUT)
+      await executeCreateProspect()
     }
   }
 
@@ -276,6 +304,21 @@ export default function NewProspectPage() {
             />
           </div>
         )}
+
+        {/* Fantasy Name */}
+        <div>
+          <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
+            Nombre de Fantasía
+          </label>
+          <Input
+            value={formData.fantasy_name}
+            onChange={(e) => setFormData({ ...formData, fantasy_name: e.target.value })}
+            placeholder="Nombre comercial o marca..."
+            className="h-12"
+          />
+          <p className="text-xs text-slate-500 mt-1">Este nombre se usará como principal en el sistema</p>
+        </div>
+
         {formData.type === 'b2b' && (
           <div>
             <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
@@ -479,6 +522,94 @@ export default function NewProspectPage() {
           </Button>
         </div>
       </form>
+
+      {/* Duplicate Warning Modal */}
+      {showDuplicateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-slate-100 bg-amber-50">
+              <div className="flex items-center gap-3 text-amber-600">
+                <div className="p-2 bg-amber-100 rounded-full">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-tight">Posibles Duplicados Detectados</h3>
+                  <p className="text-sm text-amber-700 font-medium">
+                    Hemos encontrado prospectos similares en el sistema
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6 max-h-[60vh] overflow-y-auto">
+              <p className="text-slate-600 mb-4">
+                Revisa la siguiente lista para evitar crear registros duplicados. Si el prospecto ya existe, puedes ir a su ficha.
+              </p>
+              
+              <div className="space-y-3">
+                {duplicates.map((duplicate) => (
+                  <div key={duplicate.id} className="p-4 border-2 border-slate-100 rounded-xl hover:border-calmar-ocean/30 transition-colors bg-slate-50/50">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-black text-slate-900">
+                          {duplicate.fantasy_name || duplicate.contact_name}
+                        </h4>
+                        {duplicate.company_name && (
+                          <div className="flex items-center gap-1 text-xs text-slate-500 font-bold mt-0.5">
+                            <Building2 className="w-3 h-3" />
+                            {duplicate.company_name}
+                          </div>
+                        )}
+                      </div>
+                      <Link href={`/crm/prospects/${duplicate.id}`} target="_blank">
+                        <Button variant="outline" size="sm" className="h-8 text-xs">
+                          Ver Ficha
+                        </Button>
+                      </Link>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-3 text-xs text-slate-500">
+                      {duplicate.tax_id && (
+                        <span className="bg-white px-2 py-1 rounded border border-slate-200">
+                          RUT: {duplicate.tax_id}
+                        </span>
+                      )}
+                      <span className="bg-white px-2 py-1 rounded border border-slate-200">
+                        Etapa: {duplicate.stage}
+                      </span>
+                      <span className="bg-white px-2 py-1 rounded border border-slate-200 uppercase">
+                        {duplicate.type}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowDuplicateModal(false)
+                  setIsSubmitting(false)
+                }}
+                className="font-bold"
+              >
+                Cancelar y Revisar
+              </Button>
+              <Button 
+                onClick={() => {
+                  setIsSubmitting(true)
+                  executeCreateProspect()
+                }}
+                className="font-bold bg-amber-500 hover:bg-amber-600 text-white border-amber-600"
+              >
+                Crear de Todos Modos
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

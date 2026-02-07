@@ -5,6 +5,7 @@ export interface ProspectData {
   stage?: 'contact' | 'interested' | 'sample_sent' | 'negotiation' | 'converted' | 'lost'
   user_id?: string | null
   company_name?: string
+  fantasy_name?: string
   contact_name?: string
   contact_role?: string
   email?: string
@@ -54,6 +55,7 @@ export interface ProductMovementData {
   // Fields for anonymous samples (events, fairs, etc.)
   sample_recipient_name?: string | null
   sample_event_context?: string | null
+  invoice_date?: string | null
 }
 
 export interface MovementPaymentData {
@@ -259,7 +261,7 @@ export class CRMService {
       .from('product_movements')
       .select(`
         *,
-        prospect:prospects(id, contact_name, company_name, email),
+        prospect:prospects(id, contact_name, company_name, email, payment_terms_days),
         customer:users!customer_user_id(id, email, full_name)
       `)
       .order('created_at', { ascending: false })
@@ -307,6 +309,39 @@ export class CRMService {
       .single()
 
     if (error) throw error
+
+    // Resolve product info for items
+    if (data && Array.isArray(data.items)) {
+      const productIds = data.items.map((item: any) => item.product_id).filter(Boolean)
+      const variantIds = data.items.map((item: any) => item.variant_id).filter(Boolean)
+      
+      if (productIds.length > 0) {
+        const { data: products } = await this.supabase
+          .from('products')
+          .select('id, name, sku, image_url')
+          .in('id', productIds)
+
+        const productMap = new Map(products?.map(p => [p.id, p]) || [])
+        
+        // Also fetch variants if any
+        let variantMap = new Map()
+        if (variantIds.length > 0) {
+          const { data: variants } = await this.supabase
+            .from('product_variants')
+            .select('id, name, flavor, size')
+            .in('id', variantIds)
+            
+          variantMap = new Map(variants?.map(v => [v.id, v]) || [])
+        }
+        
+        data.items = data.items.map((item: any) => ({
+          ...item,
+          product: productMap.get(item.product_id) || null,
+          variant: item.variant_id ? variantMap.get(item.variant_id) : null
+        }))
+      }
+    }
+
     return data
   }
 

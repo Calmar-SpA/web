@@ -63,6 +63,7 @@ export default function DebtsPage() {
       const search = searchTerm.toLowerCase()
       return (
         debt.movement_number?.toLowerCase().includes(search) ||
+        debt.prospect?.fantasy_name?.toLowerCase().includes(search) ||
         debt.prospect?.contact_name?.toLowerCase().includes(search) ||
         debt.prospect?.company_name?.toLowerCase().includes(search) ||
         debt.b2b_client?.company_name?.toLowerCase().includes(search) ||
@@ -220,7 +221,7 @@ export default function DebtsPage() {
                       {debt.prospect && (
                         <span className="flex items-center gap-1">
                           <User className="w-4 h-4" />
-                          {debt.prospect.company_name || debt.prospect.contact_name}
+                          {debt.prospect.fantasy_name || debt.prospect.contact_name}
                         </span>
                       )}
                       {debt.b2b_client && (

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { CRMService } from '@calmar/database'
-import { Search, Plus, Package, DollarSign, Calendar, AlertCircle, CheckCircle, UserX, Trash2 } from 'lucide-react'
+import { Search, Plus, Package, DollarSign, Calendar, AlertCircle, CheckCircle, UserX, Trash2, FileText } from 'lucide-react'
 import { deleteMovement } from '../actions'
 import { Input, Button } from '@calmar/ui'
 import Link from 'next/link'
@@ -88,6 +88,7 @@ export default function MovementsPage() {
       const search = searchTerm.toLowerCase()
       return (
         m.movement_number?.toLowerCase().includes(search) ||
+        m.prospect?.fantasy_name?.toLowerCase().includes(search) ||
         m.prospect?.contact_name?.toLowerCase().includes(search) ||
         m.prospect?.company_name?.toLowerCase().includes(search) ||
         m.b2b_client?.company_name?.toLowerCase().includes(search) ||
@@ -222,7 +223,7 @@ export default function MovementsPage() {
                       {movement.prospect && (
                         <span className="flex items-center gap-1">
                           <Package className="w-4 h-4" />
-                          {movement.prospect.company_name || movement.prospect.contact_name}
+                          {movement.prospect.fantasy_name || movement.prospect.contact_name}
                         </span>
                       )}
                       {movement.b2b_client && (
@@ -271,6 +272,36 @@ export default function MovementsPage() {
                           </p>
                         </div>
                       )}
+                      {movement.invoice_date && (
+                        <div className="flex items-center gap-1 text-xs text-slate-500">
+                          <FileText className="w-3 h-3" />
+                          <span>
+                            Factura: {new Date(movement.invoice_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })}
+                          </span>
+                        </div>
+                      )}
+
+                      {movement.invoice_date && movement.prospect?.payment_terms_days && (
+                        <div className={`flex items-center gap-1 text-xs ${
+                          (() => {
+                            const invoiceDate = new Date(movement.invoice_date)
+                            const maxDate = new Date(invoiceDate)
+                            maxDate.setDate(maxDate.getDate() + movement.prospect.payment_terms_days)
+                            return maxDate < new Date() && remainingBalance > 0 ? 'text-red-600 font-bold' : 'text-slate-500'
+                          })()
+                        }`}>
+                          <Calendar className="w-3 h-3" />
+                          <span>
+                            Plazo: {(() => {
+                              const invoiceDate = new Date(movement.invoice_date)
+                              const maxDate = new Date(invoiceDate)
+                              maxDate.setDate(maxDate.getDate() + movement.prospect.payment_terms_days)
+                              return maxDate.toLocaleDateString('es-CL', { timeZone: 'UTC' })
+                            })()}
+                          </span>
+                        </div>
+                      )}
+
                       {movement.due_date && (
                         <div className="flex items-center gap-1 text-xs text-slate-500">
                           <Calendar className="w-3 h-3" />

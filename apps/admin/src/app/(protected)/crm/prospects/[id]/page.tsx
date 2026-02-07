@@ -33,6 +33,7 @@ export default function ProspectDetailPage() {
   const [interactions, setInteractions] = useState<any[]>([])
   const [movements, setMovements] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
+  const [productPrices, setProductPrices] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isResendingEmail, setIsResendingEmail] = useState(false)
@@ -104,6 +105,35 @@ export default function ProspectDetailPage() {
       setOrders(ordersData || [])
     } catch (error: any) {
       console.error('Error loading orders:', error?.message || error)
+    }
+
+    try {
+      const prices = await crmService.getProspectProductPrices(prospectId)
+      if (prices && prices.length > 0) {
+        const productIds = prices.map((p: any) => p.product_id)
+        const { data: productsData } = await supabase
+          .from('products')
+          .select('id, name, sku, base_price')
+          .in('id', productIds)
+        
+        if (productsData) {
+          const combined = prices.map((price: any) => {
+            const product = productsData.find((p: any) => p.id === price.product_id)
+            return {
+              productId: price.product_id,
+              productName: product?.name || 'Producto desconocido',
+              sku: product?.sku || '',
+              basePrice: product?.base_price || 0,
+              fixedPrice: price.fixed_price
+            }
+          })
+          setProductPrices(combined)
+        }
+      } else {
+        setProductPrices([])
+      }
+    } catch (error: any) {
+      console.error('Error loading product prices:', error?.message || error)
     }
 
     setIsLoading(false)
@@ -319,10 +349,13 @@ export default function ProspectDetailPage() {
         </Link>
         <div className="flex-1">
           <h1 className="text-4xl font-black uppercase tracking-tighter leading-none">
-            {prospect.contact_name}
+            {prospect.fantasy_name || prospect.contact_name}
           </h1>
           {prospect.company_name && (
             <p className="text-slate-500 mt-1 font-medium">{prospect.company_name}</p>
+          )}
+          {prospect.fantasy_name && prospect.contact_name && (
+             <p className="text-slate-400 text-sm mt-0.5">Contacto: {prospect.contact_name}</p>
           )}
         </div>
         <div className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider ${
@@ -452,6 +485,12 @@ export default function ProspectDetailPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Nombre de Fantasía
+                    </label>
+                    <Input name="fantasy_name" defaultValue={prospect.fantasy_name || ''} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
                       Razón Social
                     </label>
                     <Input name="company_name" defaultValue={prospect.company_name || ''} className="h-11" />
@@ -559,6 +598,39 @@ export default function ProspectDetailPage() {
                     </label>
                     <Input name="shipping_address" defaultValue={prospect.shipping_address || ''} className="h-11" />
                   </div>
+                  
+                  {prospect.type === 'b2b' && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                          Línea de Crédito
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                          <Input 
+                            type="number" 
+                            name="credit_limit" 
+                            defaultValue={prospect.credit_limit || 0} 
+                            className="h-11 pl-7" 
+                            min="0"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                          Días de Pago
+                        </label>
+                        <Input 
+                          type="number" 
+                          name="payment_terms_days" 
+                          defaultValue={prospect.payment_terms_days || 30} 
+                          className="h-11" 
+                          min="0"
+                        />
+                      </div>
+                    </>
+                  )}
+
                   <div className="space-y-2 md:col-span-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
                       Notas
@@ -901,6 +973,29 @@ export default function ProspectDetailPage() {
                     {Number(prospect.payment_terms_days || 30)} días
                   </p>
                 </div>
+                
+                <div className="pt-2 border-t border-slate-100">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Precios Especiales</p>
+                  {productPrices.length > 0 ? (
+                    <div className="space-y-2">
+                      {productPrices.map((price) => (
+                        <div key={price.productId} className="flex justify-between items-center text-xs">
+                          <div>
+                            <p className="font-bold text-slate-900">{price.productName}</p>
+                            <p className="text-slate-400 text-[10px]">{price.sku}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-emerald-600">{formatClp(Number(price.fixedPrice))}</p>
+                            <p className="text-slate-400 line-through text-[10px]">{formatClp(Number(price.basePrice))}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">Se usan los precios base para todos los productos</p>
+                  )}
+                </div>
+
                 <Button
                   onClick={async () => {
                     try {
@@ -916,15 +1011,13 @@ export default function ProspectDetailPage() {
                 >
                   {prospect.is_b2b_active ? 'Desactivar B2B' : 'Activar B2B'}
                 </Button>
-                {!prospect.is_b2b_active && !prospect.credit_limit && (
-                  <Button
-                    onClick={() => setShowApproveModal(true)}
-                    variant="outline"
-                    className="w-full uppercase font-black tracking-wider"
-                  >
-                    Configurar B2B
-                  </Button>
-                )}
+                <Button
+                  onClick={() => setShowApproveModal(true)}
+                  variant="outline"
+                  className="w-full uppercase font-black tracking-wider"
+                >
+                  Configurar B2B
+                </Button>
               </div>
             </div>
           )}
@@ -969,6 +1062,8 @@ export default function ProspectDetailPage() {
           isOpen={showApproveModal}
           onClose={() => setShowApproveModal(false)}
           onSuccess={handleApproveSuccess}
+          initialCreditLimit={prospect.credit_limit}
+          initialPaymentTermsDays={prospect.payment_terms_days}
         />
       )}
 

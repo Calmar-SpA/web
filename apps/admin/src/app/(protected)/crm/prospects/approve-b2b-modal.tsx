@@ -14,6 +14,8 @@ interface ApproveB2BModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  initialCreditLimit?: number
+  initialPaymentTermsDays?: number
 }
 
 type FixedPriceInput = { productId: string; fixedPrice: number }
@@ -23,13 +25,15 @@ export function ApproveB2BModal({
   companyName,
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
+  initialCreditLimit,
+  initialPaymentTermsDays
 }: ApproveB2BModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoadingProducts, setIsLoadingProducts] = useState(false)
   const [formData, setFormData] = useState({
-    creditLimit: 1000000,
-    paymentTermsDays: 30
+    creditLimit: initialCreditLimit || 1000000,
+    paymentTermsDays: initialPaymentTermsDays || 30
   })
   const [products, setProducts] = useState<{ id: string; name: string; sku: string; base_price: number }[]>([])
   const [priceOverrides, setPriceOverrides] = useState<Record<string, string>>({})
@@ -38,28 +42,49 @@ export function ApproveB2BModal({
   useEffect(() => {
     if (!isOpen) return
 
-    const loadProducts = async () => {
+    setFormData({
+      creditLimit: initialCreditLimit || 1000000,
+      paymentTermsDays: initialPaymentTermsDays || 30
+    })
+
+    const loadData = async () => {
       setIsLoadingProducts(true)
       const supabase = createClient()
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name, sku, base_price')
-        .order('name', { ascending: true })
+      
+      const [{ data: productsData, error: productsError }, { data: pricesData, error: pricesError }] = await Promise.all([
+        supabase
+          .from('products')
+          .select('id, name, sku, base_price')
+          .order('name', { ascending: true }),
+        supabase
+          .from('prospect_product_prices')
+          .select('product_id, fixed_price')
+          .eq('prospect_id', prospectId)
+      ])
 
-      if (error) {
-        console.error('Error loading products:', error)
+      if (productsError) {
+        console.error('Error loading products:', productsError)
         toast.error('No se pudieron cargar los productos')
       } else {
-        setProducts(data || [])
-        setPriceOverrides({})
+        setProducts(productsData || [])
         setSearchTerm('')
+
+        if (pricesData && pricesData.length > 0) {
+          const overrides: Record<string, string> = {}
+          pricesData.forEach((price: any) => {
+            overrides[price.product_id] = String(price.fixed_price)
+          })
+          setPriceOverrides(overrides)
+        } else {
+          setPriceOverrides({})
+        }
       }
 
       setIsLoadingProducts(false)
     }
 
-    loadProducts()
-  }, [isOpen])
+    loadData()
+  }, [isOpen, prospectId, initialCreditLimit, initialPaymentTermsDays])
 
   if (!isOpen) return null
 

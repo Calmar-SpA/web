@@ -11,6 +11,7 @@ export type ProspectForCompletion = {
   id: string
   type?: 'b2b' | 'b2c'
   company_name?: string | null
+  fantasy_name?: string | null
   contact_name?: string | null
   contact_role?: string | null
   email?: string | null
@@ -31,6 +32,7 @@ type MissingField = { key: keyof ProspectForCompletion; label: string }
 const REQUIRED_FIELDS: MissingField[] = [
   { key: 'type', label: 'Tipo' },
   { key: 'company_name', label: 'Razón Social' },
+  { key: 'fantasy_name', label: 'Nombre de Fantasía' },
   { key: 'contact_name', label: 'Nombre de Contacto' },
   { key: 'contact_role', label: 'Cargo del Contacto' },
   { key: 'email', label: 'Email' },
@@ -178,6 +180,12 @@ export function CompleteDataModal({ prospect, isOpen, onClose, onSuccess }: Comp
                 Razón Social
               </label>
               <Input name="company_name" defaultValue={prospect.company_name || ''} className="h-11" required />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                Nombre de Fantasía
+              </label>
+              <Input name="fantasy_name" defaultValue={prospect.fantasy_name || ''} className="h-11" />
             </div>
             <div className="space-y-2">
               <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
