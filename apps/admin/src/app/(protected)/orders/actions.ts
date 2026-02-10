@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { OrderService } from '@calmar/database'
 import { revalidatePath } from 'next/cache'
 
@@ -105,4 +106,22 @@ export async function createOrderForUser(data: {
 
   revalidatePath('/orders')
   return order
+}
+
+export async function deleteOrder(orderId: string) {
+  // Use admin client to bypass RLS policies for deletion
+  const supabase = createAdminClient()
+  const orderService = new OrderService(supabase)
+
+  try {
+    await orderService.deleteOrder(orderId)
+    
+    revalidatePath('/orders')
+    revalidatePath('/products') // Inventory changes
+    revalidatePath('/inventory') // Inventory changes
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error deleting order:', error)
+    return { success: false, error: error.message }
+  }
 }

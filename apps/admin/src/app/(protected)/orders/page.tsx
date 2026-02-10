@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { OrderService } from '@calmar/database'
 import { Button, Card, CardContent } from "@calmar/ui"
-import { Package, Eye, MoreVertical, Plus, Building2, User, ShoppingBag } from "lucide-react"
+import { Package, Eye, MoreVertical, Plus, Building2, User, ShoppingBag, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { formatClp, getPriceBreakdown } from "@calmar/utils"
+import { deleteOrder } from "./actions"
+import { toast } from "sonner"
 
 const TYPE_LABELS: Record<string, { label: string; color: string; icon: any }> = {
   personal_order: { label: 'Personal', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: User },
@@ -20,6 +22,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'personal' | 'business'>('all')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     loadOrders()
@@ -37,6 +40,30 @@ export default function AdminOrdersPage() {
       console.error('Error loading orders:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleDelete = async (e: React.MouseEvent, orderId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!confirm('¿Estás seguro de eliminar este pedido? Se reajustará el stock automáticamente. Esta acción no se puede deshacer.')) {
+      return
+    }
+
+    setDeletingId(orderId)
+    try {
+      const result = await deleteOrder(orderId)
+      if (result.success) {
+        toast.success('Pedido eliminado correctamente')
+        await loadOrders()
+      } else {
+        toast.error('Error al eliminar pedido: ' + result.error)
+      }
+    } catch (error) {
+      toast.error('Error al eliminar pedido')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -183,6 +210,21 @@ export default function AdminOrdersPage() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!isMovement && (
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                onClick={(e) => handleDelete(e, order.id)}
+                                disabled={deletingId === order.id}
+                              >
+                                {deletingId === order.id ? (
+                                  <div className="animate-spin h-3 w-3 border-2 border-red-500 border-t-transparent rounded-full" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </Button>
+                            )}
                             <Link href={detailLink}>
                               <Button size="icon" variant="ghost" className="h-8 w-8 hover:text-calmar-ocean">
                                 <Eye className="w-4 h-4" />

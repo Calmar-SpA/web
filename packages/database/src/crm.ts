@@ -229,6 +229,20 @@ export class CRMService {
   }
 
   /**
+   * Get marketing deliveries linked to a prospect
+   */
+  async getProspectMarketingDeliveries(prospectId: string) {
+    const { data, error } = await this.supabase
+      .from('marketing_deliveries')
+      .select('*, purchase:purchases(id, description, purchase_date, total_amount)')
+      .eq('prospect_id', prospectId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data || []
+  }
+
+  /**
    * Create a new interaction
    */
   async createInteraction(data: ProspectInteractionData) {

@@ -39,7 +39,7 @@ export class OrderService {
   async getOrderById(orderId: string) {
     const { data, error } = await this.supabase
       .from('orders')
-      .select('*, order_items(*, products(*)), payments(*)')
+      .select('*, order_items(*, products(*)), payments(*), discount_code:discount_codes(id, code, name, discount_type, discount_value), discount_usage:discount_code_usages(discount_applied)')
       .eq('id', orderId)
       .single()
 
@@ -361,5 +361,38 @@ export class OrderService {
 
     if (error) throw error
     return data
+  }
+
+  /**
+   * Delete an order and all its related data
+   * This should be called with an admin client
+   */
+  async deleteOrder(orderId: string) {
+    // 1. Delete loyalty points associated with this order
+    const { error: loyaltyError } = await this.supabase
+      .from('loyalty_points')
+      .delete()
+      .eq('order_id', orderId)
+    
+    if (loyaltyError) {
+      console.error('Error deleting loyalty points:', loyaltyError)
+      // Continue anyway
+    }
+
+    // 2. Delete the order
+    // This will cascade delete:
+    // - order_items (trigger will recalculate inventory)
+    // - payments
+    // - shipments
+    // And set null:
+    // - discount_code_usages (trigger will decrement usage count)
+    
+    const { error } = await this.supabase
+      .from('orders')
+      .delete()
+      .eq('id', orderId)
+
+    if (error) throw error
+    return { success: true }
   }
 }

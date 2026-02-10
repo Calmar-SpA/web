@@ -57,6 +57,10 @@ export default function MovementDetailPage() {
     unit_price: 0
   })
 
+  // Prospect prices state
+  const [prospectPrices, setProspectPrices] = useState<Map<string, number>>(new Map())
+  const [isLoadingProspectPrices, setIsLoadingProspectPrices] = useState(false)
+
   const loadMovement = async () => {
     setIsLoading(true)
     const supabase = createClient()
@@ -75,6 +79,11 @@ export default function MovementDetailPage() {
         sample_event_context: data?.sample_event_context || ''
       })
       setEditItems(data?.items || [])
+      
+      // Load prospect prices if available
+      if (data?.prospect_id) {
+        loadProspectPrices(data.prospect_id)
+      }
     } catch (error: any) {
       console.error('Error loading movement:', error)
       toast.error('Error al cargar movimiento')
@@ -98,6 +107,30 @@ export default function MovementDetailPage() {
       toast.error('Error al cargar productos')
     } finally {
       setIsLoadingProducts(false)
+    }
+  }
+
+  const loadProspectPrices = async (prospectId: string) => {
+    setIsLoadingProspectPrices(true)
+    const supabase = createClient()
+
+    try {
+      const { data, error } = await supabase
+        .from('prospect_product_prices')
+        .select('product_id, fixed_price')
+        .eq('prospect_id', prospectId)
+
+      if (error) throw error
+
+      const priceMap = new Map(
+        (data || []).map(price => [price.product_id, Number(price.fixed_price)])
+      )
+      setProspectPrices(priceMap)
+    } catch (error) {
+      console.error('Error loading prospect prices:', error)
+      toast.error('No se pudieron cargar los precios del prospecto')
+    } finally {
+      setIsLoadingProspectPrices(false)
     }
   }
 
@@ -237,7 +270,7 @@ export default function MovementDetailPage() {
     
     try {
       // Calculate new total amount
-      const newTotalAmount = editItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+      const newTotalAmount = movement.movement_type === 'sample' ? 0 : editItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
 
       await updateMovement(movementId, {
         notes: editForm.notes || null,
@@ -250,7 +283,7 @@ export default function MovementDetailPage() {
           product_id: item.product_id,
           variant_id: item.variant_id || null,
           quantity: Number(item.quantity),
-          unit_price: Number(item.unit_price)
+          unit_price: movement.movement_type === 'sample' ? 0 : Number(item.unit_price)
         })),
         total_amount: newTotalAmount
       })
@@ -301,7 +334,7 @@ export default function MovementDetailPage() {
       product_id: newItem.product_id,
       variant_id: newItem.variant_id || null,
       quantity: newItem.quantity,
-      unit_price: newItem.unit_price,
+      unit_price: movement.movement_type === 'sample' ? 0 : newItem.unit_price,
       product: product,
       variant: variant
     }
@@ -642,15 +675,23 @@ export default function MovementDetailPage() {
                       
                       <div className="text-right">
                         <p className="text-sm text-slate-600">Cantidad: {item.quantity}</p>
-                        <p className="text-sm font-bold text-slate-900">
-                          ${item.unit_price.toLocaleString('es-CL')} <span className="text-xs font-normal text-slate-500">(IVA incl.)</span>
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          Neto: ${getNetPrice(item.unit_price).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                        <p className="text-sm font-black text-slate-900 mt-1">
-                          Total: ${(item.quantity * item.unit_price).toLocaleString('es-CL')}
-                        </p>
+                        {movement.movement_type === 'sample' ? (
+                          <p className="text-sm font-black text-emerald-600 mt-1">
+                            GRATIS
+                          </p>
+                        ) : (
+                          <>
+                            <p className="text-sm font-bold text-slate-900">
+                              ${item.unit_price.toLocaleString('es-CL')} <span className="text-xs font-normal text-slate-500">(IVA incl.)</span>
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              Neto: ${getNetPrice(item.unit_price).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                            <p className="text-sm font-black text-slate-900 mt-1">
+                              Total: ${(item.quantity * item.unit_price).toLocaleString('es-CL')}
+                            </p>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -758,47 +799,59 @@ export default function MovementDetailPage() {
                     Total (IVA incl.):
                   </span>
                   <div className="text-right">
-                    <span className="text-lg font-black text-slate-900 block">
-                      ${Number(movement.total_amount).toLocaleString('es-CL')}
-                    </span>
-                    <span className="text-xs text-slate-500 font-medium">
-                      Neto: ${getNetPrice(Number(movement.total_amount)).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
+                    {movement.movement_type === 'sample' ? (
+                      <span className="text-lg font-black text-emerald-600 block">
+                        GRATIS
+                      </span>
+                    ) : (
+                      <>
+                        <span className="text-lg font-black text-slate-900 block">
+                          ${Number(movement.total_amount).toLocaleString('es-CL')}
+                        </span>
+                        <span className="text-xs text-slate-500 font-medium">
+                          Neto: ${getNetPrice(Number(movement.total_amount)).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
                 
-                {isNetPrice && (
-                  <div className="bg-slate-50 p-3 rounded-lg text-xs space-y-1 mt-2">
-                    <div className="flex justify-between text-slate-600">
-                      <span>Monto Neto:</span>
-                      <span>${getNetPrice(Number(movement.total_amount)).toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-                    </div>
-                    <div className="flex justify-between text-slate-600">
-                      <span>IVA (19%):</span>
-                      <span>${(Number(movement.total_amount) - getNetPrice(Number(movement.total_amount))).toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-slate-900 border-t border-slate-200 pt-1 mt-1">
-                      <span>Total a Pagar:</span>
-                      <span>${Number(movement.total_amount).toLocaleString('es-CL')}</span>
-                    </div>
-                  </div>
-                )}
+                {movement.movement_type !== 'sample' && (
+                  <>
+                    {isNetPrice && (
+                      <div className="bg-slate-50 p-3 rounded-lg text-xs space-y-1 mt-2">
+                        <div className="flex justify-between text-slate-600">
+                          <span>Monto Neto:</span>
+                          <span>${getNetPrice(Number(movement.total_amount)).toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                        </div>
+                        <div className="flex justify-between text-slate-600">
+                          <span>IVA (19%):</span>
+                          <span>${(Number(movement.total_amount) - getNetPrice(Number(movement.total_amount))).toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-slate-900 border-t border-slate-200 pt-1 mt-1">
+                          <span>Total a Pagar:</span>
+                          <span>${Number(movement.total_amount).toLocaleString('es-CL')}</span>
+                        </div>
+                      </div>
+                    )}
 
-                <div className="flex justify-between pt-2 mt-2 border-t border-slate-200">
-                  <span className="text-sm font-bold text-slate-700">Pagado:</span>
-                  <span className="text-lg font-black text-green-600">
-                    ${totalPaid.toLocaleString('es-CL')}
-                  </span>
-                </div>
-                {remainingBalance > 0 && (
-                  <div className="flex justify-between pt-2 border-t border-slate-200">
-                    <span className="text-sm font-black uppercase tracking-wider text-orange-600">
-                      Pendiente:
-                    </span>
-                    <span className="text-xl font-black text-orange-600">
-                      ${remainingBalance.toLocaleString('es-CL')}
-                    </span>
-                  </div>
+                    <div className="flex justify-between pt-2 mt-2 border-t border-slate-200">
+                      <span className="text-sm font-bold text-slate-700">Pagado:</span>
+                      <span className="text-lg font-black text-green-600">
+                        ${totalPaid.toLocaleString('es-CL')}
+                      </span>
+                    </div>
+                    {remainingBalance > 0 && (
+                      <div className="flex justify-between pt-2 border-t border-slate-200">
+                        <span className="text-sm font-black uppercase tracking-wider text-orange-600">
+                          Pendiente:
+                        </span>
+                        <span className="text-xl font-black text-orange-600">
+                          ${remainingBalance.toLocaleString('es-CL')}
+                        </span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -1062,17 +1115,32 @@ export default function MovementDetailPage() {
                         value={newItem.product_id}
                         onChange={(e) => {
                           const product = products.find(p => p.id === e.target.value)
+                          let resolvedPrice = 0
+                          
+                          if (product) {
+                            if (movement.movement_type === 'sample') {
+                              resolvedPrice = 0
+                            } else {
+                              const fixedPrice = prospectPrices.get(product.id)
+                              resolvedPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
+                                ? fixedPrice
+                                : Number(product.base_price)
+                            }
+                          }
+
                           setNewItem({
                             ...newItem,
                             product_id: e.target.value,
                             variant_id: '',
-                            unit_price: product ? Number(product.base_price) : 0
+                            unit_price: resolvedPrice
                           })
                         }}
                         className="w-full px-3 py-2 rounded-lg border-2 border-slate-200 focus:border-calmar-ocean focus:outline-none text-sm"
-                        disabled={isLoadingProducts}
+                        disabled={isLoadingProducts || isLoadingProspectPrices}
                       >
-                        <option value="">Seleccionar...</option>
+                        <option value="">
+                          {isLoadingProspectPrices ? 'Cargando precios...' : 'Seleccionar...'}
+                        </option>
                         {products.map(product => (
                           <option key={product.id} value={product.id}>
                             {product.name}
@@ -1115,20 +1183,29 @@ export default function MovementDetailPage() {
                         className="h-9"
                       />
                     </div>
-                    <div className="col-span-1">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                        Precio
-                      </label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={newItem.unit_price}
-                        onChange={(e) => setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })}
-                        className="h-9"
-                      />
-                    </div>
-                    <div className="col-span-1 flex items-end">
+                    {movement.movement_type !== 'sample' && (
+                      <div className="col-span-1">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                          Precio
+                        </label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={newItem.unit_price}
+                          onChange={(e) => setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })}
+                          className={`h-9 ${newItem.product_id && prospectPrices.has(newItem.product_id) ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-bold' : ''}`}
+                        />
+                        {newItem.product_id && prospectPrices.has(newItem.product_id) && (
+                          <div className="mt-1 flex items-center gap-1 text-[9px] leading-tight">
+                            <span className="text-emerald-600 font-bold uppercase tracking-wider">
+                              Precio prospecto
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className={`col-span-1 flex items-end ${movement.movement_type === 'sample' ? 'col-start-3' : ''}`}>
                       <Button
                         type="button"
                         onClick={handleAddEditItem}
@@ -1165,16 +1242,18 @@ export default function MovementDetailPage() {
                           className="h-8 text-xs"
                         />
                       </div>
-                      <div className="w-24">
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.unit_price}
-                          onChange={(e) => handleUpdateEditItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                          className="h-8 text-xs"
-                        />
-                      </div>
+                      {movement.movement_type !== 'sample' && (
+                        <div className="w-24">
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.unit_price}
+                            onChange={(e) => handleUpdateEditItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleRemoveEditItem(index)}
@@ -1194,7 +1273,7 @@ export default function MovementDetailPage() {
                 <div className="flex justify-between items-center pt-2 border-t border-slate-100">
                   <span className="text-sm font-bold text-slate-700">Total Nuevo:</span>
                   <span className="text-lg font-black text-slate-900">
-                    ${editItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0).toLocaleString('es-CL')}
+                    {movement.movement_type === 'sample' ? 'GRATIS' : `$${editItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0).toLocaleString('es-CL')}`}
                   </span>
                 </div>
               </div>

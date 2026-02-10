@@ -7,7 +7,7 @@ import { CRMService } from '@calmar/database'
 import { ArrowLeft, Mail, Phone, Building2, Plus, Package, DollarSign, Calendar, User, ShieldCheck } from 'lucide-react'
 import { Button, Input, RutInput } from '@calmar/ui'
 import Link from 'next/link'
-import { activateProspect, createInteraction, resendActivationEmail, toggleProspectB2BActive, updateProspect, updateProspectStage, searchUsers } from '../../actions'
+import { activateProspect, createInteraction, resendActivationEmail, updateProspect, updateProspectStage, searchUsers } from '../../actions'
 import { toast } from 'sonner'
 import { isValidPhoneIntl, isValidRut, parsePhoneIntl } from '@calmar/utils'
 import { formatClp } from '@calmar/utils'
@@ -33,6 +33,7 @@ export default function ProspectDetailPage() {
   const [interactions, setInteractions] = useState<any[]>([])
   const [movements, setMovements] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
+  const [marketingDeliveries, setMarketingDeliveries] = useState<any[]>([])
   const [productPrices, setProductPrices] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
@@ -105,6 +106,13 @@ export default function ProspectDetailPage() {
       setOrders(ordersData || [])
     } catch (error: any) {
       console.error('Error loading orders:', error?.message || error)
+    }
+
+    try {
+      const deliveriesData = await crmService.getProspectMarketingDeliveries(prospectId)
+      setMarketingDeliveries(deliveriesData || [])
+    } catch (error: any) {
+      console.error('Error loading marketing deliveries:', error?.message || error)
     }
 
     try {
@@ -207,12 +215,12 @@ export default function ProspectDetailPage() {
       }
 
       try {
-        await updateProspectStage(prospectId, newStage)
+        await activateProspect(prospectId)
         await loadData()
-        toast.success('Etapa actualizada a Activo')
+        toast.success('Etapa actualizada a Activo y correo enviado')
       } catch (error: any) {
         console.error('Error updating stage:', error)
-        toast.error('Error al actualizar etapa')
+        toast.error(error.message || 'Error al actualizar etapa')
       }
       return
     }
@@ -890,7 +898,11 @@ export default function ProspectDetailPage() {
                     <div className="flex items-center gap-4 text-xs text-slate-600">
                       <span className="flex items-center gap-1">
                         <DollarSign className="w-3 h-3" />
-                        ${Number(movement.total_amount).toLocaleString('es-CL')}
+                        {movement.movement_type === 'sample' ? (
+                          <span className="font-bold text-emerald-600">GRATIS</span>
+                        ) : (
+                          `$${Number(movement.total_amount).toLocaleString('es-CL')}`
+                        )}
                       </span>
                       {movement.delivery_date && (
                         <span className="flex items-center gap-1">
@@ -938,6 +950,72 @@ export default function ProspectDetailPage() {
                       <span>{order.status}</span>
                       <span>•</span>
                       <span>{order.order_items?.length || 0} productos</span>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Marketing Deliveries */}
+          <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-black uppercase tracking-tight">Material Publicitario</h2>
+            </div>
+
+            <div className="space-y-3">
+              {marketingDeliveries.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-4">No hay entregas registradas</p>
+              ) : (
+                marketingDeliveries.map((delivery) => (
+                  <Link
+                    key={delivery.id}
+                    href={`/purchases/${delivery.purchase_id}`}
+                    className="block p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-calmar-ocean transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-600">
+                          {delivery.item_type}
+                        </span>
+                        <p className="text-sm font-bold text-slate-900 mt-1">
+                          {delivery.quantity} unidades
+                        </p>
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded font-black uppercase tracking-wider ${
+                        delivery.delivery_status === 'delivered' ? 'bg-green-100 text-green-700' :
+                        delivery.delivery_status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
+                        delivery.delivery_status === 'partial' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-slate-200 text-slate-700'
+                      }`}>
+                        {{
+                          pending: 'Pendiente',
+                          scheduled: 'Programada',
+                          delivered: 'Entregada',
+                          partial: 'Parcial'
+                        }[delivery.delivery_status as string] || delivery.delivery_status}
+                      </span>
+                    </div>
+                    
+                    {delivery.purchase && (
+                       <p className="text-xs text-slate-500 mb-2">
+                         Compra: {delivery.purchase.description}
+                       </p>
+                    )}
+
+                    <div className="flex items-center gap-4 text-xs text-slate-600">
+                      {(delivery.scheduled_date || delivery.delivered_date) && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(delivery.delivered_date || delivery.scheduled_date).toLocaleDateString('es-CL')}
+                        </span>
+                      )}
+                      {delivery.delivery_address && (
+                        <span className="flex items-center gap-1 truncate max-w-[200px]">
+                          <Building2 className="w-3 h-3" />
+                          {delivery.delivery_address}
+                        </span>
+                      )}
                     </div>
                   </Link>
                 ))
@@ -997,21 +1075,6 @@ export default function ProspectDetailPage() {
                 </div>
 
                 <Button
-                  onClick={async () => {
-                    try {
-                      await toggleProspectB2BActive(prospectId, prospect.is_b2b_active)
-                      await loadData()
-                      toast.success(prospect.is_b2b_active ? 'B2B desactivado' : 'B2B activado y correo enviado')
-                    } catch (error) {
-                      toast.error('Error al cambiar estado B2B')
-                    }
-                  }}
-                  variant={prospect.is_b2b_active ? "outline" : "default"}
-                  className="w-full uppercase font-black tracking-wider"
-                >
-                  {prospect.is_b2b_active ? 'Desactivar B2B' : 'Activar B2B'}
-                </Button>
-                <Button
                   onClick={() => setShowApproveModal(true)}
                   variant="outline"
                   className="w-full uppercase font-black tracking-wider"
@@ -1035,6 +1098,12 @@ export default function ProspectDetailPage() {
                   Compras Web
                 </p>
                 <p className="text-2xl font-black text-slate-900">{orders.length}</p>
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
+                  Material Publicitario
+                </p>
+                <p className="text-2xl font-black text-slate-900">{marketingDeliveries.length}</p>
               </div>
               <div>
                 <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">

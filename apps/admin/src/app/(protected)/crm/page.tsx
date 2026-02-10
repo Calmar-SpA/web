@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { UsersRound, Building2, User, Package, DollarSign, AlertCircle } from 'lucide-react'
+import { UsersRound, Building2, User, Package, DollarSign, AlertCircle, BarChart3 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export default function CRMPage() {
@@ -33,6 +33,14 @@ export default function CRMPage() {
       href: '/crm/debts',
       color: 'bg-orange-500',
       textColor: 'text-orange-600'
+    },
+    {
+      title: 'Estadísticas',
+      description: 'Gráficos de movimientos e inventario',
+      icon: BarChart3,
+      href: '/crm/stats',
+      color: 'bg-calmar-ocean',
+      textColor: 'text-calmar-ocean'
     }
   ]
 
@@ -101,7 +109,7 @@ export default function CRMPage() {
       </div>
 
       {/* Main Menu */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {menuItems.map((item) => {
           const Icon = item.icon
           return (

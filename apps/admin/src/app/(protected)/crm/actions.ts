@@ -210,89 +210,6 @@ export async function updateProspectB2BSettings(
   return { success: true }
 }
 
-export async function toggleProspectB2BActive(prospectId: string, currentIsActive: boolean) {
-  const supabase = await createClient()
-
-  const { data: prospect, error } = await supabase
-    .from('prospects')
-    .update({
-      is_b2b_active: !currentIsActive,
-      b2b_approved_at: !currentIsActive ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', prospectId)
-    .select('*')
-    .single()
-
-  if (error) throw error
-
-  let userId = prospect.user_id
-
-  // Si se está activando y no tiene usuario vinculado, buscar por email
-  if (!currentIsActive && !userId) {
-    const { data: userByEmail } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', prospect.email)
-      .maybeSingle()
-
-    if (userByEmail) {
-      userId = userByEmail.id
-      await supabase
-        .from('prospects')
-        .update({ user_id: userId })
-        .eq('id', prospectId)
-    }
-  }
-
-  if (userId) {
-    await supabase
-      .from('users')
-      .update({ role: !currentIsActive ? 'b2b' : 'customer' })
-      .eq('id', userId)
-  }
-
-  // Si se está activando, enviar el correo solo si ya tenía cuenta
-  if (!currentIsActive) {
-    const { data: userRecord } = await supabase
-      .from('users')
-      .select('id')
-      .eq('id', userId)
-      .maybeSingle()
-
-    if (userRecord) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
-      const registerUrl = new URL('/es/register', baseUrl)
-      const accountUrl = new URL('/es/account', baseUrl)
-      registerUrl.searchParams.set('type', prospect.type || '')
-      registerUrl.searchParams.set('company_name', prospect.company_name || '')
-      registerUrl.searchParams.set('contact_name', prospect.contact_name || '')
-      registerUrl.searchParams.set('contact_role', prospect.contact_role || '')
-      registerUrl.searchParams.set('email', prospect.email || '')
-      registerUrl.searchParams.set('phone', prospect.phone || '')
-      registerUrl.searchParams.set('tax_id', prospect.tax_id || '')
-      registerUrl.searchParams.set('address', prospect.address || '')
-      registerUrl.searchParams.set('city', prospect.city || '')
-      registerUrl.searchParams.set('comuna', prospect.comuna || '')
-      registerUrl.searchParams.set('business_activity', prospect.business_activity || '')
-      registerUrl.searchParams.set('requesting_rut', prospect.requesting_rut || '')
-      registerUrl.searchParams.set('shipping_address', prospect.shipping_address || '')
-      registerUrl.searchParams.set('notes', prospect.notes || '')
-
-      await sendProspectActivationEmail({
-        contactName: prospect.contact_name,
-        contactEmail: prospect.email,
-        hasAccount: true,
-        registerUrl: registerUrl.toString(),
-        accountUrl: accountUrl.toString()
-      })
-    }
-  }
-
-  revalidatePath('/crm/prospects')
-  revalidatePath(`/crm/prospects/${prospectId}`)
-  return { success: true }
-}
 
 export async function updateProspectStage(prospectId: string, stage: string) {
   const supabase = await createClient()
@@ -405,23 +322,14 @@ export async function activateProspect(prospectId: string) {
   registerUrl.searchParams.set('shipping_address', prospect.shipping_address || '')
   registerUrl.searchParams.set('notes', prospect.notes || '')
 
-  // Solo enviar el correo de activación si ya tenía cuenta. 
-  // Si acabamos de invitarlo, Supabase ya envió el correo de invitación.
-  const { data: userRecord } = await supabase
-    .from('users')
-    .select('id')
-    .eq('id', userId)
-    .maybeSingle()
-
-  if (userRecord) {
-    await sendProspectActivationEmail({
-      contactName: prospect.contact_name,
-      contactEmail: prospect.email,
-      hasAccount: true,
-      registerUrl: registerUrl.toString(),
-      accountUrl: accountUrl.toString()
-    })
-  }
+  // Enviar correo de activación siempre
+  await sendProspectActivationEmail({
+    contactName: prospect.contact_name,
+    contactEmail: prospect.email,
+    hasAccount,
+    registerUrl: registerUrl.toString(),
+    accountUrl: accountUrl.toString()
+  })
 
   revalidatePath('/crm/prospects')
   revalidatePath(`/crm/prospects/${prospectId}`)
@@ -610,10 +518,17 @@ export async function createMovement(data: {
   const supabase = await createClient()
   const crmService = new CRMService(supabase)
   
+  // Force 0 price for samples
+  if (data.movement_type === 'sample') {
+    data.total_amount = 0
+    data.items = data.items.map(item => ({ ...item, unit_price: 0 }))
+  }
+  
   const movement = await crmService.createMovement(data)
   
   revalidatePath('/crm/movements')
   revalidatePath('/crm/debts')
+  revalidatePath('/products') // Actualizar inventario de productos
   if (data.prospect_id) {
     revalidatePath(`/crm/prospects/${data.prospect_id}`)
   }
@@ -676,6 +591,7 @@ export async function returnConsignment(
   
   revalidatePath('/crm/movements')
   revalidatePath(`/crm/movements/${movementId}`)
+  revalidatePath('/products') // Actualizar inventario de productos
   
   return movement
 }
@@ -689,6 +605,7 @@ export async function convertConsignmentToSale(movementId: string) {
   revalidatePath('/crm/movements')
   revalidatePath(`/crm/movements/${movementId}`)
   revalidatePath('/crm/debts')
+  revalidatePath('/products') // Actualizar inventario de productos
   
   return movement
 }
@@ -948,6 +865,7 @@ export async function updateMovement(
   revalidatePath('/crm/movements')
   revalidatePath(`/crm/movements/${movementId}`)
   revalidatePath('/crm/debts')
+  revalidatePath('/products') // Actualizar inventario de productos
   if (data.prospect_id) {
     revalidatePath(`/crm/prospects/${data.prospect_id}`)
   }
@@ -983,6 +901,7 @@ export async function deleteMovement(movementId: string) {
   revalidatePath('/crm/movements')
   revalidatePath('/crm/debts')
   revalidatePath('/crm')
+  revalidatePath('/products') // Actualizar inventario de productos
   
   return { success: true }
 }

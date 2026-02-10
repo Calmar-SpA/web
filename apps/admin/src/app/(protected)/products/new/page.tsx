@@ -2,8 +2,15 @@ import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '@calmar
 import Link from 'next/link'
 import { createProduct } from '../actions'
 import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 
-export default function NewProductPage() {
+export default async function NewProductPage() {
+  const supabase = await createClient()
+  const { data: allProducts } = await supabase
+    .from('products')
+    .select('id, name, sku')
+    .order('name')
+
   async function handleCreate(formData: FormData) {
     'use server'
     
@@ -93,6 +100,35 @@ export default function NewProductPage() {
                   <input type="checkbox" id="is_active" name="is_active" defaultChecked className="w-4 h-4" />
                   <label htmlFor="is_active" className="text-sm font-medium">Producto Activo</label>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Configuración de Pack (Opcional)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Producto Unitario Base</label>
+                <select 
+                  name="unit_product_id" 
+                  className="w-full h-10 px-3 rounded-md border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-calmar-ocean/20"
+                >
+                  <option value="">-- No es un pack --</option>
+                  {allProducts?.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.sku})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-500">Si este producto es un pack, selecciona el producto unitario del cual descontará stock.</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Unidades por Pack</label>
+                <Input name="units_per_pack" type="number" min="1" defaultValue="1" />
               </div>
             </div>
           </CardContent>

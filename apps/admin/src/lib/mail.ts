@@ -222,13 +222,15 @@ export async function sendProspectActivationEmail(params: {
     `
     : `
       <p style="margin:12px 0;line-height:1.6;">
-        Ya estas activo en el sistema. Te hemos enviado un correo de invitacion para que crees tu contraseña y puedas acceder.
+        Ya estas activo en nuestro sistema. Si creas una cuenta en nuestra web con este mismo correo (<strong>${params.contactEmail}</strong>), podras acceder a toda tu informacion: pedidos, facturas, guias de despacho y mas.
       </p>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${params.registerUrl}" style="background:${brand.primaryDark};color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">
+          Crear mi cuenta
+        </a>
+      </div>
       <p style="margin:12px 0;line-height:1.6;">
-        Busca un correo con el asunto "You have been invited" (o similar) para completar tu registro.
-      </p>
-      <p style="margin:12px 0;line-height:1.6;">
-        Tus datos ya estaran completos una vez que accedas.
+        Si necesitas ayuda, responde a este correo.
       </p>
     `;
 

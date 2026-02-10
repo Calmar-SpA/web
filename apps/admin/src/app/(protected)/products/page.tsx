@@ -33,6 +33,14 @@ export default async function ProductsPage() {
         acc[entry.product_id] = (acc[entry.product_id] || 0) + (entry.quantity || 0)
         return acc
       }, {} as Record<string, number>)
+
+      // Calculate stock for packs
+      products.forEach(product => {
+        if (product.unit_product_id && product.units_per_pack) {
+           const unitStock = stockTotals[product.unit_product_id] || 0;
+           stockTotals[product.id] = Math.floor(unitStock / product.units_per_pack);
+        }
+      });
     }
   } catch (error) {
     console.error('Error fetching products:', error)

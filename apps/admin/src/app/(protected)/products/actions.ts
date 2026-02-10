@@ -37,6 +37,8 @@ export async function createProduct(formData: FormData) {
     is_active: formData.get('is_active') === 'on',
     is_featured: false,
     requires_refrigeration: false,
+    unit_product_id: formData.get('unit_product_id') ? formData.get('unit_product_id') as string : null,
+    units_per_pack: formData.get('units_per_pack') ? parseInt(formData.get('units_per_pack') as string) : 1,
   }
 
   // Validar campos requeridos
@@ -177,6 +179,8 @@ export async function updateProduct(productId: string, updates: {
   requires_refrigeration?: boolean
   meta_title?: string
   meta_description?: string
+  unit_product_id?: string | null
+  units_per_pack?: number | null
 }) {
   const supabase = await createClient()
   

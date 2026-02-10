@@ -28,6 +28,8 @@ export interface Product {
   width_cm: number;
   length_cm: number;
   requires_refrigeration: boolean;
+  unit_product_id?: string;
+  units_per_pack?: number;
   meta_title?: string;
   meta_description?: string;
   image_url?: string;

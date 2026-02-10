@@ -79,8 +79,15 @@ export function ProductsTable({ products, stockTotals }: ProductsTableProps) {
                   <div className="font-black text-slate-950 uppercase tracking-tight text-base">
                     {product.name || 'SIN NOMBRE'}
                   </div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">
-                    ID: {product.id.slice(0, 8)}
+                  <div className="flex flex-col gap-1 mt-0.5">
+                    <div className="text-[10px] text-slate-500 font-bold uppercase">
+                      ID: {product.id.slice(0, 8)}
+                    </div>
+                    {product.units_per_pack && product.units_per_pack > 1 && (
+                      <span className="inline-flex w-fit px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-black uppercase tracking-widest border border-indigo-200">
+                        Pack x{product.units_per_pack}
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className="py-4 px-4">

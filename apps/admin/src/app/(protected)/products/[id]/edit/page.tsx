@@ -33,6 +33,13 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     product = await productService.getProductBySku(data.sku)
   }
 
+  // Fetch all products for the dropdown (excluding the current one)
+  const { data: allProducts } = await supabase
+    .from('products')
+    .select('id, name, sku')
+    .neq('id', product?.id || '')
+    .order('name')
+
   if (!product) {
     return <div className="p-8">Producto no encontrado</div>
   }
@@ -54,6 +61,8 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       width_cm: parseInt(formData.get('width_cm') as string),
       length_cm: parseInt(formData.get('length_cm') as string),
       requires_refrigeration: formData.get('requires_refrigeration') === 'on',
+      unit_product_id: formData.get('unit_product_id') ? formData.get('unit_product_id') as string : null,
+      units_per_pack: formData.get('units_per_pack') ? parseInt(formData.get('units_per_pack') as string) : null,
       meta_title: formData.get('meta_title') as string || undefined,
       meta_description: formData.get('meta_description') as string || undefined,
     }
@@ -218,6 +227,43 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
                   />
                   <label htmlFor="requires_refrigeration" className="text-sm font-medium cursor-pointer">Requiere Refrigeración</label>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Configuración de Pack */}
+        <Card className="border-none shadow-xl">
+          <CardHeader className="bg-slate-50 border-b">
+            <CardTitle className="text-sm font-bold uppercase tracking-widest">Configuración de Pack</CardTitle>
+          </CardHeader>
+          <CardContent className="p-8 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Producto Unitario Base</label>
+                <select 
+                  name="unit_product_id" 
+                  defaultValue={resolvedProduct.unit_product_id || ''}
+                  className="w-full h-10 px-3 rounded-md border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-calmar-ocean/20"
+                >
+                  <option value="">-- No es un pack --</option>
+                  {allProducts?.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.sku})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-400">Si este producto es un pack, selecciona el producto unitario del cual descontará stock.</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Unidades por Pack</label>
+                <Input 
+                  name="units_per_pack" 
+                  type="number" 
+                  min="1"
+                  defaultValue={resolvedProduct.units_per_pack || 1} 
+                />
+                <p className="text-xs text-slate-400">Cantidad de unidades que se descontarán del inventario base.</p>
               </div>
             </div>
           </CardContent>

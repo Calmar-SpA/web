@@ -258,8 +258,8 @@ export default function MovementsPage() {
                         <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
                           Total
                         </p>
-                        <p className="text-2xl font-black text-slate-900">
-                          ${Number(movement.total_amount).toLocaleString('es-CL')}
+                        <p className={`text-2xl font-black ${movement.movement_type === 'sample' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                          {movement.movement_type === 'sample' ? 'GRATIS' : `$${Number(movement.total_amount).toLocaleString('es-CL')}`}
                         </p>
                       </div>
                       {movement.movement_type !== 'sample' && remainingBalance > 0 && (

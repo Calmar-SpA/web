@@ -161,33 +161,6 @@ export async function updateProspectB2BSettings(
   return { success: true }
 }
 
-export async function toggleProspectB2BActive(prospectId: string, currentIsActive: boolean) {
-  const supabase = await createClient()
-
-  const { data: prospect, error } = await supabase
-    .from('prospects')
-    .update({
-      is_b2b_active: !currentIsActive,
-      b2b_approved_at: !currentIsActive ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', prospectId)
-    .select('user_id')
-    .single()
-
-  if (error) throw error
-
-  if (prospect?.user_id) {
-    await supabase
-      .from('users')
-      .update({ role: !currentIsActive ? 'b2b' : 'customer' })
-      .eq('id', prospect.user_id)
-  }
-
-  revalidatePath('/crm/prospects')
-  revalidatePath(`/crm/prospects/${prospectId}`)
-  return { success: true }
-}
 
 export async function updateProspectStage(prospectId: string, stage: string) {
   const supabase = await createClient()

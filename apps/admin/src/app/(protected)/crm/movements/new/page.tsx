@@ -70,6 +70,7 @@ function NewMovementContent() {
   const [itemQuantity, setItemQuantity] = useState(1)
   const [itemPrice, setItemPrice] = useState(0)
   const [prospectPrices, setProspectPrices] = useState<Map<string, number>>(new Map())
+  const [isLoadingProspectPrices, setIsLoadingProspectPrices] = useState(false)
 
   useEffect(() => {
     loadProducts()
@@ -130,6 +131,7 @@ function NewMovementContent() {
       return
     }
 
+    setIsLoadingProspectPrices(true)
     const supabase = createClient()
 
     try {
@@ -148,21 +150,29 @@ function NewMovementContent() {
       if (selectedProduct) {
         const product = products.find(p => p.id === selectedProduct)
         if (product) {
-          const fixedPrice = priceMap.get(product.id)
-          const resolvedPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
-            ? fixedPrice
-            : Number(product.base_price)
-          setItemPrice(resolvedPrice)
+          if (formData.movement_type === 'sample') {
+            setItemPrice(0)
+          } else {
+            const fixedPrice = priceMap.get(product.id)
+            const resolvedPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
+              ? fixedPrice
+              : Number(product.base_price)
+            setItemPrice(resolvedPrice)
+          }
         }
       }
     } catch (error) {
       console.error('Error loading B2B prices:', error)
       toast.error('No se pudieron cargar los precios B2B')
       setProspectPrices(new Map())
+    } finally {
+      setIsLoadingProspectPrices(false)
     }
   }
 
   const selectedProductData = products.find(p => p.id === selectedProduct)
+  const isProspectPrice = selectedProduct && prospectPrices.has(selectedProduct)
+  const basePrice = selectedProductData ? Number(selectedProductData.base_price) : 0
 
   const handleAddItem = () => {
     if (!selectedProduct || itemQuantity <= 0) {
@@ -175,7 +185,7 @@ function NewMovementContent() {
 
     const variant = product.variants?.find((v: any) => v.id === selectedVariant)
     // Allow $0 price for samples - only use base_price as default when adding product
-    const unitPrice = itemPrice
+    const unitPrice = formData.movement_type === 'sample' ? 0 : itemPrice
 
     const newItem: MovementItem = {
       product_id: selectedProduct,
@@ -297,6 +307,20 @@ function NewMovementContent() {
                   // Reset anonymous sample state when changing movement type
                   if (type !== 'sample') {
                     setIsAnonymousSample(false)
+                  }
+                  
+                  // Reset price if switching to/from sample
+                  if (type === 'sample') {
+                    setItemPrice(0)
+                  } else if (selectedProduct) {
+                    const product = products.find(p => p.id === selectedProduct)
+                    if (product) {
+                       const fixedPrice = prospectPrices.get(product.id)
+                       const resolvedPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
+                         ? fixedPrice
+                         : Number(product.base_price)
+                       setItemPrice(resolvedPrice)
+                    }
                   }
                 }}
                 className={`p-4 rounded-xl border-2 transition-all text-sm font-black uppercase tracking-wider ${
@@ -455,17 +479,23 @@ function NewMovementContent() {
                   setSelectedVariant('')
                   const product = products.find(p => p.id === e.target.value)
                   if (product) {
-                    const fixedPrice = prospectPrices.get(product.id)
-                    const resolvedPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
-                      ? fixedPrice
-                      : Number(product.base_price)
-                    setItemPrice(resolvedPrice)
+                    if (formData.movement_type === 'sample') {
+                      setItemPrice(0)
+                    } else {
+                      const fixedPrice = prospectPrices.get(product.id)
+                      const resolvedPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
+                        ? fixedPrice
+                        : Number(product.base_price)
+                      setItemPrice(resolvedPrice)
+                    }
                   }
                 }}
                 className="w-full px-3 py-2 rounded-lg border-2 border-slate-200 focus:border-calmar-ocean focus:outline-none text-sm"
-                disabled={isLoadingProducts}
+                disabled={isLoadingProducts || isLoadingProspectPrices}
               >
-                <option value="">Seleccionar...</option>
+                <option value="">
+                  {isLoadingProspectPrices ? 'Cargando precios...' : 'Seleccionar...'}
+                </option>
                 {products.map(product => (
                   <option key={product.id} value={product.id}>
                     {product.name}
@@ -507,21 +537,35 @@ function NewMovementContent() {
               />
             </div>
             
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                Precio Unit.
-              </label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={itemPrice}
-                onChange={(e) => setItemPrice(parseFloat(e.target.value) || 0)}
-                className="h-10"
-              />
-            </div>
+            {formData.movement_type !== 'sample' && (
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Precio Unit.
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={itemPrice}
+                  onChange={(e) => setItemPrice(parseFloat(e.target.value) || 0)}
+                  className={`h-10 ${isProspectPrice ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-bold' : ''}`}
+                />
+                {isProspectPrice && (
+                  <div className="mt-1 flex items-center gap-2 text-[10px] leading-tight">
+                    <span className="text-emerald-600 font-bold uppercase tracking-wider">
+                      Precio prospecto
+                    </span>
+                    {basePrice > 0 && (
+                      <span className="text-slate-400 line-through">
+                        Base: ${basePrice.toLocaleString('es-CL')}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             
-            <div className="flex items-end">
+            <div className={`flex items-end ${formData.movement_type === 'sample' ? 'col-span-2' : ''}`}>
               <Button
                 type="button"
                 onClick={handleAddItem}
@@ -546,7 +590,11 @@ function NewMovementContent() {
                       {item.product_name} {item.variant_name && `- ${item.variant_name}`}
                     </p>
                     <p className="text-xs text-slate-600">
-                      {item.quantity} x ${item.unit_price.toLocaleString('es-CL')} = ${(item.quantity * item.unit_price).toLocaleString('es-CL')}
+                      {formData.movement_type === 'sample' ? (
+                        <span className="font-bold text-emerald-600">GRATIS</span>
+                      ) : (
+                        `${item.quantity} x $${item.unit_price.toLocaleString('es-CL')} = $${(item.quantity * item.unit_price).toLocaleString('es-CL')}`
+                      )}
                     </p>
                   </div>
                   <button
@@ -565,7 +613,7 @@ function NewMovementContent() {
                     Total:
                   </span>
                   <span className="text-2xl font-black text-slate-900">
-                    ${totalAmount.toLocaleString('es-CL')}
+                    {formData.movement_type === 'sample' ? 'GRATIS' : `$${totalAmount.toLocaleString('es-CL')}`}
                   </span>
                 </div>
               </div>

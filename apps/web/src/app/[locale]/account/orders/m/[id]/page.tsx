@@ -213,15 +213,23 @@ export default function MovementDetailPage({
                             {item.product?.name || item.product?.sku || t('unknownProduct')}
                           </h4>
                           <div className="text-right">
-                            <p className="font-black text-slate-900 text-xl tracking-tighter">${formatClp(lineTotal)}</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Neto: ${formatClp(lineNet)}</p>
+                            {movement.movement_type === 'sample' ? (
+                               <p className="font-black text-emerald-600 text-xl tracking-tighter">GRATIS</p>
+                            ) : (
+                               <>
+                                 <p className="font-black text-slate-900 text-xl tracking-tighter">${formatClp(lineTotal)}</p>
+                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Neto: ${formatClp(lineNet)}</p>
+                               </>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="px-3 py-1 bg-calmar-ocean/5 rounded-full border border-calmar-ocean/10">
                             <span className="text-[10px] font-black text-calmar-ocean uppercase tracking-widest">{t('quantity')}: {item.quantity}</span>
                           </div>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${formatClp(item.unit_price)} c/u</span>
+                          {movement.movement_type !== 'sample' && (
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${formatClp(item.unit_price)} c/u</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -338,7 +346,9 @@ export default function MovementDetailPage({
                   <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">{t('totalAmount')}</span>
-                      <span className="font-black text-3xl tracking-tighter">${formatClp(movement.total_amount)}</span>
+                      <span className={`font-black text-3xl tracking-tighter ${movement.movement_type === 'sample' ? 'text-emerald-400' : ''}`}>
+                         {movement.movement_type === 'sample' ? 'GRATIS' : `$${formatClp(movement.total_amount)}`}
+                      </span>
                     </div>
                     <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
                     <div className="flex justify-between items-center">
