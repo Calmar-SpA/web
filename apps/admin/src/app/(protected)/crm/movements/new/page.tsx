@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ProductService, CRMService } from '@calmar/database'
 import { createMovement } from '../../actions'
 import { Button, Input } from '@calmar/ui'
-import { ArrowLeft, Plus, X, Save, Users, UserX } from 'lucide-react'
+import { ArrowLeft, Plus, X, Save, Users, UserX, DollarSign } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
@@ -29,6 +29,7 @@ interface Prospect {
   stage?: string
   converted_to_client_id?: string | null
   converted_to_type?: 'b2b' | 'b2c' | null
+  credit_limit?: number
 }
 
 export default function NewMovementPage() {
@@ -72,6 +73,7 @@ function NewMovementContent() {
   const [itemPrice, setItemPrice] = useState(0)
   const [prospectPrices, setProspectPrices] = useState<Map<string, number>>(new Map())
   const [isLoadingProspectPrices, setIsLoadingProspectPrices] = useState(false)
+  const [prospectCreditLimit, setProspectCreditLimit] = useState<number>(0)
 
   useEffect(() => {
     loadProducts()
@@ -101,7 +103,7 @@ function NewMovementContent() {
     try {
       const { data: prospectsData } = await supabase
         .from('prospects')
-        .select('id, contact_name, company_name, fantasy_name, email, type, stage, converted_to_client_id, converted_to_type')
+        .select('id, contact_name, company_name, fantasy_name, email, type, stage, converted_to_client_id, converted_to_type, credit_limit')
         .order('created_at', { ascending: false })
       
       setProspects(prospectsData || [])
@@ -122,6 +124,7 @@ function NewMovementContent() {
     setFormData(prev => ({ ...prev, prospect_id: selectedProspectId }))
 
     if (!selectedProspectId) {
+      setProspectCreditLimit(0)
       setProspectPrices(new Map())
       if (selectedProduct) {
         const product = products.find(p => p.id === selectedProduct)
@@ -136,6 +139,18 @@ function NewMovementContent() {
     const supabase = createClient()
 
     try {
+      // 1. Get fresh credit limit
+      const { data: freshProspect } = await supabase
+        .from('prospects')
+        .select('credit_limit')
+        .eq('id', selectedProspectId)
+        .single()
+      
+      if (freshProspect) {
+        setProspectCreditLimit(Number(freshProspect.credit_limit || 0))
+      }
+
+      // 2. Get product prices
       const { data, error } = await supabase
         .from('prospect_product_prices')
         .select('product_id, fixed_price')
@@ -147,6 +162,9 @@ function NewMovementContent() {
         (data || []).map(price => [price.product_id, Number(price.fixed_price)])
       )
       setProspectPrices(priceMap)
+      
+      // ... rest of the logic
+
 
       if (selectedProduct) {
         const product = products.find(p => p.id === selectedProduct)
@@ -239,6 +257,12 @@ function NewMovementContent() {
     if (formData.movement_type === 'sample' && isAnonymousSample && !formData.sample_recipient_name && !formData.sample_event_context) {
       console.log('Validation failed: anonymous sample needs recipient or context')
       toast.error('Indica el nombre del receptor o el contexto/evento')
+      return
+    }
+
+    // Validate credit limit for consignments
+    if (formData.movement_type === 'consignment' && totalAmount > prospectCreditLimit) {
+      toast.error(`Crédito insuficiente. Disponible: $${prospectCreditLimit.toLocaleString('es-CL')}`)
       return
     }
 
@@ -459,6 +483,23 @@ function NewMovementContent() {
                     >
                       × Limpiar selección
                     </button>
+                  )}
+
+                  {/* Credit Limit Display */}
+                  {formData.movement_type === 'consignment' && formData.prospect_id && (
+                    <div className={`mt-2 p-3 rounded-lg border flex items-center justify-between ${
+                      totalAmount > prospectCreditLimit 
+                        ? 'bg-red-50 border-red-200 text-red-700' 
+                        : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-4 h-4" />
+                        <span className="text-sm font-bold">Crédito Disponible:</span>
+                      </div>
+                      <span className="text-lg font-black">
+                        ${prospectCreditLimit.toLocaleString('es-CL')}
+                      </span>
+                    </div>
                   )}
                 </>
               )}

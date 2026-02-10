@@ -239,6 +239,7 @@ calmar-ecommerce/
 - **Pipeline de prospectos** con etapas personalizables
 - **Ficha de prospectos** con datos de empresa, dirección y despacho
 - **Registro de muestras, consignaciones y ventas**
+- **Gestión de crédito** automática en consignaciones (descuento al crear, restauración al pagar/devolver)
 - **Vinculación de compras web a prospectos por RUT**
 
 ### 🧾 Gestión Interna
@@ -516,6 +517,7 @@ npm run supabase:migrate # Reset y aplicar migraciones
 - `generate_order_number` - Genera números de orden amigables (ej: `ORD-1001`)
 - `deduct_prospect_credit` - Descuenta crédito disponible para clientes B2B
 - `create_credit_sale_movement` - Crea movimientos de venta a crédito con control de errores
+- `handle_consignment_credit_management` - Gestiona el crédito en consignaciones (descuento/restauración)
 
 ---
 

@@ -543,6 +543,21 @@ export async function createMovement(data: {
     data.total_amount = 0
     data.items = data.items.map(item => ({ ...item, unit_price: 0 }))
   }
+
+  // Validate credit for consignments
+  if (data.movement_type === 'consignment' && data.prospect_id) {
+    const { data: prospect } = await supabase
+      .from('prospects')
+      .select('credit_limit')
+      .eq('id', data.prospect_id)
+      .single()
+      
+    const creditLimit = Number(prospect?.credit_limit || 0)
+    
+    if (creditLimit < data.total_amount) {
+      throw new Error(`Crédito insuficiente. Disponible: $${creditLimit.toLocaleString('es-CL')}, Requerido: $${data.total_amount.toLocaleString('es-CL')}`)
+    }
+  }
   
   const movement = await crmService.createMovement(data)
   
