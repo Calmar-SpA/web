@@ -23,6 +23,7 @@ interface Prospect {
   id: string
   contact_name: string
   company_name?: string
+  fantasy_name?: string
   email: string
   type: 'b2b' | 'b2c'
   stage?: string
@@ -100,7 +101,7 @@ function NewMovementContent() {
     try {
       const { data: prospectsData } = await supabase
         .from('prospects')
-        .select('id, contact_name, company_name, email, type, stage, converted_to_client_id, converted_to_type')
+        .select('id, contact_name, company_name, fantasy_name, email, type, stage, converted_to_client_id, converted_to_type')
         .order('created_at', { ascending: false })
       
       setProspects(prospectsData || [])
@@ -432,12 +433,15 @@ function NewMovementContent() {
                       }`}
                     >
                       <option value="">Seleccionar prospecto...</option>
-                      {prospects.map(prospect => (
-                        <option key={prospect.id} value={prospect.id}>
-                          {prospect.contact_name} {prospect.company_name ? `(${prospect.company_name})` : ''} - {prospect.type.toUpperCase()}
-                          {prospect.converted_to_type === 'b2b' ? ' ✓ B2B' : ''}
-                        </option>
-                      ))}
+                      {prospects.map(prospect => {
+                        const displayName = prospect.fantasy_name || prospect.company_name || prospect.contact_name
+                        return (
+                          <option key={prospect.id} value={prospect.id}>
+                            {displayName} - {prospect.type.toUpperCase()}
+                            {prospect.converted_to_type === 'b2b' ? ' ✓ B2B' : ''}
+                          </option>
+                        )
+                      })}
                     </select>
                     {prospects.length === 0 && (
                       <p className="text-xs text-slate-500 mt-1">No hay prospectos disponibles</p>
