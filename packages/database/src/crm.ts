@@ -599,7 +599,8 @@ export class CRMService {
     const { data: prospect, error } = await this.supabase
       .from('prospects')
       .update({
-        is_b2b_active: false,
+        is_b2b_active: true,
+        b2b_approved_at: new Date().toISOString(),
         credit_limit: data.creditLimit,
         payment_terms_days: data.paymentTermsDays || 30,
         stage: 'converted',

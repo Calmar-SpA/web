@@ -215,6 +215,15 @@ export async function updateProspectStage(prospectId: string, stage: string) {
   const supabase = await createClient()
   const crmService = new CRMService(supabase)
   
+  // Si se mueve a una etapa distinta de Activo, desactivar B2B
+  if (stage !== 'converted') {
+    await supabase
+      .from('prospects')
+      .update({ is_b2b_active: false })
+      .eq('id', prospectId)
+      .eq('type', 'b2b')
+  }
+
   await crmService.updateProspectStage(prospectId, stage)
   
   revalidatePath('/crm/prospects')
@@ -302,6 +311,17 @@ export async function activateProspect(prospectId: string) {
   const hasAccount = Boolean(userId)
 
   await crmService.updateProspectStage(prospectId, 'converted')
+
+  // Si es B2B, activar flag is_b2b_active
+  if (prospect.type === 'b2b') {
+    await supabase
+      .from('prospects')
+      .update({ 
+        is_b2b_active: true,
+        b2b_approved_at: new Date().toISOString()
+      })
+      .eq('id', prospectId)
+  }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
   const registerUrl = new URL('/es/register', baseUrl)
