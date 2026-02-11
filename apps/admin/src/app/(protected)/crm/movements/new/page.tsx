@@ -54,9 +54,11 @@ function NewMovementContent() {
   
   // For samples without client association
   const [isAnonymousSample, setIsAnonymousSample] = useState(false)
+  // For boleta without client association
+  const [isAnonymousBoleta, setIsAnonymousBoleta] = useState(false)
   
   const [formData, setFormData] = useState({
-    movement_type: defaultType as 'sample' | 'consignment' | 'sale_invoice' | 'sale_credit',
+    movement_type: defaultType as 'sample' | 'consignment' | 'sale_invoice' | 'sale_credit' | 'sale_boleta',
     prospect_id: prospectId || '',
     customer_user_id: '',
     due_date: '',
@@ -64,7 +66,9 @@ function NewMovementContent() {
     notes: '',
     // New fields for anonymous samples
     sample_recipient_name: '',
-    sample_event_context: ''
+    sample_event_context: '',
+    // New field for anonymous boleta
+    boleta_buyer_name: ''
   })
   const [items, setItems] = useState<MovementItem[]>([])
   const [selectedProduct, setSelectedProduct] = useState<string>('')
@@ -239,11 +243,15 @@ function NewMovementContent() {
       return
     }
 
-    // For non-sample movements, require client association
+    // For non-sample movements, require client association unless it's an anonymous boleta
     if (formData.movement_type !== 'sample' && !formData.prospect_id && !formData.customer_user_id) {
-      console.log('Validation failed: no client for non-sample')
-      toast.error('Selecciona un prospecto o cliente')
-      return
+      if (formData.movement_type === 'sale_boleta' && isAnonymousBoleta) {
+        // Allow if anonymous boleta
+      } else {
+        console.log('Validation failed: no client for non-sample')
+        toast.error('Selecciona un prospecto o cliente')
+        return
+      }
     }
 
     // For samples, if not anonymous, require client OR mark as anonymous
@@ -260,6 +268,9 @@ function NewMovementContent() {
       return
     }
 
+    // For anonymous boleta, require buyer name if configured (optional per requirements, but good practice)
+    // User requested optional name, so no strict validation here for name presence
+
     // Validate credit limit for consignments
     if (formData.movement_type === 'consignment' && totalAmount > prospectCreditLimit) {
       toast.error(`Crédito insuficiente. Disponible: $${prospectCreditLimit.toLocaleString('es-CL')}`)
@@ -271,7 +282,7 @@ function NewMovementContent() {
     try {
       await createMovement({
         movement_type: formData.movement_type,
-        prospect_id: isAnonymousSample ? null : (formData.prospect_id || null),
+        prospect_id: (isAnonymousSample || isAnonymousBoleta) ? null : (formData.prospect_id || null),
         customer_user_id: formData.customer_user_id || null,
         items: items.map(item => ({
           product_id: item.product_id,
@@ -284,7 +295,8 @@ function NewMovementContent() {
         delivery_date: formData.delivery_date || null,
         notes: formData.notes || undefined,
         sample_recipient_name: isAnonymousSample ? (formData.sample_recipient_name || null) : null,
-        sample_event_context: isAnonymousSample ? (formData.sample_event_context || null) : null
+        sample_event_context: isAnonymousSample ? (formData.sample_event_context || null) : null,
+        boleta_buyer_name: isAnonymousBoleta ? (formData.boleta_buyer_name || null) : null
       })
       
       toast.success('Movimiento creado exitosamente')
@@ -322,16 +334,19 @@ function NewMovementContent() {
           <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-4">
             Tipo de Movimiento
           </label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {(['sample', 'consignment', 'sale_invoice', 'sale_credit'] as const).map((type) => (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {(['sample', 'consignment', 'sale_invoice', 'sale_credit', 'sale_boleta'] as const).map((type) => (
               <button
                 key={type}
                 type="button"
                 onClick={() => {
                   setFormData({ ...formData, movement_type: type })
-                  // Reset anonymous sample state when changing movement type
+                  // Reset anonymous states when changing movement type
                   if (type !== 'sample') {
                     setIsAnonymousSample(false)
+                  }
+                  if (type !== 'sale_boleta') {
+                    setIsAnonymousBoleta(false)
                   }
                   
                   // Reset price if switching to/from sample
@@ -356,7 +371,8 @@ function NewMovementContent() {
               >
                 {type === 'sample' ? 'Muestra' :
                  type === 'consignment' ? 'Consignación' :
-                 type === 'sale_invoice' ? 'Venta Factura' : 'Venta Crédito'}
+                 type === 'sale_invoice' ? 'Venta Factura' : 
+                 type === 'sale_credit' ? 'Venta Crédito' : 'Venta Boleta'}
               </button>
             ))}
           </div>
@@ -429,8 +445,58 @@ function NewMovementContent() {
             </div>
           )}
 
-          {/* Client/Prospect selectors (hidden when anonymous sample) */}
-          {!(formData.movement_type === 'sample' && isAnonymousSample) && (
+          {/* Option for anonymous boleta (only for sale_boleta type) */}
+          {formData.movement_type === 'sale_boleta' && (
+            <div className="mb-4">
+              <label className="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-calmar-ocean/50 group"
+                style={{
+                  borderColor: isAnonymousBoleta ? '#1d504b' : '#e2e8f0',
+                  backgroundColor: isAnonymousBoleta ? 'rgba(29, 80, 75, 0.05)' : 'transparent'
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isAnonymousBoleta}
+                  onChange={(e) => {
+                    setIsAnonymousBoleta(e.target.checked)
+                    if (e.target.checked) {
+                      setFormData(prev => ({ ...prev, prospect_id: '' }))
+                    } else {
+                      setFormData(prev => ({ ...prev, boleta_buyer_name: '' }))
+                    }
+                  }}
+                  className="w-5 h-5 rounded border-2 border-slate-300 text-calmar-ocean focus:ring-calmar-ocean"
+                />
+                <div className="flex items-center gap-2">
+                  <UserX className="w-5 h-5 text-slate-500" />
+                  <div>
+                    <span className="font-bold text-sm text-slate-900">Venta sin cliente asociado</span>
+                    <p className="text-xs text-slate-500">Venta rápida sin registrar en cuenta de cliente</p>
+                  </div>
+                </div>
+              </label>
+            </div>
+          )}
+
+          {/* Anonymous boleta fields */}
+          {formData.movement_type === 'sale_boleta' && isAnonymousBoleta && (
+            <div className="space-y-4 p-4 bg-teal-50 rounded-xl border-2 border-teal-200">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                  Nombre del Comprador (Opcional)
+                </label>
+                <Input
+                  value={formData.boleta_buyer_name || ''}
+                  onChange={(e) => setFormData({ ...formData, boleta_buyer_name: e.target.value })}
+                  placeholder="Ej: Juan Pérez"
+                  className="h-10"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Client/Prospect selectors (hidden when anonymous sample or boleta) */}
+          {!(formData.movement_type === 'sample' && isAnonymousSample) && !(formData.movement_type === 'sale_boleta' && isAnonymousBoleta) && (
             <div className="space-y-4">
               {isLoadingClients ? (
                 <div className="py-4 text-center">

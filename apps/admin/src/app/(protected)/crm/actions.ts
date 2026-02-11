@@ -519,7 +519,7 @@ export async function createInteraction(data: {
 }
 
 export async function createMovement(data: {
-  movement_type: 'sample' | 'consignment' | 'sale_invoice' | 'sale_credit'
+  movement_type: 'sample' | 'consignment' | 'sale_invoice' | 'sale_credit' | 'sale_boleta'
   prospect_id?: string | null
   customer_user_id?: string | null
   items: Array<{
@@ -534,6 +534,7 @@ export async function createMovement(data: {
   notes?: string
   sample_recipient_name?: string | null
   sample_event_context?: string | null
+  boleta_buyer_name?: string | null
 }) {
   const supabase = await createClient()
   const crmService = new CRMService(supabase)
@@ -856,7 +857,7 @@ export async function rejectPayment(paymentId: string, reason: string) {
 export async function updateMovement(
   movementId: string,
   data: {
-    movement_type?: 'sample' | 'consignment' | 'sale_invoice' | 'sale_credit'
+    movement_type?: 'sample' | 'consignment' | 'sale_invoice' | 'sale_credit' | 'sale_boleta'
     prospect_id?: string | null
     customer_user_id?: string | null
     items?: Array<{
@@ -872,6 +873,7 @@ export async function updateMovement(
     notes?: string | null
     sample_recipient_name?: string | null
     sample_event_context?: string | null
+    boleta_buyer_name?: string | null
     status?: string
   }
 ) {

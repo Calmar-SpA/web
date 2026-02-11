@@ -43,7 +43,8 @@ export default function MovementDetailPage() {
     delivery_date: '',
     invoice_date: '',
     sample_recipient_name: '',
-    sample_event_context: ''
+    sample_event_context: '',
+    boleta_buyer_name: ''
   })
   
   // Product editing states
@@ -76,7 +77,8 @@ export default function MovementDetailPage() {
         delivery_date: data?.delivery_date ? data.delivery_date.split('T')[0] : '',
         invoice_date: data?.invoice_date ? data.invoice_date.split('T')[0] : '',
         sample_recipient_name: data?.sample_recipient_name || '',
-        sample_event_context: data?.sample_event_context || ''
+        sample_event_context: data?.sample_event_context || '',
+        boleta_buyer_name: data?.boleta_buyer_name || ''
       })
       setEditItems(data?.items || [])
       
@@ -279,6 +281,7 @@ export default function MovementDetailPage() {
         invoice_date: editForm.invoice_date || null,
         sample_recipient_name: editForm.sample_recipient_name || null,
         sample_event_context: editForm.sample_event_context || null,
+        boleta_buyer_name: editForm.boleta_buyer_name || null,
         items: editItems.map(item => ({
           product_id: item.product_id,
           variant_id: item.variant_id || null,
@@ -307,7 +310,8 @@ export default function MovementDetailPage() {
       delivery_date: movement?.delivery_date ? movement.delivery_date.split('T')[0] : '',
       invoice_date: movement?.invoice_date ? movement.invoice_date.split('T')[0] : '',
       sample_recipient_name: movement?.sample_recipient_name || '',
-      sample_event_context: movement?.sample_event_context || ''
+      sample_event_context: movement?.sample_event_context || '',
+      boleta_buyer_name: movement?.boleta_buyer_name || ''
     })
     setEditItems(movement?.items || [])
     setNewItem({
@@ -408,7 +412,8 @@ export default function MovementDetailPage() {
           <p className="text-slate-500 mt-1 font-medium">
             {movement.movement_type === 'sample' ? 'Muestra' :
              movement.movement_type === 'consignment' ? 'Consignación' :
-             movement.movement_type === 'sale_invoice' ? 'Venta Factura' : 'Venta Crédito'}
+             movement.movement_type === 'sale_invoice' ? 'Venta Factura' : 
+             movement.movement_type === 'sale_boleta' ? 'Venta Boleta' : 'Venta Crédito'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -615,11 +620,30 @@ export default function MovementDetailPage() {
               </div>
             )}
             
+            {/* Anonymous boleta buyer */}
+            {movement.movement_type === 'sale_boleta' && 
+             !movement.prospect && 
+             !movement.customer && 
+             movement.boleta_buyer_name && (
+              <div className="p-4 bg-teal-50 rounded-xl border-2 border-teal-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserX className="w-4 h-4 text-teal-600" />
+                  <span className="text-xs font-black uppercase tracking-wider text-teal-700">
+                    Venta sin cliente asociado
+                  </span>
+                </div>
+                <p className="font-bold text-slate-900">
+                  Comprador: {movement.boleta_buyer_name}
+                </p>
+              </div>
+            )}
+            
             {/* No client assigned */}
             {!movement.prospect && 
              !movement.customer && 
              !movement.sample_recipient_name && 
-             !movement.sample_event_context && (
+             !movement.sample_event_context && 
+             !movement.boleta_buyer_name && (
               <p className="text-sm text-slate-400 italic">Sin cliente asignado</p>
             )}
           </div>
@@ -1350,6 +1374,21 @@ export default function MovementDetailPage() {
                       />
                     </div>
                   </>
+                )}
+
+                {/* Campos para Venta Boleta */}
+                {movement.movement_type === 'sale_boleta' && (
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                      Nombre del Comprador
+                    </label>
+                    <Input
+                      value={editForm.boleta_buyer_name}
+                      onChange={(e) => setEditForm({ ...editForm, boleta_buyer_name: e.target.value })}
+                      placeholder="Nombre del comprador (opcional)"
+                      className="h-12"
+                    />
+                  </div>
                 )}
 
                 {/* Notas */}

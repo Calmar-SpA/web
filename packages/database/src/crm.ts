@@ -44,7 +44,7 @@ export interface ProductMovementItem {
 }
 
 export interface ProductMovementData {
-  movement_type: 'sample' | 'consignment' | 'sale_invoice' | 'sale_credit'
+  movement_type: 'sample' | 'consignment' | 'sale_invoice' | 'sale_credit' | 'sale_boleta'
   prospect_id?: string | null
   customer_user_id?: string | null
   items: ProductMovementItem[]
@@ -56,6 +56,8 @@ export interface ProductMovementData {
   sample_recipient_name?: string | null
   sample_event_context?: string | null
   invoice_date?: string | null
+  // Field for anonymous boleta sales
+  boleta_buyer_name?: string | null
 }
 
 export interface MovementPaymentData {
@@ -567,7 +569,7 @@ export class CRMService {
     movements?.forEach((m: any) => {
       if (m.movement_type === 'sample') stats.movements.samples++
       else if (m.movement_type === 'consignment') stats.movements.consignments++
-      else if (m.movement_type === 'sale_invoice' || m.movement_type === 'sale_credit') {
+      else if (m.movement_type === 'sale_invoice' || m.movement_type === 'sale_credit' || m.movement_type === 'sale_boleta') {
         stats.movements.sales++
       }
     })

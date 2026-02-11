@@ -13,7 +13,8 @@ const MOVEMENT_TYPES = {
   sample: { label: 'Muestra', color: 'bg-purple-100 text-purple-700' },
   consignment: { label: 'Consignación', color: 'bg-indigo-100 text-indigo-700' },
   sale_invoice: { label: 'Venta Factura', color: 'bg-green-100 text-green-700' },
-  sale_credit: { label: 'Venta Crédito', color: 'bg-orange-100 text-orange-700' }
+  sale_credit: { label: 'Venta Crédito', color: 'bg-orange-100 text-orange-700' },
+  sale_boleta: { label: 'Venta Boleta', color: 'bg-teal-100 text-teal-700' }
 }
 
 const STATUSES = {
@@ -94,7 +95,8 @@ export default function MovementsPage() {
         m.b2b_client?.company_name?.toLowerCase().includes(search) ||
         m.customer?.email?.toLowerCase().includes(search) ||
         m.sample_recipient_name?.toLowerCase().includes(search) ||
-        m.sample_event_context?.toLowerCase().includes(search)
+        m.sample_event_context?.toLowerCase().includes(search) ||
+        m.boleta_buyer_name?.toLowerCase().includes(search)
       )
     }
     return true
@@ -247,6 +249,18 @@ export default function MovementsPage() {
                         <span className="flex items-center gap-1 text-amber-600">
                           <UserX className="w-4 h-4" />
                           {movement.sample_recipient_name || movement.sample_event_context}
+                        </span>
+                      )}
+                      
+                      {/* Anonymous boleta buyer */}
+                      {movement.movement_type === 'sale_boleta' && 
+                       !movement.prospect && 
+                       !movement.b2b_client && 
+                       !movement.customer && 
+                       movement.boleta_buyer_name && (
+                        <span className="flex items-center gap-1 text-teal-600">
+                          <UserX className="w-4 h-4" />
+                          {movement.boleta_buyer_name}
                         </span>
                       )}
                     </div>
