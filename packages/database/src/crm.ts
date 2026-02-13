@@ -278,7 +278,7 @@ export class CRMService {
       .from('product_movements')
       .select(`
         *,
-        prospect:prospects(id, contact_name, company_name, fantasy_name, tax_id, phone, email, payment_terms_days),
+        prospect:prospects(id, contact_name, company_name, fantasy_name, tax_id, phone, email, payment_terms_days, type),
         customer:users!customer_user_id(id, email, full_name),
         payments:movement_payments(paid_at, amount, verification_status)
       `)

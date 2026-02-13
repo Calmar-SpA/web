@@ -505,9 +505,9 @@ export default function ProspectDetailPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
-                      Nombre de Contacto *
+                      Nombre de Contacto
                     </label>
-                    <Input name="contact_name" defaultValue={prospect.contact_name || ''} required className="h-11" />
+                    <Input name="contact_name" defaultValue={prospect.contact_name || ''} className="h-11" />
                   </div>
                   <div className="space-y-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
@@ -517,9 +517,9 @@ export default function ProspectDetailPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
-                      Email *
+                      Email
                     </label>
-                    <Input name="email" type="email" defaultValue={prospect.email || ''} required className="h-11" />
+                    <Input name="email" type="email" defaultValue={prospect.email || ''} className="h-11" />
                   </div>
                   <div className="space-y-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-slate-700">

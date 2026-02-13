@@ -87,20 +87,7 @@ export async function createProspect(data: {
   const phoneFormatted = data.phone ? formatPhoneIntl(phoneCountry, data.phone) : undefined
   const { phone_country: _phoneCountry, user_id: manualUserId, ...prospectData } = data
 
-  // Para B2C, validamos todos los campos obligatorios
-  if (data.type === 'b2c') {
-    if (!data.contact_name?.trim()) {
-      throw new Error('El nombre de contacto es obligatorio')
-    }
-    if (!data.email?.trim()) {
-      throw new Error('El email es obligatorio')
-    }
-    if (!taxId || !isValidRut(taxId)) {
-      throw new Error('El RUT no es válido')
-    }
-  }
-
-  // Para B2B, solo validamos si se proporcionan los datos
+  // Validamos si se proporcionan los datos
   if (taxId && !isValidRut(taxId)) {
     throw new Error('El RUT no es válido')
   }
@@ -457,11 +444,6 @@ export async function updateProspect(prospectId: string, formData: FormData) {
     payment_terms_days: formData.get('payment_terms_days') ? Number(formData.get('payment_terms_days')) : undefined,
     notes: (formData.get('notes') as string)?.trim() || null,
     user_id: (formData.get('user_id') as string) || null,
-  }
-
-  // Para B2C, nombre de contacto y email son obligatorios
-  if (payload.type === 'b2c' && (!payload.contact_name || !payload.email)) {
-    throw new Error('Nombre de contacto y email son obligatorios para B2C')
   }
 
   const { error } = await supabase

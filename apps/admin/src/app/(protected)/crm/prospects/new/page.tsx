@@ -69,11 +69,8 @@ export default function NewProspectPage() {
     }))
   }
 
-  // Para B2B: RUT es opcional, solo validar si se proporciona
-  // Para B2C: RUT es obligatorio
-  const isTaxIdValid = formData.type === 'b2b' 
-    ? !formData.tax_id || isValidRut(formData.tax_id)
-    : formData.tax_id ? isValidRut(formData.tax_id) : false
+  // Para B2B y B2C: RUT es opcional, solo validar si se proporciona
+  const isTaxIdValid = !formData.tax_id || isValidRut(formData.tax_id)
   const isRequestingRutValid = !formData.requesting_rut || isValidRut(formData.requesting_rut)
   const isPhoneValid = !formData.phone || isValidPhoneIntl(formData.phone)
 
@@ -117,14 +114,8 @@ export default function NewProspectPage() {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Para B2C, el RUT es obligatorio
-    if (formData.type === 'b2c' && !isValidRut(formData.tax_id)) {
-      toast.error('El RUT no es válido')
-      setIsSubmitting(false)
-      return
-    }
-    // Para B2B, solo validar si se proporciona
-    if (formData.type === 'b2b' && formData.tax_id && !isValidRut(formData.tax_id)) {
+    // Validar RUT si se proporciona (para ambos tipos)
+    if (formData.tax_id && !isValidRut(formData.tax_id)) {
       toast.error('El RUT no es válido')
       setIsSubmitting(false)
       return
@@ -404,10 +395,9 @@ export default function NewProspectPage() {
         {/* Contact Name */}
         <div>
           <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
-            Nombre de Contacto {formData.type === 'b2c' && '*'}
+            Nombre de Contacto
           </label>
           <Input
-            required={formData.type === 'b2c'}
             value={formData.contact_name}
             onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
             placeholder="Ej: Juan Pérez"
@@ -429,10 +419,9 @@ export default function NewProspectPage() {
         {/* Email */}
         <div>
           <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
-            Email {formData.type === 'b2c' && '*'}
+            Email
           </label>
           <Input
-            required={formData.type === 'b2c'}
             type="email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -476,10 +465,9 @@ export default function NewProspectPage() {
         {/* RUT */}
         <div>
           <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
-            RUT {formData.type === 'b2c' && '*'}
+            RUT
           </label>
           <RutInput
-            required={formData.type === 'b2c'}
             value={formData.tax_id}
             onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
             placeholder="12.345.678-9"

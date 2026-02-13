@@ -41,9 +41,7 @@ export default function MovementsPage() {
   const docCounts = useMemo(() => {
     let noInvoice = 0, noBoleta = 0, noDispatch = 0
     for (const m of movements) {
-      const isB2B = m.prospect?.type === 'b2b' || 
-                    m.movement_type === 'sale_invoice' || 
-                    m.movement_type === 'sale_credit'
+      const isB2B = m.prospect?.type === 'b2b'
       const hasInvoice = m.invoice_url || m.invoice_date
       const hasDispatch = m.dispatch_order_url || m.dispatch_order_date
       
@@ -119,9 +117,7 @@ export default function MovementsPage() {
 
     // Document Filter
     if (filterDocs !== 'all') {
-      const isB2B = m.prospect?.type === 'b2b' || 
-                    m.movement_type === 'sale_invoice' || 
-                    m.movement_type === 'sale_credit'
+      const isB2B = m.prospect?.type === 'b2b'
       const hasInvoice = m.invoice_url || m.invoice_date
       const hasDispatch = m.dispatch_order_url || m.dispatch_order_date
 
@@ -410,9 +406,7 @@ export default function MovementsPage() {
               .sort((a: any, b: any) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime())[0]
             const lastPaymentDate = lastApprovedPayment?.paid_at
             
-            const isMovementB2B = movement.prospect?.type === 'b2b' || 
-                                  movement.movement_type === 'sale_invoice' || 
-                                  movement.movement_type === 'sale_credit'
+            const isMovementB2B = movement.prospect?.type === 'b2b'
 
             return (
               <div

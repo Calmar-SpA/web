@@ -387,9 +387,7 @@ export default function MovementDetailPage() {
     return grossPrice / 1.19
   }
 
-  const isB2B = movement.prospect?.type === 'b2b' || 
-                movement.movement_type === 'sale_invoice' || 
-                movement.movement_type === 'sale_credit'
+  const isB2B = movement.prospect?.type === 'b2b'
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
