@@ -28,7 +28,6 @@ export default async function OrdersPage({ params }: { params: Promise<{ locale:
       delivered: t('status.delivered'),
       cancelled: t('status.cancelled'),
       returned: t('status.returned'),
-      sold: t('status.sold'),
       partial_paid: t('status.partial_paid'),
       overdue: t('status.overdue'),
     },

@@ -22,11 +22,18 @@ const sendEmail = async ({
   subject,
   html,
   replyTo,
+  attachments,
 }: {
   to: string;
   subject: string;
   html: string;
   replyTo?: string;
+  attachments?: Array<{
+    content: string;
+    filename: string;
+    type: string;
+    disposition: 'attachment';
+  }>;
 }) => {
   if (!process.env.SENDGRID_API_KEY) {
     console.warn('SendGrid API key is missing. Email skipped.');
@@ -39,6 +46,7 @@ const sendEmail = async ({
     subject,
     html,
     replyTo,
+    attachments,
   });
 
   return { success: true };
@@ -335,5 +343,54 @@ export async function sendPaymentStatusCustomerNotification(params: {
     to: params.to,
     subject: `${title} - Movimiento ${params.movementNumber}`,
     html,
+  });
+}
+
+export async function sendDocumentUploadedEmail(params: {
+  contactName: string;
+  contactEmail: string;
+  companyName: string;
+  movementNumber: string;
+  documentType: 'invoice' | 'dispatch_order';
+  attachment: {
+    content: string;
+    filename: string;
+    type: string;
+  };
+}) {
+  const isInvoice = params.documentType === 'invoice';
+  const docLabel = isInvoice ? 'Factura' : 'Guía de Despacho';
+  const title = `${docLabel} Disponible - ${params.movementNumber}`;
+  
+  const content = `
+    <p style="margin:12px 0;line-height:1.6;">Hola ${params.contactName},</p>
+    <p style="margin:12px 0;line-height:1.6;">
+      Se ha emitido un nuevo documento para tu empresa <strong>${params.companyName}</strong>.
+    </p>
+    <div style="background:${brand.muted};padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid ${brand.primary};">
+      <div><strong>Documento:</strong> ${docLabel}</div>
+      <div><strong>Movimiento:</strong> ${params.movementNumber}</div>
+    </div>
+    <p style="margin:12px 0;line-height:1.6;">
+      Adjunto encontrarás el documento en formato PDF/Imagen.
+    </p>
+    <p style="margin:12px 0;line-height:1.6;">
+      Si tienes dudas, responde a este correo.
+    </p>
+  `;
+
+  const html = buildEmailShell(title, content);
+
+  return sendEmail({
+    to: params.contactEmail,
+    subject: title,
+    html,
+    replyTo: ADMIN_EMAIL,
+    attachments: [{
+      content: params.attachment.content,
+      filename: params.attachment.filename,
+      type: params.attachment.type,
+      disposition: 'attachment'
+    }]
   });
 }

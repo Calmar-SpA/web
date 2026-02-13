@@ -183,7 +183,6 @@
         "delivered": "Entregado",
         "cancelled": "Cancelado",
         "returned": "Devuelto",
-        "sold": "Vendido",
         "partial_paid": "Pago Parcial",
         "overdue": "Vencido"
       },
@@ -209,7 +208,6 @@
         "pending": "Pendiente",
         "delivered": "Entregado",
         "returned": "Devuelto",
-        "sold": "Vendido",
         "paid": "Pagado",
         "partialPaid": "Pago Parcial",
         "overdue": "Vencido"

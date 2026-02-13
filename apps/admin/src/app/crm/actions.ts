@@ -537,15 +537,3 @@ export async function rejectPayment(paymentId: string, reason: string) {
   return { success: true }
 }
 
-export async function convertConsignmentToSale(movementId: string) {
-  const supabase = await createClient()
-  const crmService = new CRMService(supabase)
-  
-  const movement = await crmService.convertConsignmentToSale(movementId)
-  
-  revalidatePath('/crm/movements')
-  revalidatePath(`/crm/movements/${movementId}`)
-  revalidatePath('/crm/debts')
-  
-  return movement
-}

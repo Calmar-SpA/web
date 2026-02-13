@@ -100,7 +100,6 @@ export default function MovementDetailPage({
     pending: { label: t('status.pending'), color: 'bg-amber-100 text-amber-700' },
     delivered: { label: t('status.delivered'), color: 'bg-green-100 text-green-700' },
     returned: { label: t('status.returned'), color: 'bg-orange-100 text-orange-700' },
-    sold: { label: t('status.sold'), color: 'bg-emerald-100 text-emerald-700' },
     paid: { label: t('status.paid'), color: 'bg-green-100 text-green-700' },
     partial_paid: { label: t('status.partialPaid'), color: 'bg-amber-100 text-amber-700' },
     overdue: { label: t('status.overdue'), color: 'bg-red-100 text-red-700' },

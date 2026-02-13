@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CRMService } from '@calmar/database'
-import { sendProspectActivationEmail, sendProspectAdminNotification, sendRefundAdminNotification, sendPaymentStatusCustomerNotification } from '@/lib/mail'
+import { sendProspectActivationEmail, sendProspectAdminNotification, sendRefundAdminNotification, sendPaymentStatusCustomerNotification, sendDocumentUploadedEmail } from '@/lib/mail'
 import { revalidatePath } from 'next/cache'
 import { formatPhoneIntl, formatRut, isValidPhoneIntl, isValidRut, normalizeRut, parsePhoneIntl } from '@calmar/utils'
 
@@ -632,20 +632,6 @@ export async function returnConsignment(
   return movement
 }
 
-export async function convertConsignmentToSale(movementId: string) {
-  const supabase = await createClient()
-  const crmService = new CRMService(supabase)
-  
-  const movement = await crmService.convertConsignmentToSale(movementId)
-  
-  revalidatePath('/crm/movements')
-  revalidatePath(`/crm/movements/${movementId}`)
-  revalidatePath('/crm/debts')
-  revalidatePath('/products') // Actualizar inventario de productos
-  
-  return movement
-}
-
 export async function uploadMovementDocument(formData: FormData) {
   const supabase = await createClient()
   
@@ -695,6 +681,17 @@ export async function uploadMovementDocument(formData: FormData) {
 
       if (!movement?.invoice_date) {
         updateData.invoice_date = new Date().toISOString().split('T')[0]
+      }
+    } else if (documentType === 'dispatch_order') {
+      // If dispatch order date is not set, set it to today
+      const { data: movement } = await supabase
+        .from('product_movements')
+        .select('dispatch_order_date')
+        .eq('id', movementId)
+        .single()
+
+      if (!movement?.dispatch_order_date) {
+        updateData.dispatch_order_date = new Date().toISOString().split('T')[0]
       }
     }
     
@@ -870,6 +867,7 @@ export async function updateMovement(
     due_date?: string | null
     delivery_date?: string | null
     invoice_date?: string | null
+    dispatch_order_date?: string | null
     notes?: string | null
     sample_recipient_name?: string | null
     sample_event_context?: string | null
@@ -941,4 +939,117 @@ export async function deleteMovement(movementId: string) {
   revalidatePath('/products') // Actualizar inventario de productos
   
   return { success: true }
+}
+
+export async function resendMovementDocumentEmail(
+  movementId: string,
+  documentType: 'invoice' | 'dispatch_order'
+) {
+  const supabase = await createClient()
+
+  try {
+    // 1. Get movement and prospect data
+    const { data: movementData, error: fetchError } = await supabase
+      .from('product_movements')
+      .select(`
+        movement_number, 
+        prospect_id, 
+        invoice_url,
+        dispatch_order_url,
+        prospect:prospects(
+          email, 
+          contact_name, 
+          company_name, 
+          fantasy_name
+        )
+      `)
+      .eq('id', movementId)
+      .single()
+
+    if (fetchError || !movementData) {
+      return { success: false, error: 'Movimiento no encontrado' }
+    }
+
+    // @ts-ignore
+    const prospect = movementData.prospect
+    // @ts-ignore
+    const email = prospect?.email
+
+    if (!email) {
+      return { success: false, error: 'El cliente no tiene un email registrado' }
+    }
+
+    // 2. Get document URL and extract file path
+    const documentUrl = documentType === 'invoice' 
+      ? movementData.invoice_url 
+      : movementData.dispatch_order_url
+
+    if (!documentUrl) {
+      return { success: false, error: 'No hay documento cargado' }
+    }
+
+    const urlParts = documentUrl.split('/movement-documents/')
+    if (urlParts.length <= 1) {
+      return { success: false, error: 'URL del documento inválida' }
+    }
+    const fileName = urlParts[1]
+
+    // 3. Download file
+    const { data: fileData, error: downloadError } = await supabase.storage
+      .from('movement-documents')
+      .download(fileName)
+
+    if (downloadError || !fileData) {
+      console.error('Download error:', downloadError)
+      return { success: false, error: 'Error al descargar el documento' }
+    }
+
+    // 4. Prepare attachment
+    const buffer = Buffer.from(await fileData.arrayBuffer())
+    const base64Content = buffer.toString('base64')
+    const fileExt = fileName.split('.').pop()?.toLowerCase()
+    
+    let mimeType = 'application/octet-stream'
+    if (fileExt === 'pdf') mimeType = 'application/pdf'
+    else if (['png', 'jpg', 'jpeg'].includes(fileExt || '')) mimeType = `image/${fileExt}`
+
+    // @ts-ignore
+    const companyName = prospect.fantasy_name || prospect.company_name || 'Cliente'
+    // @ts-ignore
+    const contactName = prospect.contact_name || 'Cliente'
+
+    // 5. Send email
+    await sendDocumentUploadedEmail({
+      contactName,
+      contactEmail: email,
+      companyName,
+      movementNumber: movementData.movement_number || movementId.slice(0, 8),
+      documentType,
+      attachment: {
+        content: base64Content,
+        filename: fileName.split('/').pop() || 'documento',
+        type: mimeType
+      }
+    })
+
+    // 6. Update timestamp
+    const emailSentField = documentType === 'invoice' ? 'invoice_email_sent_at' : 'dispatch_order_email_sent_at'
+    
+    const { error: updateError } = await supabase
+      .from('product_movements')
+      .update({ [emailSentField]: new Date().toISOString() })
+      .eq('id', movementId)
+
+    if (updateError) {
+      console.error('Update timestamp error:', updateError)
+      // Continue anyway since email was sent
+    }
+
+    revalidatePath(`/crm/movements/${movementId}`)
+    return { success: true }
+
+  } catch (error) {
+    console.error('Resend email error:', error)
+    return { success: false, error: 'Error al reenviar el correo' }
+  }
 }

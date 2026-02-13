@@ -183,7 +183,6 @@
         "delivered": "Delivered",
         "cancelled": "Cancelled",
         "returned": "Returned",
-        "sold": "Sold",
         "partial_paid": "Partial Payment",
         "overdue": "Overdue"
       },
@@ -209,7 +208,6 @@
         "pending": "Pending",
         "delivered": "Delivered",
         "returned": "Returned",
-        "sold": "Sold",
         "paid": "Paid",
         "partialPaid": "Partial Payment",
         "overdue": "Overdue"

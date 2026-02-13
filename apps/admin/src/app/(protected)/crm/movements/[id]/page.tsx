@@ -7,14 +7,17 @@ import { CRMService, ProductService } from '@calmar/database'
 import { ArrowLeft, DollarSign, Calendar, Package, AlertCircle, CheckCircle, Plus, UserX, FileText, Upload, Trash2, ExternalLink, Eye, CheckCircle2, XCircle, Pencil, X } from 'lucide-react'
 import { Button, Input } from '@calmar/ui'
 import Link from 'next/link'
-import { updateMovementStatus, registerPayment, returnConsignment, convertConsignmentToSale, uploadMovementDocument, deleteMovementDocument, approvePayment, rejectPayment, deleteMovement, updateMovement } from '../../actions'
+import { updateMovementStatus, registerPayment, returnConsignment, uploadMovementDocument, deleteMovementDocument, approvePayment, rejectPayment, deleteMovement, updateMovement, resendMovementDocumentEmail } from '../../actions'
 import { toast } from 'sonner'
+import { Check, Send, RefreshCw } from 'lucide-react'
+
+// Formatea RUT sin puntos, solo con guión (ej: "12.345.678-9" → "12345678-9")
+const formatRut = (rut: string) => rut.replace(/\./g, '')
 
 const STATUSES = {
   pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700' },
   delivered: { label: 'Entregado', color: 'bg-blue-100 text-blue-700' },
   returned: { label: 'Devuelto', color: 'bg-gray-100 text-gray-700' },
-  sold: { label: 'Vendido', color: 'bg-green-100 text-green-700' },
   paid: { label: 'Pagado', color: 'bg-emerald-100 text-emerald-700' },
   partial_paid: { label: 'Pago Parcial', color: 'bg-amber-100 text-amber-700' },
   overdue: { label: 'Vencido', color: 'bg-red-100 text-red-700' }
@@ -42,6 +45,7 @@ export default function MovementDetailPage() {
     due_date: '',
     delivery_date: '',
     invoice_date: '',
+    dispatch_order_date: '',
     sample_recipient_name: '',
     sample_event_context: '',
     boleta_buyer_name: ''
@@ -76,6 +80,7 @@ export default function MovementDetailPage() {
         due_date: data?.due_date ? data.due_date.split('T')[0] : '',
         delivery_date: data?.delivery_date ? data.delivery_date.split('T')[0] : '',
         invoice_date: data?.invoice_date ? data.invoice_date.split('T')[0] : '',
+        dispatch_order_date: data?.dispatch_order_date ? data.dispatch_order_date.split('T')[0] : '',
         sample_recipient_name: data?.sample_recipient_name || '',
         sample_event_context: data?.sample_event_context || '',
         boleta_buyer_name: data?.boleta_buyer_name || ''
@@ -207,21 +212,6 @@ export default function MovementDetailPage() {
     }
   }
 
-  const handleConvertToSale = async () => {
-    if (!confirm('¿Convertir esta consignación en venta? Esto actualizará el estado.')) {
-      return
-    }
-
-    try {
-      await convertConsignmentToSale(movementId)
-      await loadMovement()
-      toast.success('Consignación convertida a venta')
-    } catch (error: any) {
-      console.error('Error converting to sale:', error)
-      toast.error('Error al convertir consignación')
-    }
-  }
-
   const handleApprovePayment = async (paymentId: string) => {
     if (!confirm('¿Estás seguro de aprobar este pago?')) return
     try {
@@ -279,6 +269,7 @@ export default function MovementDetailPage() {
         due_date: editForm.due_date || null,
         delivery_date: editForm.delivery_date || null,
         invoice_date: editForm.invoice_date || null,
+        dispatch_order_date: editForm.dispatch_order_date || null,
         sample_recipient_name: editForm.sample_recipient_name || null,
         sample_event_context: editForm.sample_event_context || null,
         boleta_buyer_name: editForm.boleta_buyer_name || null,
@@ -309,6 +300,7 @@ export default function MovementDetailPage() {
       due_date: movement?.due_date ? movement.due_date.split('T')[0] : '',
       delivery_date: movement?.delivery_date ? movement.delivery_date.split('T')[0] : '',
       invoice_date: movement?.invoice_date ? movement.invoice_date.split('T')[0] : '',
+      dispatch_order_date: movement?.dispatch_order_date ? movement.dispatch_order_date.split('T')[0] : '',
       sample_recipient_name: movement?.sample_recipient_name || '',
       sample_event_context: movement?.sample_event_context || '',
       boleta_buyer_name: movement?.boleta_buyer_name || ''
@@ -394,6 +386,10 @@ export default function MovementDetailPage() {
   const getNetPrice = (grossPrice: number) => {
     return grossPrice / 1.19
   }
+
+  const isB2B = movement.prospect?.type === 'b2b' || 
+                movement.movement_type === 'sale_invoice' || 
+                movement.movement_type === 'sale_credit'
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
@@ -502,7 +498,7 @@ export default function MovementDetailPage() {
                     {movement.prospect.tax_id && (
                       <p className="text-sm text-slate-600 flex items-center gap-2">
                         <span className="text-xs font-bold uppercase text-slate-400 w-20 shrink-0">RUT:</span>
-                        {movement.prospect.tax_id}
+                        {formatRut(movement.prospect.tax_id)}
                       </p>
                     )}
                   </div>
@@ -581,7 +577,7 @@ export default function MovementDetailPage() {
                     {movement.customer.rut && (
                       <p className="text-sm text-slate-600 flex items-center gap-2">
                         <span className="text-xs font-bold uppercase text-slate-400 w-20 shrink-0">RUT:</span>
-                        {movement.customer.rut}
+                        {formatRut(movement.customer.rut)}
                       </p>
                     )}
                     {movement.customer.phone && (
@@ -887,21 +883,25 @@ export default function MovementDetailPage() {
             <div className="space-y-4">
               {/* Invoice/Receipt */}
               <DocumentUpload
-                label="Factura / Boleta"
+                label={isB2B ? "Factura" : "Boleta"}
                 movementId={movementId}
                 documentType="invoice"
                 currentUrl={movement.invoice_url}
+                emailSentAt={movement.invoice_email_sent_at}
                 onUploadComplete={loadMovement}
               />
               
               {/* Dispatch Order */}
-              <DocumentUpload
-                label="Orden de Despacho"
-                movementId={movementId}
-                documentType="dispatch_order"
-                currentUrl={movement.dispatch_order_url}
-                onUploadComplete={loadMovement}
-              />
+              {isB2B && (
+                <DocumentUpload
+                  label="Orden de Despacho"
+                  movementId={movementId}
+                  documentType="dispatch_order"
+                  currentUrl={movement.dispatch_order_url}
+                  emailSentAt={movement.dispatch_order_email_sent_at}
+                  onUploadComplete={loadMovement}
+                />
+              )}
             </div>
           </div>
 
@@ -959,7 +959,7 @@ export default function MovementDetailPage() {
               {movement.invoice_date && (
                 <div>
                   <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
-                    Fecha Factura
+                    {isB2B ? 'Fecha Factura' : 'Fecha Boleta'}
                   </p>
                   <p className="text-sm font-medium text-slate-900">
                     {new Date(movement.invoice_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })}
@@ -967,10 +967,21 @@ export default function MovementDetailPage() {
                 </div>
               )}
 
+              {isB2B && movement.dispatch_order_date && (
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
+                    Fecha Guía Despacho
+                  </p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {new Date(movement.dispatch_order_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })}
+                  </p>
+                </div>
+              )}
+
               {movement.due_date && (
                 <div>
                   <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
-                    Vencimiento Factura
+                    {isB2B ? 'Vencimiento Factura' : 'Vencimiento Boleta'}
                   </p>
                   <p className={`text-sm font-medium ${
                     new Date(movement.due_date) < new Date() && remainingBalance > 0
@@ -992,12 +1003,6 @@ export default function MovementDetailPage() {
             <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
               <h2 className="text-lg font-black uppercase tracking-tight mb-4">Acciones</h2>
               <div className="space-y-3">
-                <Button
-                  onClick={handleConvertToSale}
-                  className="w-full uppercase font-black tracking-wider"
-                >
-                  Convertir a Venta
-                </Button>
                 <Button
                   onClick={handleReturnConsignment}
                   variant="outline"
@@ -1311,7 +1316,7 @@ export default function MovementDetailPage() {
                 {/* Fecha de Factura */}
                 <div>
                   <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
-                    Fecha de Factura
+                    {isB2B ? 'Fecha de Factura' : 'Fecha de Boleta'}
                   </label>
                   <Input
                     type="date"
@@ -1320,6 +1325,21 @@ export default function MovementDetailPage() {
                     className="h-12"
                   />
                 </div>
+
+                {/* Fecha de Guía de Despacho */}
+                {isB2B && (
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                      Fecha de Guía de Despacho
+                    </label>
+                    <Input
+                      type="date"
+                      value={editForm.dispatch_order_date}
+                      onChange={(e) => setEditForm({ ...editForm, dispatch_order_date: e.target.value })}
+                      className="h-12"
+                    />
+                  </div>
+                )}
 
                 {/* Fecha de Entrega */}
                 <div>
@@ -1445,18 +1465,39 @@ function DocumentUpload({
   movementId,
   documentType,
   currentUrl,
+  emailSentAt,
   onUploadComplete
 }: {
   label: string
   movementId: string
   documentType: 'invoice' | 'dispatch_order'
   currentUrl: string | null
+  emailSentAt?: string | null
   onUploadComplete: () => void
 }) {
   const [isUploading, setIsUploading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isResending, setIsResending] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleResend = async () => {
+    setIsResending(true)
+    try {
+      const result = await resendMovementDocumentEmail(movementId, documentType)
+      if (result.success) {
+        toast.success('Correo reenviado exitosamente')
+        onUploadComplete()
+      } else {
+        toast.error(result.error || 'Error al reenviar correo')
+      }
+    } catch (error) {
+      console.error('Resend error:', error)
+      toast.error('Error al reenviar correo')
+    } finally {
+      setIsResending(false)
+    }
+  }
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -1542,6 +1583,37 @@ function DocumentUpload({
           
           {currentUrl ? (
             <div className="flex items-center gap-2">
+              {/* Email Status & Resend */}
+              <div className="flex items-center mr-2 px-2 py-1 bg-slate-100 rounded-lg border border-slate-200">
+                {emailSentAt ? (
+                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-emerald-700" title={`Enviado: ${new Date(emailSentAt).toLocaleString('es-CL')}`}>
+                    <Check className="w-3 h-3" />
+                    <span>Enviado</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                    <span>No enviado</span>
+                  </div>
+                )}
+                
+                <div className="w-px h-3 bg-slate-300 mx-2" />
+                
+                <button
+                  onClick={handleResend}
+                  disabled={isResending}
+                  className="flex items-center gap-1 text-[10px] font-bold text-calmar-ocean hover:underline disabled:opacity-50"
+                  title={emailSentAt ? "Reenviar correo al cliente" : "Enviar correo al cliente"}
+                >
+                  {isResending ? (
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Send className="w-3 h-3" />
+                  )}
+                  {emailSentAt ? 'Reenviar' : 'Enviar'}
+                </button>
+              </div>
+
               <button
                 onClick={() => setShowPreview(true)}
                 className="flex items-center gap-1 text-xs font-bold text-calmar-ocean hover:underline"

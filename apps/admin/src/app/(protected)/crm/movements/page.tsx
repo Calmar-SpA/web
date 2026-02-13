@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { CRMService } from '@calmar/database'
-import { Search, Plus, Package, DollarSign, Calendar, AlertCircle, CheckCircle, UserX, Trash2, FileText } from 'lucide-react'
+import { Search, Plus, Package, DollarSign, Calendar, AlertCircle, CheckCircle, UserX, Trash2, FileText, Building2, CreditCard, Phone, User, Truck } from 'lucide-react'
 import { deleteMovement } from '../actions'
 import { Input, Button } from '@calmar/ui'
 import Link from 'next/link'
@@ -21,7 +21,6 @@ const STATUSES = {
   pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700' },
   delivered: { label: 'Entregado', color: 'bg-blue-100 text-blue-700' },
   returned: { label: 'Devuelto', color: 'bg-gray-100 text-gray-700' },
-  sold: { label: 'Vendido', color: 'bg-green-100 text-green-700' },
   paid: { label: 'Pagado', color: 'bg-emerald-100 text-emerald-700' },
   partial_paid: { label: 'Pago Parcial', color: 'bg-amber-100 text-amber-700' },
   overdue: { label: 'Vencido', color: 'bg-red-100 text-red-700' }
@@ -33,7 +32,29 @@ export default function MovementsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [filterPrice, setFilterPrice] = useState<string>('all')
+  const [priceMin, setPriceMin] = useState<string>('')
+  const [priceMax, setPriceMax] = useState<string>('')
+  const [filterDocs, setFilterDocs] = useState<string>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const docCounts = useMemo(() => {
+    let noInvoice = 0, noBoleta = 0, noDispatch = 0
+    for (const m of movements) {
+      const isB2B = m.prospect?.type === 'b2b' || 
+                    m.movement_type === 'sale_invoice' || 
+                    m.movement_type === 'sale_credit'
+      const hasInvoice = m.invoice_url || m.invoice_date
+      const hasDispatch = m.dispatch_order_url || m.dispatch_order_date
+      
+      if (m.movement_type !== 'sample') {
+         if (isB2B && !hasInvoice) noInvoice++
+         if (!isB2B && !hasInvoice) noBoleta++
+      }
+      if (isB2B && !hasDispatch) noDispatch++
+    }
+    return { noInvoice, noBoleta, noDispatch }
+  }, [movements])
 
   const loadMovements = async () => {
     setIsLoading(true)
@@ -85,6 +106,42 @@ export default function MovementsPage() {
   }
 
   const filteredMovements = movements.filter(m => {
+    // Price Filter
+    if (filterPrice === 'free') {
+      if (m.movement_type !== 'sample' && Number(m.total_amount) > 0) return false
+    } else if (filterPrice === 'paid') {
+      if (m.movement_type === 'sample' || Number(m.total_amount) <= 0) return false
+    } else     if (filterPrice === 'range') {
+      const amount = Number(m.total_amount)
+      if (priceMin && amount < Number(priceMin)) return false
+      if (priceMax && amount > Number(priceMax)) return false
+    }
+
+    // Document Filter
+    if (filterDocs !== 'all') {
+      const isB2B = m.prospect?.type === 'b2b' || 
+                    m.movement_type === 'sale_invoice' || 
+                    m.movement_type === 'sale_credit'
+      const hasInvoice = m.invoice_url || m.invoice_date
+      const hasDispatch = m.dispatch_order_url || m.dispatch_order_date
+
+      if (filterDocs === 'no_invoice') {
+        // B2B sin factura (excluir muestras)
+        if (m.movement_type === 'sample') return false
+        if (!isB2B) return false
+        if (hasInvoice) return false
+      } else if (filterDocs === 'no_boleta') {
+        // B2C/boleta sin boleta (excluir muestras)
+        if (m.movement_type === 'sample') return false
+        if (isB2B) return false
+        if (hasInvoice) return false
+      } else if (filterDocs === 'no_dispatch') {
+        // B2B sin guia de despacho
+        if (!isB2B) return false
+        if (hasDispatch) return false
+      }
+    }
+
     if (searchTerm) {
       const search = searchTerm.toLowerCase()
       return (
@@ -92,6 +149,7 @@ export default function MovementsPage() {
         m.prospect?.fantasy_name?.toLowerCase().includes(search) ||
         m.prospect?.contact_name?.toLowerCase().includes(search) ||
         m.prospect?.company_name?.toLowerCase().includes(search) ||
+        m.prospect?.tax_id?.toLowerCase().includes(search) ||
         m.b2b_client?.company_name?.toLowerCase().includes(search) ||
         m.customer?.email?.toLowerCase().includes(search) ||
         m.sample_recipient_name?.toLowerCase().includes(search) ||
@@ -187,6 +245,149 @@ export default function MovementsPage() {
               </button>
             ))}
           </div>
+
+          {/* Price Filter */}
+          <div className="flex flex-wrap items-center gap-2 p-1 bg-slate-100 rounded-xl">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setFilterPrice('all')
+                  setPriceMin('')
+                  setPriceMax('')
+                }}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  filterPrice === 'all'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <DollarSign className="w-3 h-3" />
+                Todos
+              </button>
+              <button
+                onClick={() => {
+                  setFilterPrice('free')
+                  setPriceMin('')
+                  setPriceMax('')
+                }}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  filterPrice === 'free'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Gratis
+              </button>
+              <button
+                onClick={() => {
+                  setFilterPrice('paid')
+                  setPriceMin('')
+                  setPriceMax('')
+                }}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  filterPrice === 'paid'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Con Precio
+              </button>
+              <button
+                onClick={() => setFilterPrice('range')}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  filterPrice === 'range'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Rango
+              </button>
+            </div>
+            
+            {filterPrice === 'range' && (
+              <div className="flex items-center gap-2 px-2 animate-in fade-in slide-in-from-left-2 duration-200">
+                <Input
+                  type="number"
+                  placeholder="Min"
+                  value={priceMin}
+                  onChange={(e) => setPriceMin(e.target.value)}
+                  className="w-20 h-8 text-xs border-slate-200 bg-white"
+                  min="0"
+                />
+                <span className="text-slate-400 text-xs">-</span>
+                <Input
+                  type="number"
+                  placeholder="Max"
+                  value={priceMax}
+                  onChange={(e) => setPriceMax(e.target.value)}
+                  className="w-20 h-8 text-xs border-slate-200 bg-white"
+                  min="0"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Document Filter */}
+          <div className="flex flex-wrap items-center gap-2 p-1 bg-slate-100 rounded-xl">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setFilterDocs('all')}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  filterDocs === 'all'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <FileText className="w-3 h-3" />
+                Todos
+              </button>
+              <button
+                onClick={() => setFilterDocs('no_invoice')}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  filterDocs === 'no_invoice'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Sin Factura
+                {docCounts.noInvoice > 0 && (
+                  <span className="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full text-[9px]">
+                    {docCounts.noInvoice}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setFilterDocs('no_boleta')}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  filterDocs === 'no_boleta'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Sin Boleta
+                {docCounts.noBoleta > 0 && (
+                  <span className="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full text-[9px]">
+                    {docCounts.noBoleta}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setFilterDocs('no_dispatch')}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  filterDocs === 'no_dispatch'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Sin Guía
+                {docCounts.noDispatch > 0 && (
+                  <span className="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full text-[9px]">
+                    {docCounts.noDispatch}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -203,6 +404,16 @@ export default function MovementsPage() {
             const statusInfo = STATUSES[movement.status as keyof typeof STATUSES]
             const remainingBalance = Number(movement.total_amount) - Number(movement.amount_paid || 0)
             
+            // Get last approved payment date
+            const lastApprovedPayment = movement.payments
+              ?.filter((p: any) => p.verification_status === 'approved')
+              .sort((a: any, b: any) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime())[0]
+            const lastPaymentDate = lastApprovedPayment?.paid_at
+            
+            const isMovementB2B = movement.prospect?.type === 'b2b' || 
+                                  movement.movement_type === 'sale_invoice' || 
+                                  movement.movement_type === 'sale_credit'
+
             return (
               <div
                 key={movement.id}
@@ -223,10 +434,32 @@ export default function MovementsPage() {
                     </h3>
                     <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
                       {movement.prospect && (
-                        <span className="flex items-center gap-1">
-                          <Package className="w-4 h-4" />
-                          {movement.prospect.fantasy_name || movement.prospect.contact_name}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          {movement.prospect.fantasy_name && (
+                            <span className="flex items-center gap-1 font-bold text-slate-700">
+                              <Building2 className="w-4 h-4 text-calmar-ocean" />
+                              {movement.prospect.fantasy_name}
+                            </span>
+                          )}
+                          {movement.prospect.company_name && movement.prospect.company_name !== movement.prospect.fantasy_name && (
+                            <span className="flex items-center gap-1 text-xs text-slate-500">
+                              <Package className="w-3 h-3" />
+                              {movement.prospect.company_name}
+                            </span>
+                          )}
+                          {movement.prospect.tax_id && (
+                            <span className="flex items-center gap-1 text-xs text-slate-500">
+                              <CreditCard className="w-3 h-3" />
+                              {movement.prospect.tax_id}
+                            </span>
+                          )}
+                          {(movement.prospect.contact_name || movement.prospect.phone) && (
+                            <span className="flex items-center gap-1 text-xs text-slate-500">
+                              <User className="w-3 h-3" />
+                              {[movement.prospect.contact_name, movement.prospect.phone].filter(Boolean).join(' • ')}
+                            </span>
+                          )}
+                        </div>
                       )}
                       {movement.b2b_client && (
                         <span className="flex items-center gap-1">
@@ -267,7 +500,7 @@ export default function MovementsPage() {
                   </Link>
                   
                   <div className="flex items-center gap-4">
-                    <div className="flex flex-col items-end gap-2">
+                    <div className="flex flex-col items-end gap-3">
                       <div className="text-right">
                         <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
                           Total
@@ -276,36 +509,63 @@ export default function MovementsPage() {
                           {movement.movement_type === 'sample' ? 'GRATIS' : `$${Number(movement.total_amount).toLocaleString('es-CL')}`}
                         </p>
                       </div>
-                      {movement.movement_type !== 'sample' && remainingBalance > 0 && (
-                        <div className="text-right">
-                          <p className="text-xs font-black uppercase tracking-wider text-orange-600 mb-1">
-                            Pendiente
-                          </p>
-                          <p className="text-lg font-black text-orange-600">
-                            ${remainingBalance.toLocaleString('es-CL')}
-                          </p>
-                        </div>
-                      )}
-                      {movement.invoice_date && (
-                        <div className="flex items-center gap-1 text-xs text-slate-500">
-                          <FileText className="w-3 h-3" />
-                          <span>
-                            Factura: {new Date(movement.invoice_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })}
-                          </span>
-                        </div>
-                      )}
 
-                      {movement.due_date && (
-                        <div className="flex items-center gap-1 text-xs text-slate-500">
-                          <Calendar className="w-3 h-3" />
-                          <span>
-                            Vence: {new Date(movement.due_date).toLocaleDateString('es-CL')}
-                          </span>
-                          {new Date(movement.due_date) < new Date() && movement.status !== 'paid' && (
-                            <AlertCircle className="w-3 h-3 text-red-500" />
+                      {/* Indicators */}
+                      <div className="flex flex-col items-end gap-2">
+                        {/* Payment Status */}
+                        {movement.movement_type !== 'sample' && (
+                          <div className="flex items-center gap-2">
+                            {movement.status === 'paid' ? (
+                              <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+                                <CheckCircle className="w-3 h-3" />
+                                Pagado {lastPaymentDate && `(${new Date(lastPaymentDate).toLocaleDateString('es-CL')})`}
+                              </span>
+                            ) : movement.status === 'partial_paid' ? (
+                              <span className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">
+                                <AlertCircle className="w-3 h-3" />
+                                Parcial {lastPaymentDate && `(${new Date(lastPaymentDate).toLocaleDateString('es-CL')})`}
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">
+                                <AlertCircle className="w-3 h-3" />
+                                Pendiente ${remainingBalance.toLocaleString('es-CL')}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Invoice Status */}
+                        <div className="flex items-center gap-2">
+                          {movement.invoice_url || movement.invoice_date ? (
+                            <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+                              <FileText className="w-3 h-3" />
+                              {isMovementB2B ? 'Facturado' : 'Con Boleta'} {movement.invoice_date && `(${new Date(movement.invoice_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })})`}
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
+                              <FileText className="w-3 h-3" />
+                              {isMovementB2B ? 'Sin Factura' : 'Sin Boleta'}
+                            </span>
                           )}
                         </div>
-                      )}
+
+                        {/* Dispatch Status */}
+                        {isMovementB2B && (
+                          <div className="flex items-center gap-2">
+                            {movement.dispatch_order_url || movement.dispatch_order_date ? (
+                              <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+                                <Truck className="w-3 h-3" />
+                                Guía {movement.dispatch_order_date && `(${new Date(movement.dispatch_order_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })})`}
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
+                                <Truck className="w-3 h-3" />
+                                Sin Guía
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
                     <button

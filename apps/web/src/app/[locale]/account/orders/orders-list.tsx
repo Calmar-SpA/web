@@ -17,7 +17,6 @@ const statusMap: Record<string, { icon: typeof Clock; color: string }> = {
   delivered: { icon: CheckCircle2, color: 'text-emerald-500 bg-emerald-50' },
   cancelled: { icon: AlertCircle, color: 'text-red-500 bg-red-50' },
   returned: { icon: AlertCircle, color: 'text-orange-500 bg-orange-50' },
-  sold: { icon: CheckCircle2, color: 'text-green-500 bg-green-50' },
   partial_paid: { icon: Clock, color: 'text-amber-500 bg-amber-50' },
   overdue: { icon: AlertCircle, color: 'text-red-500 bg-red-50' },
 }

@@ -56,6 +56,7 @@ export interface ProductMovementData {
   sample_recipient_name?: string | null
   sample_event_context?: string | null
   invoice_date?: string | null
+  dispatch_order_date?: string | null
   // Field for anonymous boleta sales
   boleta_buyer_name?: string | null
 }
@@ -277,8 +278,9 @@ export class CRMService {
       .from('product_movements')
       .select(`
         *,
-        prospect:prospects(id, contact_name, company_name, email, payment_terms_days),
-        customer:users!customer_user_id(id, email, full_name)
+        prospect:prospects(id, contact_name, company_name, fantasy_name, tax_id, phone, email, payment_terms_days),
+        customer:users!customer_user_id(id, email, full_name),
+        payments:movement_payments(paid_at, amount, verification_status)
       `)
       .order('created_at', { ascending: false })
 
@@ -426,24 +428,6 @@ export class CRMService {
   }
 
   /**
-   * Convert consignment to sale
-   */
-  async convertConsignmentToSale(movementId: string) {
-    const { data, error } = await this.supabase
-      .from('product_movements')
-      .update({
-        status: 'sold',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', movementId)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  }
-
-  /**
    * Register a payment for a movement
    */
   async registerPayment(data: MovementPaymentData) {
@@ -477,7 +461,7 @@ export class CRMService {
         payments:movement_payments(*)
       `)
       .in('movement_type', ['sale_credit', 'consignment'])
-      .in('status', ['delivered', 'sold', 'partial_paid', 'overdue'])
+      .in('status', ['delivered', 'partial_paid', 'overdue'])
 
     if (filters?.overdue_only) {
       query = query

@@ -59,7 +59,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
           `)
           .in('prospect_id', prospectIds)
           .in('movement_type', ['sale_credit', 'consignment'])
-          .in('status', ['delivered', 'sold', 'partial_paid', 'overdue'])
+          .in('status', ['delivered', 'partial_paid', 'overdue'])
 
         if (!movementsError && movements) {
           pendingDebts = movements
