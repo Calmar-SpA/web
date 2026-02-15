@@ -792,12 +792,16 @@ export async function approvePayment(paymentId: string) {
   const customerName = movement?.customer?.full_name || movement?.prospect?.contact_name || 'Cliente'
   
   if (customerEmail) {
+    const webUrl = process.env.WEB_URL || 'http://localhost:3002'
+    const movementUrl = `${webUrl}/es/m/${payment.movement_id}`
+
     await sendPaymentStatusCustomerNotification({
       to: customerEmail,
       customerName,
       movementNumber: movement.movement_number || movement.id.slice(0, 8),
       amount: Number(payment.amount),
-      status: 'approved'
+      status: 'approved',
+      movementUrl
     })
   }
 
@@ -832,13 +836,17 @@ export async function rejectPayment(paymentId: string, reason: string) {
   const customerName = movement?.customer?.full_name || movement?.prospect?.contact_name || 'Cliente'
   
   if (customerEmail) {
+    const webUrl = process.env.WEB_URL || 'http://localhost:3002'
+    const movementUrl = `${webUrl}/es/m/${payment.movement_id}`
+
     await sendPaymentStatusCustomerNotification({
       to: customerEmail,
       customerName,
       movementNumber: movement.movement_number || movement.id.slice(0, 8),
       amount: Number(payment.amount),
       status: 'rejected',
-      rejectionReason: reason
+      rejectionReason: reason,
+      movementUrl
     })
   }
 
@@ -1032,6 +1040,9 @@ export async function resendMovementDocumentEmail(
     }
 
     // @ts-ignore - ignoring type mismatch if sendDocumentUploadedEmail hasn't been updated in types yet (though I just updated it)
+    const webUrl = process.env.WEB_URL || 'http://localhost:3002'
+    const movementUrl = `${webUrl}/es/m/${movementId}`
+
     await sendDocumentUploadedEmail({
       contactName,
       contactEmail: email,
@@ -1042,7 +1053,8 @@ export async function resendMovementDocumentEmail(
         content: base64Content,
         filename: fileName.split('/').pop() || 'documento',
         type: mimeType
-      }
+      },
+      movementUrl
     })
 
     // 6. Update timestamp

@@ -230,6 +230,15 @@
       "pendingBalance": "Pending Balance",
       "sampleNoPayment": "Samples do not require payment"
     },
+    "publicMovementDetail": {
+      "publicView": "PUBLIC VIEW",
+      "readOnlyDescription": "You are viewing a read-only version of this movement.",
+      "loginToManage": "Log in to manage",
+      "ctaTitle": "ARE YOU A CALMAR CLIENT?",
+      "ctaDescription": "Create your account or log in to view full details of all your movements, make payments, and manage returns.",
+      "login": "Log In",
+      "register": "Create Account"
+    },
     "loyalty": {
       "title": "Calmar Points",
       "equivalent": "Equivalent to ${value} discount",

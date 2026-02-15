@@ -230,6 +230,15 @@
       "pendingBalance": "Saldo Pendiente",
       "sampleNoPayment": "Las muestras no requieren pago"
     },
+    "publicMovementDetail": {
+      "publicView": "VISTA PÚBLICA",
+      "readOnlyDescription": "Estás viendo una versión de solo lectura de este movimiento.",
+      "loginToManage": "Iniciar sesión para gestionar",
+      "ctaTitle": "¿ERES CLIENTE CALMAR?",
+      "ctaDescription": "Crea tu cuenta o inicia sesión para ver el detalle completo de todos tus movimientos, realizar pagos y gestionar devoluciones.",
+      "login": "Iniciar Sesión",
+      "register": "Crear Cuenta"
+    },
     "loyalty": {
       "title": "Puntos Calmar",
       "equivalent": "Equivalente a ${value} de descuento",

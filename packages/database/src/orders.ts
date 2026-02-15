@@ -346,6 +346,80 @@ export class OrderService {
   }
 
   /**
+   * Get public movement detail (read-only, safe data)
+   * Used for public sharing link
+   */
+  async getMovementPublic(movementId: string) {
+    // 1. Fetch movement with minimal fields
+    const { data, error } = await this.supabase
+      .from('product_movements')
+      .select(`
+        id, movement_number, movement_type, status, total_amount, 
+        created_at, due_date, items, notes,
+        invoice_url, dispatch_order_url,
+        documents:movement_documents(id, document_type, document_url, document_number, is_current, created_at),
+        payments:movement_payments(amount, paid_at, verification_status)
+      `)
+      .eq('id', movementId)
+      .single()
+
+    if (error) throw error
+    if (!data) return null
+
+    // 2. Resolve product info for items (same as user view)
+    if (Array.isArray(data.items)) {
+      const productIds = data.items.map((item: any) => item.product_id).filter(Boolean)
+      
+      if (productIds.length > 0) {
+        const { data: products } = await this.supabase
+          .from('products')
+          .select('id, name, sku, image_url')
+          .in('id', productIds)
+
+        const productMap = new Map(products?.map(p => [p.id, p]) || [])
+        
+        data.items = data.items.map((item: any) => ({
+          ...item,
+          product: productMap.get(item.product_id) || null
+        }))
+      }
+    }
+
+    // 3. Calculate financial summary (only totals)
+    const totalPaid = data.payments?.reduce(
+      (sum: number, p: { amount: number; verification_status?: string }) => {
+        // Only count approved payments or those without status (legacy)
+        if (!p.verification_status || p.verification_status === 'approved') {
+          return sum + Number(p.amount)
+        }
+        return sum
+      }, 0
+    ) || 0
+    
+    // Filter documents to show only current ones
+    const currentDocuments = data.documents?.filter((d: any) => d.is_current) || []
+
+    // Return safe object
+    return {
+      id: data.id,
+      movement_number: data.movement_number,
+      movement_type: data.movement_type,
+      status: data.status,
+      total_amount: Number(data.total_amount),
+      total_paid: totalPaid,
+      remaining_balance: Number(data.total_amount) - totalPaid,
+      created_at: data.created_at,
+      due_date: data.due_date,
+      items: data.items,
+      notes: data.notes,
+      documents: currentDocuments,
+      // Legacy document fields fallback
+      invoice_url: data.invoice_url,
+      dispatch_order_url: data.dispatch_order_url
+    }
+  }
+
+  /**
    * Request return for a consignment (user action)
    */
   async requestConsignmentReturn(movementId: string) {

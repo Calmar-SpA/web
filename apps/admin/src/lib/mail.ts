@@ -317,6 +317,7 @@ export async function sendPaymentStatusCustomerNotification(params: {
   amount: number;
   status: 'approved' | 'rejected';
   rejectionReason?: string;
+  movementUrl?: string;
 }) {
   const isApproved = params.status === 'approved';
   const title = isApproved ? 'Pago Aprobado' : 'Pago Rechazado';
@@ -335,6 +336,14 @@ export async function sendPaymentStatusCustomerNotification(params: {
       
       ${isApproved ? '<p>Tu saldo ha sido actualizado correctamente.</p>' : ''}
     </div>
+
+    ${params.movementUrl ? `
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${params.movementUrl}" style="background:${brand.primaryDark};color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">
+          Ver Movimiento
+        </a>
+      </div>
+    ` : ''}
   `;
 
   const html = buildEmailShell(title, content);
@@ -357,6 +366,7 @@ export async function sendDocumentUploadedEmail(params: {
     filename: string;
     type: string;
   };
+  movementUrl?: string;
 }) {
   const docLabels: Record<string, string> = {
     invoice: 'Factura',
@@ -381,6 +391,20 @@ export async function sendDocumentUploadedEmail(params: {
     <p style="margin:12px 0;line-height:1.6;">
       Adjunto encontrarás el documento en formato PDF/Imagen.
     </p>
+
+    ${params.movementUrl ? `
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${params.movementUrl}" style="background:${brand.primaryDark};color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">
+          Ver Movimiento
+        </a>
+        <p style="margin-top:12px;font-size:12px;color:#666;">
+          No necesitas iniciar sesión para ver el detalle.
+          <br>
+          Si creas una cuenta con este correo, podrás ver todos tus movimientos.
+        </p>
+      </div>
+    ` : ''}
+
     <p style="margin:12px 0;line-height:1.6;">
       Si tienes dudas, responde a este correo.
     </p>
