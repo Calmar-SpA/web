@@ -392,6 +392,26 @@ export async function sendDocumentUploadedEmail(params: {
       Adjunto encontrarás el documento en formato PDF/Imagen.
     </p>
 
+    ${(params.documentType === 'invoice' || params.documentType === 'boleta') ? `
+      <div style="background:${brand.muted};padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid ${brand.primary};">
+        <p style="margin:0 0 8px;font-weight:600;">Opciones de pago</p>
+        <p style="margin:0 0 8px;line-height:1.5;">
+          Puedes realizar el pago con <strong>tarjeta de crédito/débito</strong> o mediante <strong>transferencia bancaria</strong>.
+        </p>
+        <p style="margin:0 0 8px;line-height:1.5;">
+          Si aún no tienes cuenta, puedes crearla gratuitamente:
+        </p>
+        <div style="text-align:center;margin:12px 0;">
+          <a href="https://www.calmar.cl/login" style="background:${brand.primaryDark};color:#ffffff;padding:10px 18px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;font-size:14px;">
+            Crear cuenta gratis
+          </a>
+        </div>
+        <p style="margin:8px 0 0;font-size:13px;color:#666;line-height:1.5;">
+          <strong>Importante:</strong> asegúrate de registrarte con el mismo correo electrónico en el que estás recibiendo esta notificación.
+        </p>
+      </div>
+    ` : ''}
+
     ${params.movementUrl ? `
       <div style="text-align:center;margin:24px 0;">
         <a href="${params.movementUrl}" style="background:${brand.primaryDark};color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">
