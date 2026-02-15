@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { flow } from '@/lib/flow'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // CORS headers for Flow callbacks
 const corsHeaders = {
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const status = await flow.getStatus(token)
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Extract movement ID from commerceOrder (format: MOV-{movementId})
     const commerceOrder = status.commerceOrder
@@ -49,7 +49,6 @@ export async function POST(request: NextRequest) {
     // Only process if payment was successful (status 2 = paid)
     if (status.status === 2) {
       // Register payment in movement_payments table
-      const { data: { user } } = await supabase.auth.getUser()
       
       const { error: paymentError } = await supabase
         .from('movement_payments')
@@ -59,7 +58,7 @@ export async function POST(request: NextRequest) {
           payment_method: 'credit_card', // Flow uses cards
           payment_reference: token,
           notes: `Pago online via Flow - ${status.paymentData?.media || 'Tarjeta'}`,
-          created_by: user?.id || null
+          created_by: null
         })
 
       if (paymentError) {

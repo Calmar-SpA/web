@@ -30,6 +30,7 @@ interface Prospect {
   converted_to_client_id?: string | null
   converted_to_type?: 'b2b' | 'b2c' | null
   credit_limit?: number
+  user_id?: string
 }
 
 export default function NewMovementPage() {
@@ -107,7 +108,7 @@ function NewMovementContent() {
     try {
       const { data: prospectsData } = await supabase
         .from('prospects')
-        .select('id, contact_name, company_name, fantasy_name, email, type, stage, converted_to_client_id, converted_to_type, credit_limit')
+        .select('id, contact_name, company_name, fantasy_name, email, type, stage, converted_to_client_id, converted_to_type, credit_limit, user_id')
         .order('created_at', { ascending: false })
       
       setProspects(prospectsData || [])
@@ -125,7 +126,12 @@ function NewMovementContent() {
   }
 
   const handleProspectSelection = async (selectedProspectId: string) => {
-    setFormData(prev => ({ ...prev, prospect_id: selectedProspectId }))
+    const selectedProspect = prospects.find(p => p.id === selectedProspectId)
+    setFormData(prev => ({ 
+      ...prev, 
+      prospect_id: selectedProspectId,
+      customer_user_id: selectedProspect?.user_id || ''
+    }))
 
     if (!selectedProspectId) {
       setProspectCreditLimit(0)

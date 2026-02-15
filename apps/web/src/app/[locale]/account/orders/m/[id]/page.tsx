@@ -5,7 +5,7 @@ import { OrderService } from '@calmar/database'
 import { Button, Card, CardHeader, CardTitle, CardContent } from "@calmar/ui"
 import { Package, ChevronLeft, FileText, CreditCard, Receipt, Gift, RotateCcw, Download, Calendar, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { notFound, useRouter } from 'next/navigation'
+import { notFound, useRouter, useSearchParams } from 'next/navigation'
 import { formatClp, getPriceBreakdown } from '@calmar/utils'
 import { useTranslations } from 'next-intl'
 import { RequestReturnButton } from './request-return-button'
@@ -21,6 +21,8 @@ export default function MovementDetailPage({
   const { id, locale } = use(params)
   const t = useTranslations("Account.movementDetail")
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const paymentStatus = searchParams.get('payment')
   
   const [movement, setMovement] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -131,6 +133,45 @@ export default function MovementDetailPage({
           {t('backToOrders')}
         </Link>
       </div>
+
+      {/* Payment Feedback Banner */}
+      {paymentStatus && (
+        <div className={`mb-8 p-5 rounded-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500 ${
+          paymentStatus === 'success' ? 'bg-emerald-50 border-2 border-emerald-100' :
+          paymentStatus === 'pending' ? 'bg-amber-50 border-2 border-amber-100' :
+          'bg-red-50 border-2 border-red-100'
+        }`}>
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+            paymentStatus === 'success' ? 'bg-emerald-100 text-emerald-600' :
+            paymentStatus === 'pending' ? 'bg-amber-100 text-amber-600' :
+            'bg-red-100 text-red-600'
+          }`}>
+            {paymentStatus === 'success' ? <CheckCircle2 className="w-6 h-6" /> :
+             paymentStatus === 'pending' ? <Loader2 className="w-6 h-6 animate-spin" /> :
+             <AlertCircle className="w-6 h-6" />}
+          </div>
+          <div>
+            <p className={`font-black uppercase tracking-tight ${
+              paymentStatus === 'success' ? 'text-emerald-900' :
+              paymentStatus === 'pending' ? 'text-amber-900' :
+              'text-red-900'
+            }`}>
+              {paymentStatus === 'success' ? (locale === 'es' ? '¡Pago Exitoso!' : 'Payment Successful!') :
+               paymentStatus === 'pending' ? (locale === 'es' ? 'Pago en Proceso' : 'Payment Processing') :
+               (locale === 'es' ? 'Error en el Pago' : 'Payment Failed')}
+            </p>
+            <p className={`text-sm font-medium ${
+              paymentStatus === 'success' ? 'text-emerald-700/80' :
+              paymentStatus === 'pending' ? 'text-amber-700/80' :
+              'text-red-700/80'
+            }`}>
+              {paymentStatus === 'success' ? (locale === 'es' ? 'Tu pago ha sido procesado correctamente.' : 'Your payment has been processed successfully.') :
+               paymentStatus === 'pending' ? (locale === 'es' ? 'Estamos confirmando tu pago. Esto puede tomar unos momentos.' : 'We are confirming your payment. This may take a few moments.') :
+               (locale === 'es' ? 'Hubo un problema al procesar tu pago. Por favor intenta nuevamente.' : 'There was a problem processing your payment. Please try again.')}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Header Section */}
       <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
