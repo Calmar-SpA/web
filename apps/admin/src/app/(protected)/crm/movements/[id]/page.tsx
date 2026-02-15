@@ -29,6 +29,7 @@ export default function MovementDetailPage() {
   const movementId = params.id as string
   
   const [movement, setMovement] = useState<any>(null)
+  const [documents, setDocuments] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -74,6 +75,14 @@ export default function MovementDetailPage() {
     try {
       const data = await crmService.getMovementById(movementId)
       setMovement(data)
+      
+      try {
+        const docs = await crmService.getMovementDocuments(movementId)
+        setDocuments(docs || [])
+      } catch (docError) {
+        console.error('Error loading documents:', docError)
+      }
+
       // Initialize edit form with current values
       setEditForm({
         notes: data?.notes || '',
@@ -876,32 +885,13 @@ export default function MovementDetailPage() {
           )}
 
           {/* Documents */}
-          <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
-            <h2 className="text-lg font-black uppercase tracking-tight mb-4">Documentos</h2>
-            <div className="space-y-4">
-              {/* Invoice/Receipt */}
-              <DocumentUpload
-                label={isB2B ? "Factura" : "Boleta"}
-                movementId={movementId}
-                documentType="invoice"
-                currentUrl={movement.invoice_url}
-                emailSentAt={movement.invoice_email_sent_at}
-                onUploadComplete={loadMovement}
-              />
-              
-              {/* Dispatch Order */}
-              {isB2B && (
-                <DocumentUpload
-                  label="Orden de Despacho"
-                  movementId={movementId}
-                  documentType="dispatch_order"
-                  currentUrl={movement.dispatch_order_url}
-                  emailSentAt={movement.dispatch_order_email_sent_at}
-                  onUploadComplete={loadMovement}
-                />
-              )}
-            </div>
-          </div>
+          <DocumentSection 
+            movementId={movementId}
+            movementType={movement.movement_type}
+            isB2B={isB2B}
+            documents={documents}
+            onRefresh={loadMovement}
+          />
 
           {/* Notes */}
           {movement.notes && (
@@ -1457,75 +1447,108 @@ export default function MovementDetailPage() {
   )
 }
 
-// Document Upload Component
-function DocumentUpload({
-  label,
+// Document Section Component
+function DocumentSection({
   movementId,
-  documentType,
-  currentUrl,
-  emailSentAt,
-  onUploadComplete
+  movementType,
+  isB2B,
+  documents,
+  onRefresh
+}: {
+  movementId: string
+  movementType: string
+  isB2B: boolean
+  documents: any[]
+  onRefresh: () => void
+}) {
+  const docTypes = []
+
+  if (movementType === 'sample') {
+    docTypes.push({ type: 'guia_despacho', label: 'Guía de Despacho' })
+  } else if (movementType === 'sale_boleta') {
+    docTypes.push({ type: 'boleta', label: 'Boleta' })
+    docTypes.push({ type: 'nota_credito', label: 'Nota de Crédito' })
+    docTypes.push({ type: 'nota_debito', label: 'Nota de Débito' })
+  } else {
+    // B2B sales (invoice, credit, consignment)
+    docTypes.push({ type: 'factura', label: 'Factura' })
+    docTypes.push({ type: 'guia_despacho', label: 'Guía de Despacho' })
+    docTypes.push({ type: 'nota_credito', label: 'Nota de Crédito' })
+    docTypes.push({ type: 'nota_debito', label: 'Nota de Débito' })
+  }
+
+  return (
+    <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
+      <h2 className="text-lg font-black uppercase tracking-tight mb-4">Documentos</h2>
+      <div className="space-y-8">
+        {docTypes.map(docType => (
+          <DocumentTypeSection
+            key={docType.type}
+            label={docType.label}
+            type={docType.type as any}
+            movementId={movementId}
+            documents={documents.filter(d => d.document_type === docType.type)}
+            onRefresh={onRefresh}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function DocumentTypeSection({
+  label,
+  type,
+  movementId,
+  documents,
+  onRefresh
 }: {
   label: string
+  type: 'factura' | 'boleta' | 'guia_despacho' | 'nota_credito' | 'nota_debito'
   movementId: string
-  documentType: 'invoice' | 'dispatch_order'
-  currentUrl: string | null
-  emailSentAt?: string | null
-  onUploadComplete: () => void
+  documents: any[]
+  onRefresh: () => void
 }) {
   const [isUploading, setIsUploading] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isResending, setIsResending] = useState(false)
-  const [showPreview, setShowPreview] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleResend = async () => {
-    setIsResending(true)
-    try {
-      const result = await resendMovementDocumentEmail(movementId, documentType)
-      if (result.success) {
-        toast.success('Correo reenviado exitosamente')
-        onUploadComplete()
-      } else {
-        toast.error(result.error || 'Error al reenviar correo')
-      }
-    } catch (error) {
-      console.error('Resend error:', error)
-      toast.error('Error al reenviar correo')
-    } finally {
-      setIsResending(false)
-    }
-  }
+  const currentDoc = documents.find(d => d.is_current)
+  const historyDocs = documents.filter(d => !d.is_current)
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type (PDF, images)
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
     if (!allowedTypes.includes(file.type)) {
       toast.error('Solo se permiten archivos PDF o imágenes')
       return
     }
 
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast.error('El archivo no puede superar los 10MB')
       return
     }
+
+    // Ask for document number and notes if replacing or adding new
+    const docNumber = prompt('Número de documento (opcional):')
+    const notes = prompt('Notas / Razón (opcional):')
 
     setIsUploading(true)
     try {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('movementId', movementId)
-      formData.append('documentType', documentType)
+      formData.append('documentType', type)
+      if (docNumber) formData.append('documentNumber', docNumber)
+      if (notes) formData.append('notes', notes)
 
       const result = await uploadMovementDocument(formData)
       
       if (result.success) {
         toast.success('Documento subido')
-        onUploadComplete()
+        onRefresh()
       } else {
         toast.error(result.error || 'Error al subir documento')
       }
@@ -1540,16 +1563,123 @@ function DocumentUpload({
     }
   }
 
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FileText className="w-4 h-4 text-slate-400" />
+          <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">{label}</h3>
+        </div>
+        
+        <label className="cursor-pointer">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.webp"
+            onChange={handleFileSelect}
+            className="hidden"
+            disabled={isUploading}
+          />
+          <span className="flex items-center gap-1 text-xs font-bold text-calmar-ocean hover:underline">
+            {isUploading ? (
+              <>
+                <div className="w-3 h-3 border-2 border-calmar-ocean border-t-transparent rounded-full animate-spin" />
+                Subiendo...
+              </>
+            ) : (
+              <>
+                <Plus className="w-3 h-3" />
+                {currentDoc ? 'Reemplazar / Agregar nuevo' : 'Subir documento'}
+              </>
+            )}
+          </span>
+        </label>
+      </div>
+
+      {currentDoc ? (
+        <DocumentCard 
+          document={currentDoc} 
+          movementId={movementId} 
+          onRefresh={onRefresh} 
+          isCurrent={true} 
+        />
+      ) : (
+        <div className="p-4 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-xs italic">
+          No hay documento vigente
+        </div>
+      )}
+
+      {historyDocs.length > 0 && (
+        <div className="pt-2">
+          <button 
+            onClick={() => setShowHistory(!showHistory)}
+            className="text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center gap-1"
+          >
+            {showHistory ? 'Ocultar historial' : `Ver historial (${historyDocs.length})`}
+          </button>
+          
+          {showHistory && (
+            <div className="mt-2 space-y-2 pl-4 border-l-2 border-slate-100">
+              {historyDocs.map(doc => (
+                <DocumentCard 
+                  key={doc.id} 
+                  document={doc} 
+                  movementId={movementId} 
+                  onRefresh={onRefresh} 
+                  isCurrent={false} 
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DocumentCard({
+  document,
+  movementId,
+  onRefresh,
+  isCurrent
+}: {
+  document: any
+  movementId: string
+  onRefresh: () => void
+  isCurrent: boolean
+}) {
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isResending, setIsResending] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+
+  const handleResend = async () => {
+    setIsResending(true)
+    try {
+      const result = await resendMovementDocumentEmail(document.id, movementId)
+      if (result.success) {
+        toast.success('Correo reenviado exitosamente')
+        onRefresh()
+      } else {
+        toast.error(result.error || 'Error al reenviar correo')
+      }
+    } catch (error) {
+      console.error('Resend error:', error)
+      toast.error('Error al reenviar correo')
+    } finally {
+      setIsResending(false)
+    }
+  }
+
   const handleDelete = async () => {
     if (!confirm('¿Estás seguro de eliminar este documento?')) return
 
     setIsDeleting(true)
     try {
-      const result = await deleteMovementDocument(movementId, documentType)
+      const result = await deleteMovementDocument(document.id, movementId)
       
       if (result.success) {
         toast.success('Documento eliminado')
-        onUploadComplete()
+        onRefresh()
       } else {
         toast.error(result.error || 'Error al eliminar documento')
       }
@@ -1568,30 +1698,46 @@ function DocumentUpload({
     return 'unknown'
   }
 
-  const fileType = currentUrl ? getFileType(currentUrl) : null
+  const fileType = getFileType(document.document_url)
 
   return (
     <>
-      <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-slate-400" />
-            <span className="font-bold text-sm text-slate-700">{label}</span>
+      <div className={`p-3 rounded-xl border ${isCurrent ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-50 border-slate-100'}`}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isCurrent ? 'bg-calmar-ocean/10 text-calmar-ocean' : 'bg-slate-200 text-slate-500'}`}>
+              <FileText className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className={`text-xs font-bold truncate ${isCurrent ? 'text-slate-900' : 'text-slate-500'}`}>
+                  {document.document_number ? `Nº ${document.document_number}` : 'Sin número'}
+                </p>
+                {!isCurrent && (
+                  <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 bg-slate-200 text-slate-500 rounded">
+                    Reemplazado
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-slate-500">
+                {new Date(document.created_at).toLocaleDateString('es-CL')} 
+                {document.notes && ` • ${document.notes}`}
+              </p>
+            </div>
           </div>
-          
-          {currentUrl ? (
-            <div className="flex items-center gap-2">
-              {/* Email Status & Resend */}
+
+          <div className="flex items-center gap-1">
+            {isCurrent && (
               <div className="flex items-center mr-2 px-2 py-1 bg-slate-100 rounded-lg border border-slate-200">
-                {emailSentAt ? (
-                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-emerald-700" title={`Enviado: ${new Date(emailSentAt).toLocaleString('es-CL')}`}>
+                {document.email_sent_at ? (
+                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-emerald-700" title={`Enviado: ${new Date(document.email_sent_at).toLocaleString('es-CL')}`}>
                     <Check className="w-3 h-3" />
-                    <span>Enviado</span>
+                    <span className="hidden sm:inline">Enviado</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
                     <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                    <span>No enviado</span>
+                    <span className="hidden sm:inline">No enviado</span>
                   </div>
                 )}
                 
@@ -1601,126 +1747,65 @@ function DocumentUpload({
                   onClick={handleResend}
                   disabled={isResending}
                   className="flex items-center gap-1 text-[10px] font-bold text-calmar-ocean hover:underline disabled:opacity-50"
-                  title={emailSentAt ? "Reenviar correo al cliente" : "Enviar correo al cliente"}
+                  title={document.email_sent_at ? "Reenviar correo al cliente" : "Enviar correo al cliente"}
                 >
                   {isResending ? (
                     <RefreshCw className="w-3 h-3 animate-spin" />
                   ) : (
                     <Send className="w-3 h-3" />
                   )}
-                  {emailSentAt ? 'Reenviar' : 'Enviar'}
+                  {document.email_sent_at ? 'Reenviar' : 'Enviar'}
                 </button>
               </div>
-
-              <button
-                onClick={() => setShowPreview(true)}
-                className="flex items-center gap-1 text-xs font-bold text-calmar-ocean hover:underline"
-              >
-                <Eye className="w-4 h-4" />
-                Ver
-              </button>
-              <div className="w-px h-3 bg-slate-300 mx-1" />
-              <a
-                href={currentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-calmar-ocean"
-                title="Abrir en nueva pestaña"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </a>
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-50 ml-1"
-                title="Eliminar documento"
-              >
-                {isDeleting ? (
-                  <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Trash2 className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          ) : (
-            <label className="cursor-pointer">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.webp"
-                onChange={handleFileSelect}
-                className="hidden"
-                disabled={isUploading}
-              />
-              <span className="flex items-center gap-1 text-xs font-bold text-calmar-ocean hover:underline">
-                {isUploading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-calmar-ocean border-t-transparent rounded-full animate-spin" />
-                    Subiendo...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4" />
-                    Subir documento
-                  </>
-                )}
-              </span>
-            </label>
-          )}
-        </div>
-
-        {/* Inline Preview */}
-        {currentUrl && (
-          <div className="mt-4 border-t border-slate-200 pt-4">
-            {fileType === 'image' && (
-              <div 
-                className="relative w-full h-48 bg-white rounded-lg overflow-hidden cursor-pointer group border border-slate-200 shadow-sm"
-                onClick={() => setShowPreview(true)}
-              >
-                <img 
-                  src={currentUrl} 
-                  alt={label} 
-                  className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" 
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                  <Eye className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 drop-shadow-lg transition-opacity" />
-                </div>
-              </div>
             )}
-            {fileType === 'pdf' && (
-              <div className="w-full h-[300px] bg-white rounded-lg overflow-hidden border border-slate-200 relative group shadow-sm">
-                <iframe 
-                  src={`${currentUrl}#toolbar=0&view=FitH`} 
-                  className="w-full h-full" 
-                  title={label}
-                />
-                <div 
-                  className="absolute inset-0 bg-transparent cursor-pointer"
-                  onClick={() => setShowPreview(true)}
-                >
-                  <div className="absolute top-2 right-2 bg-white/90 p-2 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
-                    <Eye className="w-4 h-4 text-slate-700" />
-                  </div>
-                </div>
-              </div>
-            )}
+
+            <button
+              onClick={() => setShowPreview(true)}
+              className="p-1.5 text-calmar-ocean hover:bg-calmar-ocean/10 rounded transition-colors"
+              title="Ver documento"
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+            
+            <a
+              href={document.document_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 text-slate-500 hover:text-calmar-ocean hover:bg-slate-100 rounded transition-colors"
+              title="Abrir en nueva pestaña"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+              title="Eliminar documento"
+            >
+              {isDeleting ? (
+                <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Full Screen Modal */}
-      {showPreview && currentUrl && (
+      {/* Preview Modal */}
+      {showPreview && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-6xl h-full max-h-[95vh] flex flex-col bg-transparent">
             {/* Toolbar */}
             <div className="flex items-center justify-between text-white mb-4 px-2">
               <h3 className="font-bold text-lg flex items-center gap-2">
                 <FileText className="w-5 h-5 text-slate-400" />
-                {label}
+                Documento
               </h3>
               <div className="flex items-center gap-2">
                 <a 
-                  href={currentUrl} 
+                  href={document.document_url} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-sm font-bold"
@@ -1742,15 +1827,15 @@ function DocumentUpload({
             <div className="flex-1 bg-slate-900/50 rounded-xl overflow-hidden flex items-center justify-center border border-white/10 relative shadow-2xl">
               {fileType === 'image' ? (
                 <img 
-                  src={currentUrl} 
-                  alt={label} 
+                  src={document.document_url} 
+                  alt="Documento" 
                   className="max-w-full max-h-full object-contain" 
                 />
               ) : (
                 <iframe 
-                  src={currentUrl} 
+                  src={document.document_url} 
                   className="w-full h-full bg-white" 
-                  title={label}
+                  title="Documento"
                 />
               )}
             </div>

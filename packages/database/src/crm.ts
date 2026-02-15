@@ -69,6 +69,20 @@ export interface MovementPaymentData {
   notes?: string
 }
 
+export interface MovementDocument {
+  id: string
+  movement_id: string
+  document_type: 'factura' | 'boleta' | 'guia_despacho' | 'nota_credito' | 'nota_debito'
+  document_url: string
+  document_number?: string | null
+  document_date: string
+  is_current: boolean
+  email_sent_at?: string | null
+  notes?: string | null
+  created_by?: string | null
+  created_at: string
+}
+
 export class CRMService {
   constructor(private supabase: SupabaseClient) {}
 
@@ -280,7 +294,8 @@ export class CRMService {
         *,
         prospect:prospects(id, contact_name, company_name, fantasy_name, tax_id, phone, email, payment_terms_days, type),
         customer:users!customer_user_id(id, email, full_name),
-        payments:movement_payments(paid_at, amount, verification_status)
+        payments:movement_payments(paid_at, amount, verification_status),
+        documents:movement_documents(*)
       `)
       .order('created_at', { ascending: false })
 
@@ -486,6 +501,91 @@ export class CRMService {
         remaining_balance: remainingBalance
       }
     })
+  }
+
+  /**
+   * Get documents for a movement
+   */
+  async getMovementDocuments(movementId: string) {
+    const { data, error } = await this.supabase
+      .from('movement_documents')
+      .select('*')
+      .eq('movement_id', movementId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data as MovementDocument[]
+  }
+
+  /**
+   * Add a new document to a movement
+   */
+  async addMovementDocument(data: {
+    movement_id: string
+    document_type: 'factura' | 'boleta' | 'guia_despacho' | 'nota_credito' | 'nota_debito'
+    document_url: string
+    document_number?: string
+    notes?: string
+    is_current?: boolean
+  }) {
+    const { data: { user } } = await this.supabase.auth.getUser()
+
+    const { data: document, error } = await this.supabase
+      .from('movement_documents')
+      .insert({
+        ...data,
+        is_current: data.is_current ?? true,
+        created_by: user?.id
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return document as MovementDocument
+  }
+
+  /**
+   * Delete a movement document
+   * If the deleted document was current, the most recent previous document of the same type becomes current
+   */
+  async deleteMovementDocument(documentId: string) {
+    // Get document info before deletion
+    const { data: docToDelete, error: fetchError } = await this.supabase
+      .from('movement_documents')
+      .select('movement_id, document_type, is_current')
+      .eq('id', documentId)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    // Delete the document
+    const { error: deleteError } = await this.supabase
+      .from('movement_documents')
+      .delete()
+      .eq('id', documentId)
+
+    if (deleteError) throw deleteError
+
+    // If it was current, find the most recent one of same type and make it current
+    if (docToDelete.is_current) {
+      const { data: previousDoc } = await this.supabase
+        .from('movement_documents')
+        .select('id')
+        .eq('movement_id', docToDelete.movement_id)
+        .eq('document_type', docToDelete.document_type)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (previousDoc) {
+        await this.supabase
+          .from('movement_documents')
+          .update({ is_current: true })
+          .eq('id', previousDoc.id)
+      }
+    }
+
+    return { success: true }
   }
 
   /**

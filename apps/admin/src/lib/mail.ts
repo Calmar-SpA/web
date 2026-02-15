@@ -351,15 +351,22 @@ export async function sendDocumentUploadedEmail(params: {
   contactEmail: string;
   companyName: string;
   movementNumber: string;
-  documentType: 'invoice' | 'dispatch_order';
+  documentType: 'invoice' | 'dispatch_order' | 'credit_note' | 'debit_note' | 'boleta';
   attachment: {
     content: string;
     filename: string;
     type: string;
   };
 }) {
-  const isInvoice = params.documentType === 'invoice';
-  const docLabel = isInvoice ? 'Factura' : 'Guía de Despacho';
+  const docLabels: Record<string, string> = {
+    invoice: 'Factura',
+    dispatch_order: 'Guía de Despacho',
+    credit_note: 'Nota de Crédito',
+    debit_note: 'Nota de Débito',
+    boleta: 'Boleta'
+  };
+
+  const docLabel = docLabels[params.documentType] || 'Documento';
   const title = `${docLabel} Disponible - ${params.movementNumber}`;
   
   const content = `

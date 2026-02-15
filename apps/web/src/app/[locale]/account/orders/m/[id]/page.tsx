@@ -241,36 +241,91 @@ export default function MovementDetailPage({
           {/* Documents & Notes Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Documents */}
-            {(movement.invoice_url || movement.dispatch_order_url) && (
-              <Card className="border-0 shadow-sm bg-white rounded-3xl overflow-hidden">
-                <CardHeader className="border-b border-slate-50 px-6 py-4">
-                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5" />
-                    {t('documents')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-3">
-                  {movement.invoice_url && (
-                    <a href={movement.invoice_url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-calmar-ocean hover:text-white transition-all group">
-                      <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-calmar-ocean group-hover:text-white transition-colors" />
-                        <span className="font-black text-[10px] uppercase tracking-widest">{t('invoiceDocument')}</span>
-                      </div>
-                      <Download className="w-4 h-4 opacity-40 group-hover:opacity-100" />
-                    </a>
-                  )}
-                  {movement.dispatch_order_url && (
-                    <a href={movement.dispatch_order_url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-purple-600 hover:text-white transition-all group">
-                      <div className="flex items-center gap-3">
-                        <Package className="w-5 h-5 text-purple-600 group-hover:text-white transition-colors" />
-                        <span className="font-black text-[10px] uppercase tracking-widest">{t('dispatchDocument')}</span>
-                      </div>
-                      <Download className="w-4 h-4 opacity-40 group-hover:opacity-100" />
-                    </a>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+            {(() => {
+              const currentDocs = movement.documents?.filter((d: any) => d.is_current) || []
+              const hasLegacyDocs = movement.invoice_url || movement.dispatch_order_url
+              
+              if (currentDocs.length === 0 && !hasLegacyDocs) return null
+
+              return (
+                <Card className="border-0 shadow-sm bg-white rounded-3xl overflow-hidden">
+                  <CardHeader className="border-b border-slate-50 px-6 py-4">
+                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5" />
+                      {t('documents')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-3">
+                    {currentDocs.length > 0 ? (
+                      currentDocs.map((doc: any) => {
+                        let label = t('invoiceDocument')
+                        let icon = FileText
+                        let colorClass = "text-calmar-ocean group-hover:text-white"
+                        let bgHoverClass = "hover:bg-calmar-ocean"
+
+                        if (doc.document_type === 'guia_despacho') {
+                          label = t('dispatchDocument')
+                          icon = Package
+                          colorClass = "text-purple-600 group-hover:text-white"
+                          bgHoverClass = "hover:bg-purple-600"
+                        } else if (doc.document_type === 'nota_credito') {
+                          label = 'Nota de Crédito'
+                          icon = FileText
+                          colorClass = "text-amber-600 group-hover:text-white"
+                          bgHoverClass = "hover:bg-amber-600"
+                        } else if (doc.document_type === 'nota_debito') {
+                          label = 'Nota de Débito'
+                          icon = FileText
+                          colorClass = "text-slate-600 group-hover:text-white"
+                          bgHoverClass = "hover:bg-slate-600"
+                        } else if (doc.document_type === 'boleta') {
+                          label = 'Boleta'
+                          icon = FileText
+                          colorClass = "text-teal-600 group-hover:text-white"
+                          bgHoverClass = "hover:bg-teal-600"
+                        }
+
+                        const Icon = icon
+
+                        return (
+                          <a key={doc.id} href={doc.document_url} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-between p-4 bg-slate-50 rounded-2xl ${bgHoverClass} hover:text-white transition-all group`}>
+                            <div className="flex items-center gap-3">
+                              <Icon className={`w-5 h-5 ${colorClass} transition-colors`} />
+                              <div className="flex flex-col">
+                                <span className="font-black text-[10px] uppercase tracking-widest">{label}</span>
+                                {doc.document_number && <span className="text-[9px] opacity-70">Nº {doc.document_number}</span>}
+                              </div>
+                            </div>
+                            <Download className="w-4 h-4 opacity-40 group-hover:opacity-100" />
+                          </a>
+                        )
+                      })
+                    ) : (
+                      <>
+                        {movement.invoice_url && (
+                          <a href={movement.invoice_url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-calmar-ocean hover:text-white transition-all group">
+                            <div className="flex items-center gap-3">
+                              <FileText className="w-5 h-5 text-calmar-ocean group-hover:text-white transition-colors" />
+                              <span className="font-black text-[10px] uppercase tracking-widest">{t('invoiceDocument')}</span>
+                            </div>
+                            <Download className="w-4 h-4 opacity-40 group-hover:opacity-100" />
+                          </a>
+                        )}
+                        {movement.dispatch_order_url && (
+                          <a href={movement.dispatch_order_url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-purple-600 hover:text-white transition-all group">
+                            <div className="flex items-center gap-3">
+                              <Package className="w-5 h-5 text-purple-600 group-hover:text-white transition-colors" />
+                              <span className="font-black text-[10px] uppercase tracking-widest">{t('dispatchDocument')}</span>
+                            </div>
+                            <Download className="w-4 h-4 opacity-40 group-hover:opacity-100" />
+                          </a>
+                        )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })()}
 
             {/* Notes */}
             {movement.notes && (

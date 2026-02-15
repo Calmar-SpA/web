@@ -42,12 +42,23 @@ export default function MovementsPage() {
     let noInvoice = 0, noBoleta = 0, noDispatch = 0
     for (const m of movements) {
       const isB2B = m.prospect?.type === 'b2b'
-      const hasInvoice = m.invoice_url || m.invoice_date
-      const hasDispatch = m.dispatch_order_url || m.dispatch_order_date
+      
+      const hasDoc = (type: string) => {
+        if (m.documents && Array.isArray(m.documents)) {
+          return m.documents.some((d: any) => d.document_type === type && d.is_current)
+        }
+        if (type === 'factura' || type === 'boleta') return !!(m.invoice_url || m.invoice_date)
+        if (type === 'guia_despacho') return !!(m.dispatch_order_url || m.dispatch_order_date)
+        return false
+      }
+
+      const hasInvoice = hasDoc('factura')
+      const hasBoleta = hasDoc('boleta')
+      const hasDispatch = hasDoc('guia_despacho')
       
       if (m.movement_type !== 'sample') {
          if (isB2B && !hasInvoice) noInvoice++
-         if (!isB2B && !hasInvoice) noBoleta++
+         if (!isB2B && !hasBoleta) noBoleta++
       }
       if (isB2B && !hasDispatch) noDispatch++
     }
@@ -118,8 +129,19 @@ export default function MovementsPage() {
     // Document Filter
     if (filterDocs !== 'all') {
       const isB2B = m.prospect?.type === 'b2b'
-      const hasInvoice = m.invoice_url || m.invoice_date
-      const hasDispatch = m.dispatch_order_url || m.dispatch_order_date
+      
+      const hasDoc = (type: string) => {
+        if (m.documents && Array.isArray(m.documents)) {
+          return m.documents.some((d: any) => d.document_type === type && d.is_current)
+        }
+        if (type === 'factura' || type === 'boleta') return !!(m.invoice_url || m.invoice_date)
+        if (type === 'guia_despacho') return !!(m.dispatch_order_url || m.dispatch_order_date)
+        return false
+      }
+
+      const hasInvoice = hasDoc('factura')
+      const hasBoleta = hasDoc('boleta')
+      const hasDispatch = hasDoc('guia_despacho')
 
       if (filterDocs === 'no_invoice') {
         // B2B sin factura (excluir muestras)
@@ -130,7 +152,7 @@ export default function MovementsPage() {
         // B2C/boleta sin boleta (excluir muestras)
         if (m.movement_type === 'sample') return false
         if (isB2B) return false
-        if (hasInvoice) return false
+        if (hasBoleta) return false
       } else if (filterDocs === 'no_dispatch') {
         // B2B sin guia de despacho
         if (!isB2B) return false
@@ -506,23 +528,18 @@ export default function MovementsPage() {
 
                       {/* Indicators */}
                       <div className="flex flex-col items-end gap-2">
-                        {/* Payment Status */}
+                        {/* Payment Registration Status */}
                         {movement.movement_type !== 'sample' && (
                           <div className="flex items-center gap-2">
-                            {movement.status === 'paid' ? (
+                            {lastApprovedPayment ? (
                               <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
                                 <CheckCircle className="w-3 h-3" />
-                                Pagado {lastPaymentDate && `(${new Date(lastPaymentDate).toLocaleDateString('es-CL')})`}
-                              </span>
-                            ) : movement.status === 'partial_paid' ? (
-                              <span className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">
-                                <AlertCircle className="w-3 h-3" />
-                                Parcial {lastPaymentDate && `(${new Date(lastPaymentDate).toLocaleDateString('es-CL')})`}
+                                Pago Registrado {lastPaymentDate && `(${new Date(lastPaymentDate).toLocaleDateString('es-CL')})`}
                               </span>
                             ) : (
-                              <span className="flex items-center gap-1 text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">
-                                <AlertCircle className="w-3 h-3" />
-                                Pendiente ${remainingBalance.toLocaleString('es-CL')}
+                              <span className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
+                                <DollarSign className="w-3 h-3" />
+                                Sin Registro de Pago
                               </span>
                             )}
                           </div>
@@ -530,33 +547,43 @@ export default function MovementsPage() {
 
                         {/* Invoice Status */}
                         <div className="flex items-center gap-2">
-                          {movement.invoice_url || movement.invoice_date ? (
-                            <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
-                              <FileText className="w-3 h-3" />
-                              {isMovementB2B ? 'Facturado' : 'Con Boleta'} {movement.invoice_date && `(${new Date(movement.invoice_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })})`}
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
-                              <FileText className="w-3 h-3" />
-                              {isMovementB2B ? 'Sin Factura' : 'Sin Boleta'}
-                            </span>
-                          )}
+                          {(() => {
+                            const hasInvoice = (movement.documents && movement.documents.some((d: any) => d.document_type === 'factura' && d.is_current)) || movement.invoice_url || movement.invoice_date
+                            const hasBoleta = (movement.documents && movement.documents.some((d: any) => d.document_type === 'boleta' && d.is_current)) || movement.invoice_url || movement.invoice_date
+                            const hasDoc = isMovementB2B ? hasInvoice : hasBoleta
+                            
+                            return hasDoc ? (
+                              <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+                                <FileText className="w-3 h-3" />
+                                {isMovementB2B ? 'Facturado' : 'Con Boleta'} {movement.invoice_date && `(${new Date(movement.invoice_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })})`}
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
+                                <FileText className="w-3 h-3" />
+                                {isMovementB2B ? 'Sin Factura' : 'Sin Boleta'}
+                              </span>
+                            )
+                          })()}
                         </div>
 
                         {/* Dispatch Status */}
                         {isMovementB2B && (
                           <div className="flex items-center gap-2">
-                            {movement.dispatch_order_url || movement.dispatch_order_date ? (
-                              <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
-                                <Truck className="w-3 h-3" />
-                                Guía {movement.dispatch_order_date && `(${new Date(movement.dispatch_order_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })})`}
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
-                                <Truck className="w-3 h-3" />
-                                Sin Guía
-                              </span>
-                            )}
+                            {(() => {
+                              const hasDispatch = (movement.documents && movement.documents.some((d: any) => d.document_type === 'guia_despacho' && d.is_current)) || movement.dispatch_order_url || movement.dispatch_order_date
+                              
+                              return hasDispatch ? (
+                                <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+                                  <Truck className="w-3 h-3" />
+                                  Guía {movement.dispatch_order_date && `(${new Date(movement.dispatch_order_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })})`}
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
+                                  <Truck className="w-3 h-3" />
+                                  Sin Guía
+                                </span>
+                              )
+                            })()}
                           </div>
                         )}
                       </div>

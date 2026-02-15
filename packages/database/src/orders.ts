@@ -306,7 +306,8 @@ export class OrderService {
       .from('product_movements')
       .select(`
         *,
-        payments:movement_payments(id, amount, payment_method, payment_reference, paid_at)
+        payments:movement_payments(id, amount, payment_method, payment_reference, paid_at),
+        documents:movement_documents(*)
       `)
       .eq('id', movementId)
       .single()
