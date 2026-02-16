@@ -19,7 +19,6 @@ interface RegisterFormClientProps {
     city: string
     comuna: string
     business_activity: string
-    requesting_rut: string
     shipping_address: string
     notes: string
   }
@@ -149,12 +148,6 @@ export function RegisterFormClient({ locale, prefill, translations }: RegisterFo
             Giro
           </label>
           <Input id="business_activity" defaultValue={prefill.business_activity} readOnly className={readOnlyClass} />
-        </div>
-        <div className="grid gap-2">
-          <label htmlFor="requesting_rut" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-            RUT solicita
-          </label>
-          <Input id="requesting_rut" defaultValue={prefill.requesting_rut} readOnly className={readOnlyClass} />
         </div>
         <div className="grid gap-2 md:col-span-2">
           <label htmlFor="shipping_address" className="text-xs font-bold uppercase tracking-widest text-slate-500">

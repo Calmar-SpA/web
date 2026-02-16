@@ -21,7 +21,6 @@ export type ProspectForCompletion = {
   city?: string | null
   comuna?: string | null
   business_activity?: string | null
-  requesting_rut?: string | null
   shipping_address?: string | null
   notes?: string | null
   is_b2b_active?: boolean | null
@@ -42,7 +41,6 @@ const REQUIRED_FIELDS: MissingField[] = [
   { key: 'city', label: 'Ciudad' },
   { key: 'comuna', label: 'Comuna' },
   { key: 'business_activity', label: 'Giro' },
-  { key: 'requesting_rut', label: 'RUT solicita' },
   { key: 'shipping_address', label: 'Dirección de despacho' },
   { key: 'notes', label: 'Notas' }
 ]
@@ -59,9 +57,6 @@ export function getMissingProspectFields(prospect: ProspectForCompletion) {
     }
     if (key === 'tax_id') {
       return isBlank(prospect.tax_id) || !isValidRut(String(prospect.tax_id))
-    }
-    if (key === 'requesting_rut') {
-      return isBlank(prospect.requesting_rut) || !isValidRut(String(prospect.requesting_rut))
     }
     if (key === 'type') {
       return prospect.type !== 'b2b' && prospect.type !== 'b2c'
@@ -82,7 +77,6 @@ export function CompleteDataModal({ prospect, isOpen, onClose, onSuccess }: Comp
   const [phoneCountry, setPhoneCountry] = useState('56')
   const [phoneValue, setPhoneValue] = useState('')
   const [taxIdValue, setTaxIdValue] = useState('')
-  const [requestingRutValue, setRequestingRutValue] = useState('')
 
   useEffect(() => {
     if (!prospect) return
@@ -90,7 +84,6 @@ export function CompleteDataModal({ prospect, isOpen, onClose, onSuccess }: Comp
     setPhoneValue(parsedPhone.digits || '')
     setPhoneCountry(parsedPhone.countryCode || '56')
     setTaxIdValue(prospect.tax_id || '')
-    setRequestingRutValue(prospect.requesting_rut || '')
   }, [prospect])
 
   const missingFields = useMemo(
@@ -99,9 +92,8 @@ export function CompleteDataModal({ prospect, isOpen, onClose, onSuccess }: Comp
   )
 
   const isTaxIdValid = !taxIdValue || isValidRut(taxIdValue)
-  const isRequestingRutValid = !requestingRutValue || isValidRut(requestingRutValue)
   const isPhoneValid = !phoneValue || isValidPhoneIntl(phoneValue)
-  const isFormValid = isTaxIdValid && isRequestingRutValid && isPhoneValid
+  const isFormValid = isTaxIdValid && isPhoneValid
 
   const formatLocalPhone = (value: string) =>
     value.replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ')
@@ -238,7 +230,7 @@ export function CompleteDataModal({ prospect, isOpen, onClose, onSuccess }: Comp
             </div>
             <div className="space-y-2">
               <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
-                RUT
+                RUT Empresa
               </label>
               <RutInput
                 name="tax_id"
@@ -273,20 +265,6 @@ export function CompleteDataModal({ prospect, isOpen, onClose, onSuccess }: Comp
                 Giro
               </label>
               <Input name="business_activity" defaultValue={prospect.business_activity || ''} className="h-11" required />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
-                RUT solicita
-              </label>
-              <RutInput
-                name="requesting_rut"
-                value={requestingRutValue}
-                onChange={(e) => setRequestingRutValue(e.target.value)}
-                placeholder="12.345.678-9"
-                className="h-11"
-                required
-              />
-              {!isRequestingRutValid && <p className="text-xs text-red-600">RUT inválido</p>}
             </div>
             <div className="space-y-2 md:col-span-2">
               <label className="block text-xs font-black uppercase tracking-wider text-slate-700">

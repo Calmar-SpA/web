@@ -234,7 +234,7 @@ export class OrderService {
     // 2. Get movements via prospect_id
     // First, find the prospect(s) associated with this user
     const { data: userProspects } = await this.supabase
-      .from('prospects')
+      .from('prospects_user_safe')
       .select('id')
       .eq('user_id', userId)
 
@@ -242,7 +242,7 @@ export class OrderService {
 
     if (prospectIds.length > 0) {
       const { data: movements, error: movementsError } = await this.supabase
-        .from('product_movements')
+        .from('product_movements_user_safe')
         .select(`
           id, movement_number, movement_type, status, total_amount, amount_paid, 
           due_date, created_at, items, invoice_url, dispatch_order_url,
@@ -303,9 +303,12 @@ export class OrderService {
    */
   async getMovementForUser(movementId: string) {
     const { data, error } = await this.supabase
-      .from('product_movements')
+      .from('product_movements_user_safe')
       .select(`
-        *,
+        id, movement_number, movement_type, status, prospect_id, 
+        customer_user_id, items, total_amount, amount_paid,
+        due_date, delivery_date, created_by, created_at, updated_at,
+        invoice_url, dispatch_order_url, boleta_buyer_name,
         payments:movement_payments(id, amount, payment_method, payment_reference, paid_at),
         documents:movement_documents(*)
       `)
@@ -352,10 +355,10 @@ export class OrderService {
   async getMovementPublic(movementId: string) {
     // 1. Fetch movement with minimal fields
     const { data, error } = await this.supabase
-      .from('product_movements')
+      .from('product_movements_user_safe')
       .select(`
         id, movement_number, movement_type, status, total_amount, 
-        created_at, due_date, items, notes,
+        created_at, due_date, items,
         invoice_url, dispatch_order_url,
         documents:movement_documents(id, document_type, document_url, document_number, is_current, created_at),
         payments:movement_payments(amount, paid_at, verification_status)
@@ -411,7 +414,6 @@ export class OrderService {
       created_at: data.created_at,
       due_date: data.due_date,
       items: data.items,
-      notes: data.notes,
       documents: currentDocuments,
       // Legacy document fields fallback
       invoice_url: data.invoice_url,

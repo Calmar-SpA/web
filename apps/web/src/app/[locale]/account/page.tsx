@@ -35,7 +35,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
 
     // Fetch prospects (B2B and B2C)
     const { data: prospectsData, error: prospectsError } = await supabase
-      .from('prospects')
+      .from('prospects_user_safe')
       .select('id, company_name, tax_id, credit_limit, is_b2b_active, type, contact_name, email')
       .eq('user_id', user.id)
 
@@ -46,7 +46,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
       const prospectIds = prospectsData.map(p => p.id)
       if (prospectIds.length > 0) {
         const { data: movements, error: movementsError } = await supabase
-          .from('product_movements')
+          .from('product_movements_user_safe')
           .select(`
             id, 
             movement_number, 

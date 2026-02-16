@@ -15,7 +15,6 @@ export interface ProspectData {
   city?: string
   comuna?: string
   business_activity?: string
-  requesting_rut?: string
   shipping_address?: string
   notes?: string
   credit_limit?: number

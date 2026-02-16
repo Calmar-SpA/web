@@ -74,7 +74,6 @@ export async function createProspect(data: {
   city?: string
   comuna?: string
   business_activity?: string
-  requesting_rut?: string
   shipping_address?: string
   notes?: string
   user_id?: string
@@ -82,7 +81,6 @@ export async function createProspect(data: {
   const supabase = await createClient()
   const crmService = new CRMService(supabase)
   const taxId = data.tax_id ? normalizeRut(data.tax_id) : null
-  const requestingRut = normalizeRut(data.requesting_rut)
   const phoneCountry = data.phone_country || '56'
   const phoneFormatted = data.phone ? formatPhoneIntl(phoneCountry, data.phone) : undefined
   const { phone_country: _phoneCountry, user_id: manualUserId, ...prospectData } = data
@@ -90,9 +88,6 @@ export async function createProspect(data: {
   // Validamos si se proporcionan los datos
   if (taxId && !isValidRut(taxId)) {
     throw new Error('El RUT no es válido')
-  }
-  if (data.requesting_rut && (!requestingRut || !isValidRut(requestingRut))) {
-    throw new Error('El RUT solicita no es válido')
   }
   if (data.phone && !isValidPhoneIntl(data.phone)) {
     throw new Error('El teléfono no es válido')
@@ -116,7 +111,6 @@ export async function createProspect(data: {
   const prospect = await crmService.createProspect({
     ...prospectData,
     tax_id: formattedTaxId,
-    requesting_rut: requestingRut ? formatRut(requestingRut) : undefined,
     phone: phoneFormatted,
     user_id: manualUserId
   })
@@ -225,12 +219,11 @@ const REQUIRED_PROSPECT_FIELDS = [
   { key: 'contact_role', label: 'Cargo del Contacto' },
   { key: 'email', label: 'Email' },
   { key: 'phone', label: 'Teléfono' },
-  { key: 'tax_id', label: 'RUT' },
+  { key: 'tax_id', label: 'RUT Empresa' },
   { key: 'address', label: 'Dirección empresa' },
   { key: 'city', label: 'Ciudad' },
   { key: 'comuna', label: 'Comuna' },
   { key: 'business_activity', label: 'Giro' },
-  { key: 'requesting_rut', label: 'RUT solicita' },
   { key: 'shipping_address', label: 'Dirección de despacho' },
   { key: 'notes', label: 'Notas' }
 ]
@@ -247,9 +240,6 @@ const getMissingActivationFields = (prospect: any) => {
     }
     if (key === 'tax_id') {
       return isBlank(prospect?.tax_id) || !isValidRut(String(prospect.tax_id))
-    }
-    if (key === 'requesting_rut') {
-      return isBlank(prospect?.requesting_rut) || !isValidRut(String(prospect.requesting_rut))
     }
     if (key === 'type') {
       return prospect?.type !== 'b2b' && prospect?.type !== 'b2c'
@@ -325,7 +315,6 @@ export async function activateProspect(prospectId: string) {
   registerUrl.searchParams.set('city', prospect.city || '')
   registerUrl.searchParams.set('comuna', prospect.comuna || '')
   registerUrl.searchParams.set('business_activity', prospect.business_activity || '')
-  registerUrl.searchParams.set('requesting_rut', prospect.requesting_rut || '')
   registerUrl.searchParams.set('shipping_address', prospect.shipping_address || '')
   registerUrl.searchParams.set('notes', prospect.notes || '')
 
@@ -375,7 +364,6 @@ export async function resendActivationEmail(prospectId: string) {
   registerUrl.searchParams.set('city', prospect.city || '')
   registerUrl.searchParams.set('comuna', prospect.comuna || '')
   registerUrl.searchParams.set('business_activity', prospect.business_activity || '')
-  registerUrl.searchParams.set('requesting_rut', prospect.requesting_rut || '')
   registerUrl.searchParams.set('shipping_address', prospect.shipping_address || '')
   registerUrl.searchParams.set('notes', prospect.notes || '')
 
@@ -395,17 +383,12 @@ export async function updateProspect(prospectId: string, formData: FormData) {
 
   const taxIdRaw = (formData.get('tax_id') as string)?.trim()
   const taxId = taxIdRaw ? normalizeRut(taxIdRaw) : null
-  const requestingRutRaw = (formData.get('requesting_rut') as string)?.trim()
-  const requestingRut = requestingRutRaw ? normalizeRut(requestingRutRaw) : null
   const phoneCountry = (formData.get('phone_country') as string)?.trim() || '56'
   const phoneRaw = (formData.get('phone') as string)?.trim()
   const phoneFormatted = phoneRaw ? formatPhoneIntl(phoneCountry, phoneRaw) : null
 
   if (taxIdRaw && (!taxId || !isValidRut(taxId))) {
     throw new Error('El RUT no es válido')
-  }
-  if (requestingRutRaw && (!requestingRut || !isValidRut(requestingRut))) {
-    throw new Error('El RUT solicita no es válido')
   }
   if (phoneRaw && !isValidPhoneIntl(phoneRaw)) {
     throw new Error('El teléfono no es válido')
@@ -438,7 +421,6 @@ export async function updateProspect(prospectId: string, formData: FormData) {
     city: (formData.get('city') as string)?.trim() || null,
     comuna: (formData.get('comuna') as string)?.trim() || null,
     business_activity: (formData.get('business_activity') as string)?.trim() || null,
-    requesting_rut: requestingRut ? formatRut(requestingRut) : null,
     shipping_address: (formData.get('shipping_address') as string)?.trim() || null,
     credit_limit: formData.get('credit_limit') ? Number(formData.get('credit_limit')) : undefined,
     payment_terms_days: formData.get('payment_terms_days') ? Number(formData.get('payment_terms_days')) : undefined,

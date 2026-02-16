@@ -27,7 +27,6 @@ export default async function RegisterPage({
     city: resolvedSearchParams?.city || '',
     comuna: resolvedSearchParams?.comuna || '',
     business_activity: resolvedSearchParams?.business_activity || '',
-    requesting_rut: resolvedSearchParams?.requesting_rut || '',
     shipping_address: resolvedSearchParams?.shipping_address || '',
     notes: resolvedSearchParams?.notes || ''
   }

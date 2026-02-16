@@ -44,7 +44,6 @@ export default function ProspectDetailPage() {
   const [showCompleteModal, setShowCompleteModal] = useState(false)
   const [pendingStage, setPendingStage] = useState<string | null>(null)
   const [taxIdValue, setTaxIdValue] = useState('')
-  const [requestingRutValue, setRequestingRutValue] = useState('')
   const [phoneValue, setPhoneValue] = useState('')
   const [phoneCountry, setPhoneCountry] = useState('56')
   const [userQuery, setUserQuery] = useState('')
@@ -156,7 +155,6 @@ export default function ProspectDetailPage() {
   useEffect(() => {
     if (prospect) {
       setTaxIdValue(prospect.tax_id || '')
-      setRequestingRutValue(prospect.requesting_rut || '')
       const parsedPhone = parsePhoneIntl(prospect.phone)
       setPhoneValue(parsedPhone.digits || '')
       setPhoneCountry(parsedPhone.countryCode || '56')
@@ -190,9 +188,8 @@ export default function ProspectDetailPage() {
   }
 
   const isTaxIdValid = !taxIdValue || isValidRut(taxIdValue)
-  const isRequestingRutValid = !requestingRutValue || isValidRut(requestingRutValue)
   const isPhoneValid = !phoneValue || isValidPhoneIntl(phoneValue)
-  const isFormValid = isTaxIdValid && isRequestingRutValid && isPhoneValid
+  const isFormValid = isTaxIdValid && isPhoneValid
 
   const formatLocalPhone = (value: string) =>
     value.replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ')
@@ -417,7 +414,7 @@ export default function ProspectDetailPage() {
               {prospect.tax_id && (
                 <div className="flex items-center gap-3">
                   <Building2 className="w-5 h-5 text-slate-400" />
-                  <span className="text-sm font-medium">RUT: {prospect.tax_id}</span>
+                  <span className="text-sm font-medium">RUT Empresa: {prospect.tax_id}</span>
                 </div>
               )}
               {prospect.contact_role && (
@@ -448,12 +445,6 @@ export default function ProspectDetailPage() {
                 <div className="flex items-center gap-3">
                   <Building2 className="w-5 h-5 text-slate-400" />
                   <span className="text-sm font-medium">Giro: {prospect.business_activity}</span>
-                </div>
-              )}
-              {prospect.requesting_rut && (
-                <div className="flex items-center gap-3">
-                  <Building2 className="w-5 h-5 text-slate-400" />
-                  <span className="text-sm font-medium">RUT solicita: {prospect.requesting_rut}</span>
                 </div>
               )}
               {prospect.shipping_address && (
@@ -552,7 +543,7 @@ export default function ProspectDetailPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
-                      RUT
+                      RUT Empresa
                     </label>
                     <RutInput
                       name="tax_id"
@@ -586,19 +577,6 @@ export default function ProspectDetailPage() {
                       Giro
                     </label>
                     <Input name="business_activity" defaultValue={prospect.business_activity || ''} className="h-11" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
-                      RUT solicita
-                    </label>
-                    <RutInput
-                      name="requesting_rut"
-                      value={requestingRutValue}
-                      onChange={(e) => setRequestingRutValue(e.target.value)}
-                      placeholder="12.345.678-9"
-                      className="h-11"
-                    />
-                    {!isRequestingRutValid && <p className="text-xs text-red-600">RUT inválido</p>}
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-slate-700">

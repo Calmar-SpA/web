@@ -368,20 +368,6 @@ export default function MovementDetailPage({
               )
             })()}
 
-            {/* Notes */}
-            {movement.notes && (
-              <Card className="border-0 shadow-sm bg-white rounded-3xl overflow-hidden">
-                <CardHeader className="border-b border-slate-50 px-6 py-4">
-                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                    <Receipt className="w-3.5 h-3.5" />
-                    {t('notes')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <p className="text-xs text-slate-500 font-medium leading-relaxed italic">"{movement.notes}"</p>
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           {/* Payment History */}

@@ -32,7 +32,6 @@ export default function NewProspectPage() {
     city: '',
     comuna: '',
     business_activity: '',
-    requesting_rut: '',
     shipping_address: '',
     notes: ''
   })
@@ -71,7 +70,6 @@ export default function NewProspectPage() {
 
   // Para B2B y B2C: RUT es opcional, solo validar si se proporciona
   const isTaxIdValid = !formData.tax_id || isValidRut(formData.tax_id)
-  const isRequestingRutValid = !formData.requesting_rut || isValidRut(formData.requesting_rut)
   const isPhoneValid = !formData.phone || isValidPhoneIntl(formData.phone)
 
   const formatLocalPhone = (value: string) =>
@@ -93,7 +91,6 @@ export default function NewProspectPage() {
         city: formData.city || undefined,
         comuna: formData.comuna || undefined,
         business_activity: formData.business_activity || undefined,
-        requesting_rut: formData.requesting_rut || undefined,
         shipping_address: formData.shipping_address || undefined,
         notes: formData.notes || undefined,
         user_id: selectedUser?.id
@@ -117,11 +114,6 @@ export default function NewProspectPage() {
     // Validar RUT si se proporciona (para ambos tipos)
     if (formData.tax_id && !isValidRut(formData.tax_id)) {
       toast.error('El RUT no es válido')
-      setIsSubmitting(false)
-      return
-    }
-    if (formData.requesting_rut && !isValidRut(formData.requesting_rut)) {
-      toast.error('El RUT solicita no es válido')
       setIsSubmitting(false)
       return
     }
@@ -365,22 +357,6 @@ export default function NewProspectPage() {
         {formData.type === 'b2b' && (
           <div>
             <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
-              RUT solicita
-            </label>
-            <RutInput
-              value={formData.requesting_rut}
-              onChange={(e) => setFormData({ ...formData, requesting_rut: e.target.value })}
-              placeholder="12.345.678-9"
-              className="h-12"
-            />
-            {formData.requesting_rut && !isRequestingRutValid && (
-              <p className="text-xs text-red-600 mt-1">RUT inválido</p>
-            )}
-          </div>
-        )}
-        {formData.type === 'b2b' && (
-          <div>
-            <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
               Dirección de despacho
             </label>
             <Input
@@ -465,7 +441,7 @@ export default function NewProspectPage() {
         {/* RUT */}
         <div>
           <label className="block text-sm font-black uppercase tracking-wider text-slate-900 mb-2">
-            RUT
+            RUT Empresa
           </label>
           <RutInput
             value={formData.tax_id}
@@ -502,7 +478,7 @@ export default function NewProspectPage() {
           </Link>
           <Button
             type="submit"
-            disabled={isSubmitting || !isTaxIdValid || !isRequestingRutValid || !isPhoneValid}
+            disabled={isSubmitting || !isTaxIdValid || !isPhoneValid}
             className="flex-1 uppercase font-black tracking-wider"
           >
             <Save className="w-4 h-4 mr-2" />
