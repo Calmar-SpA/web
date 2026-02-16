@@ -443,29 +443,10 @@ export class OrderService {
    * This should be called with an admin client
    */
   async deleteOrder(orderId: string) {
-    // 1. Delete loyalty points associated with this order
-    const { error: loyaltyError } = await this.supabase
-      .from('loyalty_points')
-      .delete()
-      .eq('order_id', orderId)
-    
-    if (loyaltyError) {
-      console.error('Error deleting loyalty points:', loyaltyError)
-      // Continue anyway
-    }
-
-    // 2. Delete the order
-    // This will cascade delete:
-    // - order_items (trigger will recalculate inventory)
-    // - payments
-    // - shipments
-    // And set null:
-    // - discount_code_usages (trigger will decrement usage count)
-    
-    const { error } = await this.supabase
-      .from('orders')
-      .delete()
-      .eq('id', orderId)
+    // Use the atomic RPC function to delete order and restore stock
+    const { error } = await this.supabase.rpc('delete_order_and_restore_stock', {
+      p_order_id: orderId
+    })
 
     if (error) throw error
     return { success: true }
