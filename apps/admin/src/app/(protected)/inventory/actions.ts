@@ -1,8 +1,26 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+
+export async function syncInventory() {
+  const supabase = createAdminClient()
+
+  try {
+    const { error } = await supabase.rpc('recalculate_all_inventory')
+    
+    if (error) throw error
+
+    revalidatePath('/inventory')
+    revalidatePath('/products')
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error syncing inventory:', error)
+    return { success: false, error: error.message }
+  }
+}
 
 export async function createStockEntry(formData: FormData) {
   const supabase = await createClient()

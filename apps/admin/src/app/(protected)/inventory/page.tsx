@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { SuccessToast } from './success-toast'
 import { InventoryTabs } from './inventory-tabs'
+import { SyncStockButton } from './sync-stock-button'
 
 export default async function InventoryPage() {
   const supabase = await createClient()
@@ -50,11 +51,14 @@ export default async function InventoryPage() {
             Gestión de stock, historial de ingresos y movimientos.
           </p>
         </div>
-        <Link href="/inventory/add">
-          <Button className="bg-[#1d504b] hover:bg-[#153f3b] text-white font-black uppercase text-xs tracking-widest px-6 shadow-lg">
-            + Nuevo ingreso
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <SyncStockButton />
+          <Link href="/inventory/add">
+            <Button className="bg-[#1d504b] hover:bg-[#153f3b] text-white font-black uppercase text-xs tracking-widest px-6 shadow-lg">
+              + Nuevo ingreso
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <InventoryTabs 
