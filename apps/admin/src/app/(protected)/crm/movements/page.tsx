@@ -448,6 +448,15 @@ export default function MovementsPage() {
                     <h3 className="text-lg font-black text-slate-900 mb-1">
                       {movement.movement_number}
                     </h3>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-2">
+                      <span>{new Date(movement.created_at).toLocaleDateString('es-CL')}</span>
+                      {movement.invoice_date && (
+                        <span className="flex items-center gap-1">
+                          <FileText className="w-3 h-3" />
+                          {isMovementB2B ? 'Factura' : 'Boleta'}: {new Date(movement.invoice_date).toLocaleDateString('es-CL', { timeZone: 'UTC' })}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
                       {movement.prospect && (
                         <div className="flex flex-col gap-1">

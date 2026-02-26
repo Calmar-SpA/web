@@ -39,7 +39,8 @@ export default function MovementDetailPage() {
     amount: '',
     payment_method: 'transfer' as 'cash' | 'transfer' | 'check' | 'credit_card' | 'other',
     payment_reference: '',
-    notes: ''
+    notes: '',
+    paid_at: new Date().toISOString().split('T')[0]
   })
   const [editForm, setEditForm] = useState({
     notes: '',
@@ -188,7 +189,8 @@ export default function MovementDetailPage() {
         amount,
         payment_method: paymentForm.payment_method,
         payment_reference: paymentForm.payment_reference || undefined,
-        notes: paymentForm.notes || undefined
+        notes: paymentForm.notes || undefined,
+        paid_at: paymentForm.paid_at || undefined
       })
       
       toast.success('Pago registrado')
@@ -197,7 +199,8 @@ export default function MovementDetailPage() {
         amount: '',
         payment_method: 'transfer',
         payment_reference: '',
-        notes: ''
+        notes: '',
+        paid_at: new Date().toISOString().split('T')[0]
       })
       await loadMovement()
     } catch (error: any) {
@@ -983,6 +986,22 @@ export default function MovementDetailPage() {
                   </p>
                 </div>
               )}
+
+              {(() => {
+                const lastApproved = movement.payments
+                  ?.filter((p: any) => p.verification_status === 'approved')
+                  .sort((a: any, b: any) => new Date(b.paid_at || b.created_at).getTime() - new Date(a.paid_at || a.created_at).getTime())[0]
+                return lastApproved?.paid_at || lastApproved?.created_at ? (
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
+                      Último Pago
+                    </p>
+                    <p className="text-sm font-medium text-emerald-600">
+                      {new Date(lastApproved.paid_at || lastApproved.created_at).toLocaleDateString('es-CL')}
+                    </p>
+                  </div>
+                ) : null
+              })()}
             </div>
           </div>
 
@@ -1060,7 +1079,20 @@ export default function MovementDetailPage() {
 
               <div>
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
-                  Notas
+                  Fecha de Pago *
+                </label>
+                <Input
+                  type="date"
+                  value={paymentForm.paid_at}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, paid_at: e.target.value })}
+                  className="h-12"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                  Notas (Opcional)
                 </label>
                 <textarea
                   value={paymentForm.notes}
@@ -1081,7 +1113,8 @@ export default function MovementDetailPage() {
                       amount: '',
                       payment_method: 'transfer',
                       payment_reference: '',
-                      notes: ''
+                      notes: '',
+                      paid_at: new Date().toISOString().split('T')[0]
                     })
                   }}
                   className="flex-1 uppercase font-black tracking-wider"

@@ -66,6 +66,7 @@ export interface MovementPaymentData {
   payment_method: 'cash' | 'transfer' | 'check' | 'credit_card' | 'other'
   payment_reference?: string
   notes?: string
+  paid_at?: string
 }
 
 export interface MovementDocument {

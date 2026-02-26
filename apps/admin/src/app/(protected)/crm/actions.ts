@@ -557,6 +557,7 @@ export async function registerPayment(data: {
   payment_method: 'cash' | 'transfer' | 'check' | 'credit_card' | 'other'
   payment_reference?: string
   notes?: string
+  paid_at?: string
 }) {
   const supabase = await createClient()
   const crmService = new CRMService(supabase)
