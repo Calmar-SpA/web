@@ -1,4 +1,5 @@
 import sendgrid from '@sendgrid/mail';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 const DEFAULT_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'notificaciones@calmar.cl';
 const DEFAULT_FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Notificaciones Calmar';
@@ -17,12 +18,54 @@ if (process.env.SENDGRID_API_KEY) {
 
 const buildFromAddress = () => `${DEFAULT_FROM_NAME} <${DEFAULT_FROM_EMAIL}>`;
 
+async function logEmail(params: {
+  sendgridMessageId?: string;
+  toEmail: string;
+  toName?: string;
+  fromEmail: string;
+  subject: string;
+  emailType: string;
+  emailCategory: string;
+  source: 'admin' | 'web';
+  relatedEntityType?: string;
+  relatedEntityId?: string;
+  metadata?: Record<string, unknown>;
+  hasAttachment?: boolean;
+  status?: 'sent' | 'failed';
+  errorMessage?: string;
+}): Promise<void> {
+  try {
+    const supabase = createAdminClient();
+    
+    await supabase.from('email_logs').insert({
+      sendgrid_message_id: params.sendgridMessageId,
+      to_email: params.toEmail,
+      to_name: params.toName,
+      from_email: params.fromEmail,
+      subject: params.subject,
+      email_type: params.emailType,
+      email_category: params.emailCategory,
+      source: params.source,
+      related_entity_type: params.relatedEntityType,
+      related_entity_id: params.relatedEntityId,
+      metadata: params.metadata || {},
+      has_attachment: params.hasAttachment || false,
+      status: params.status || 'sent',
+      error_message: params.errorMessage,
+    });
+  } catch (error) {
+    console.error('Error logging email:', error);
+    // We don't throw here to avoid failing the email sending process if logging fails
+  }
+}
+
 const sendEmail = async ({
   to,
   subject,
   html,
   replyTo,
   attachments,
+  logParams,
 }: {
   to: string;
   subject: string;
@@ -34,22 +77,74 @@ const sendEmail = async ({
     type: string;
     disposition: 'attachment';
   }>;
+  logParams?: {
+    emailType: string;
+    emailCategory: string;
+    relatedEntityType?: string;
+    relatedEntityId?: string;
+    metadata?: Record<string, unknown>;
+    toName?: string;
+  };
 }) => {
   if (!process.env.SENDGRID_API_KEY) {
     console.warn('SendGrid API key is missing. Email skipped.');
     return { success: false, error: 'Missing API key' };
   }
 
-  await sendgrid.send({
-    to,
-    from: buildFromAddress(),
-    subject,
-    html,
-    replyTo,
-    attachments,
-  });
+  try {
+    const [response] = await sendgrid.send({
+      to,
+      from: buildFromAddress(),
+      subject,
+      html,
+      replyTo,
+      attachments,
+    });
 
-  return { success: true };
+    const messageId = response?.headers?.['x-message-id'];
+
+    if (logParams) {
+      await logEmail({
+        sendgridMessageId: messageId,
+        toEmail: to,
+        toName: logParams.toName,
+        fromEmail: DEFAULT_FROM_EMAIL,
+        subject,
+        emailType: logParams.emailType,
+        emailCategory: logParams.emailCategory,
+        source: 'admin',
+        relatedEntityType: logParams.relatedEntityType,
+        relatedEntityId: logParams.relatedEntityId,
+        metadata: logParams.metadata,
+        hasAttachment: !!attachments?.length,
+        status: 'sent',
+      });
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error sending email:', error);
+
+    if (logParams) {
+      await logEmail({
+        toEmail: to,
+        toName: logParams.toName,
+        fromEmail: DEFAULT_FROM_EMAIL,
+        subject,
+        emailType: logParams.emailType,
+        emailCategory: logParams.emailCategory,
+        source: 'admin',
+        relatedEntityType: logParams.relatedEntityType,
+        relatedEntityId: logParams.relatedEntityId,
+        metadata: logParams.metadata,
+        hasAttachment: !!attachments?.length,
+        status: 'failed',
+        errorMessage: error.message || 'Unknown error',
+      });
+    }
+
+    return { success: false, error: error.message };
+  }
 };
 
 const LOGO_URL =
@@ -109,6 +204,11 @@ export async function sendTestEmail(params: {
     to: params.to,
     subject,
     html,
+    logParams: {
+      emailType: 'test',
+      emailCategory: 'test',
+      metadata: { message },
+    },
   });
 }
 
@@ -140,6 +240,17 @@ export async function sendB2BApprovedEmail(params: {
     subject: 'Tu postulacion B2B fue aprobada',
     html,
     replyTo: ADMIN_EMAIL,
+    logParams: {
+      emailType: 'notification',
+      emailCategory: 'b2b_approved',
+      toName: params.contactName,
+      relatedEntityType: 'prospect',
+      metadata: {
+        companyName: params.companyName,
+        creditLimit: params.creditLimit,
+        paymentTermsDays: params.paymentTermsDays,
+      },
+    },
   });
 }
 
@@ -163,6 +274,15 @@ export async function sendB2BRejectedEmail(params: {
     subject: 'Tu postulacion B2B fue rechazada',
     html,
     replyTo: ADMIN_EMAIL,
+    logParams: {
+      emailType: 'notification',
+      emailCategory: 'b2b_rejected',
+      toName: params.contactName,
+      relatedEntityType: 'prospect',
+      metadata: {
+        companyName: params.companyName,
+      },
+    },
   });
 }
 
@@ -198,6 +318,17 @@ export async function sendProspectAdminNotification(params: {
     subject: 'Nuevo prospecto registrado',
     html,
     replyTo: params.email || ADMIN_EMAIL,
+    logParams: {
+      emailType: 'notification',
+      emailCategory: 'prospect_admin',
+      relatedEntityType: 'prospect',
+      metadata: {
+        type: params.type,
+        companyName: params.companyName,
+        contactName: params.contactName,
+        email: params.email,
+      },
+    },
   });
 }
 
@@ -257,6 +388,15 @@ export async function sendProspectActivationEmail(params: {
     subject: 'Tu cuenta en Calmar esta activa',
     html,
     replyTo: ADMIN_EMAIL,
+    logParams: {
+      emailType: 'confirmation',
+      emailCategory: 'prospect_activation',
+      toName: params.contactName,
+      relatedEntityType: 'prospect',
+      metadata: {
+        hasAccount: params.hasAccount,
+      },
+    },
   });
 }
 
@@ -279,6 +419,15 @@ export async function sendRefundAdminNotification(params: {
     to: ADMIN_EMAIL,
     subject: 'Devolucion registrada',
     html,
+    logParams: {
+      emailType: 'notification',
+      emailCategory: 'refund_admin',
+      metadata: {
+        referenceId: params.referenceId,
+        amountLabel: params.amountLabel,
+        reason: params.reason,
+      },
+    },
   });
 }
 
@@ -307,6 +456,16 @@ export async function sendPaymentVerificationAdminNotification(params: {
     to: ADMIN_EMAIL,
     subject: `Nuevo pago por verificar - ${params.movementNumber}`,
     html,
+    logParams: {
+      emailType: 'notification',
+      emailCategory: 'payment_verification',
+      relatedEntityType: 'movement',
+      metadata: {
+        movementNumber: params.movementNumber,
+        customerName: params.customerName,
+        amount: params.amount,
+      },
+    },
   });
 }
 
@@ -352,6 +511,18 @@ export async function sendPaymentStatusCustomerNotification(params: {
     to: params.to,
     subject: `${title} - Movimiento ${params.movementNumber}`,
     html,
+    logParams: {
+      emailType: 'notification',
+      emailCategory: 'payment_status',
+      toName: params.customerName,
+      relatedEntityType: 'movement',
+      metadata: {
+        movementNumber: params.movementNumber,
+        status: params.status,
+        amount: params.amount,
+        rejectionReason: params.rejectionReason,
+      },
+    },
   });
 }
 
@@ -442,6 +613,17 @@ export async function sendDocumentUploadedEmail(params: {
       filename: params.attachment.filename,
       type: params.attachment.type,
       disposition: 'attachment'
-    }]
+    }],
+    logParams: {
+      emailType: 'document',
+      emailCategory: params.documentType,
+      toName: params.contactName,
+      relatedEntityType: 'movement',
+      metadata: {
+        movementNumber: params.movementNumber,
+        companyName: params.companyName,
+        documentType: params.documentType,
+      },
+    },
   });
 }

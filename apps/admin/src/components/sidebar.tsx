@@ -55,7 +55,7 @@ export function Sidebar() {
     { href: "/sponsorships", label: "Patrocinios", icon: Sparkles, color: "text-yellow-400" },
     { href: "/media", label: "Media", icon: Film, color: "text-calmar-accent" },
     { href: "/users", label: "Usuarios", icon: Users, color: "text-calmar-mint" },
-    { href: "/email-tests", label: "Emails", icon: Mail, color: "text-calmar-primary" },
+    { href: "/email-logs", label: "Historial Correos", icon: Mail, color: "text-calmar-primary" },
     { href: "/settings", label: "Configuración", icon: Settings, color: "text-slate-400" },
   ]
 

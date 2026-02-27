@@ -896,6 +896,9 @@ export default function MovementDetailPage() {
             onRefresh={loadMovement}
           />
 
+          {/* Email History */}
+          <EmailHistorySection movementId={movementId} />
+
           {/* Notes */}
           {movement.notes && (
             <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
@@ -1733,148 +1736,96 @@ function DocumentCard({
 
   const fileType = getFileType(document.document_url)
 
+  )
+}
+
+const EMAIL_STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
+  sent: { label: 'Enviado', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Check },
+  delivered: { label: 'Entregado', color: 'bg-green-100 text-green-700 border-green-200', icon: CheckCircle },
+  opened: { label: 'Abierto', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Eye },
+  bounced: { label: 'Rebotado', color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle },
+  failed: { label: 'Fallido', color: 'bg-red-100 text-red-700 border-red-200', icon: AlertCircle },
+}
+
+function EmailHistorySection({ movementId }: { movementId: string }) {
+  const [logs, setLogs] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  const loadLogs = async () => {
+    setIsLoading(true)
+    const supabase = createClient()
+    
+    try {
+      const { data, error } = await supabase
+        .from('email_logs')
+        .select('*')
+        .eq('related_entity_type', 'movement')
+        .eq('related_entity_id', movementId)
+        .order('sent_at', { ascending: false })
+
+      if (error) throw error
+      setLogs(data || [])
+    } catch (error) {
+      console.error('Error loading email logs:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadLogs()
+  }, [movementId])
+
+  if (isLoading && logs.length === 0) return null
+  if (!isLoading && logs.length === 0) return null
+
   return (
-    <>
-      <div className={`p-3 rounded-xl border ${isCurrent ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-50 border-slate-100'}`}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isCurrent ? 'bg-calmar-ocean/10 text-calmar-ocean' : 'bg-slate-200 text-slate-500'}`}>
-              <FileText className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <p className={`text-xs font-bold truncate ${isCurrent ? 'text-slate-900' : 'text-slate-500'}`}>
-                  {document.document_number ? `Nº ${document.document_number}` : 'Sin número'}
-                </p>
-                {!isCurrent && (
-                  <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 bg-slate-200 text-slate-500 rounded">
-                    Reemplazado
-                  </span>
-                )}
-              </div>
-              <p className="text-[10px] text-slate-500">
-                {new Date(document.created_at).toLocaleDateString('es-CL')} 
-                {document.notes && ` • ${document.notes}`}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1">
-            {isCurrent && (
-              <div className="flex items-center mr-2 px-2 py-1 bg-slate-100 rounded-lg border border-slate-200">
-                {document.email_sent_at ? (
-                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-emerald-700" title={`Enviado: ${new Date(document.email_sent_at).toLocaleString('es-CL')}`}>
-                    <Check className="w-3 h-3" />
-                    <span className="hidden sm:inline">Enviado</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
-                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                    <span className="hidden sm:inline">No enviado</span>
-                  </div>
-                )}
-                
-                <div className="w-px h-3 bg-slate-300 mx-2" />
-                
-                <button
-                  onClick={handleResend}
-                  disabled={isResending}
-                  className="flex items-center gap-1 text-[10px] font-bold text-calmar-ocean hover:underline disabled:opacity-50"
-                  title={document.email_sent_at ? "Reenviar correo al cliente" : "Enviar correo al cliente"}
-                >
-                  {isResending ? (
-                    <RefreshCw className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Send className="w-3 h-3" />
-                  )}
-                  {document.email_sent_at ? 'Reenviar' : 'Enviar'}
-                </button>
-              </div>
-            )}
-
-            <button
-              onClick={() => setShowPreview(true)}
-              className="p-1.5 text-calmar-ocean hover:bg-calmar-ocean/10 rounded transition-colors"
-              title="Ver documento"
-            >
-              <Eye className="w-4 h-4" />
-            </button>
-            
-            <a
-              href={document.document_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-1.5 text-slate-500 hover:text-calmar-ocean hover:bg-slate-100 rounded transition-colors"
-              title="Abrir en nueva pestaña"
-            >
-              <ExternalLink className="w-4 h-4" />
-            </a>
-
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
-              title="Eliminar documento"
-            >
-              {isDeleting ? (
-                <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Trash2 className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-        </div>
+    <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-black uppercase tracking-tight">Historial de Correos</h2>
+        <Button variant="ghost" size="sm" onClick={loadLogs} className="h-8 w-8 p-0 hover:bg-slate-100 rounded-full">
+          <RefreshCw className="w-4 h-4 text-slate-400" />
+        </Button>
       </div>
-
-      {/* Preview Modal */}
-      {showPreview && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-6xl h-full max-h-[95vh] flex flex-col bg-transparent">
-            {/* Toolbar */}
-            <div className="flex items-center justify-between text-white mb-4 px-2">
-              <h3 className="font-bold text-lg flex items-center gap-2">
-                <FileText className="w-5 h-5 text-slate-400" />
-                Documento
-              </h3>
-              <div className="flex items-center gap-2">
-                <a 
-                  href={document.document_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-sm font-bold"
-                  title="Abrir en nueva pestaña"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Abrir original
-                </a>
-                <button 
-                  onClick={() => setShowPreview(false)}
-                  className="p-2 hover:bg-white/20 rounded-full transition-colors text-slate-400 hover:text-white"
-                >
-                  <X className="w-8 h-8" />
-                </button>
+      <div className="space-y-3">
+        {logs.map((log) => {
+          const statusInfo = EMAIL_STATUS_CONFIG[log.status] || EMAIL_STATUS_CONFIG.sent
+          const StatusIcon = statusInfo.icon
+          
+          return (
+            <div key={log.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 truncate">
+                    {log.subject}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      {new Date(log.sent_at).toLocaleString('es-CL')}
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      • {log.to_email}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border flex items-center gap-1 w-fit ${statusInfo.color}`}>
+                    <StatusIcon className="w-3 h-3" />
+                    {statusInfo.label}
+                  </span>
+                  {log.opened_at && (
+                    <span className="text-[9px] text-slate-400 flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      {new Date(log.opened_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-
-            {/* Content */}
-            <div className="flex-1 bg-slate-900/50 rounded-xl overflow-hidden flex items-center justify-center border border-white/10 relative shadow-2xl">
-              {fileType === 'image' ? (
-                <img 
-                  src={document.document_url} 
-                  alt="Documento" 
-                  className="max-w-full max-h-full object-contain" 
-                />
-              ) : (
-                <iframe 
-                  src={document.document_url} 
-                  className="w-full h-full bg-white" 
-                  title="Documento"
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+          )
+        })}
+      </div>
+    </div>
   )
 }

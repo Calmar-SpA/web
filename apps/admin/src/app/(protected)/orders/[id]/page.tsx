@@ -4,7 +4,7 @@ import { useEffect, useState, use } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { OrderService } from "@calmar/database"
 import { Button, Card, CardHeader, CardTitle, CardContent } from "@calmar/ui"
-import { Package, ChevronLeft, MapPin, CreditCard, Receipt, Truck, Trash2, Gift, Store, User, Building2 } from "lucide-react"
+import { Package, ChevronLeft, MapPin, CreditCard, Receipt, Truck, Trash2, Gift, Store, User, Building2, Check, CheckCircle, Eye, XCircle, AlertCircle, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { updateOrderStatus, deleteOrder } from "../actions"
 import { toast } from "sonner"
@@ -402,8 +402,104 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
               </div>
             </CardContent>
           </Card>
+
+          <EmailHistorySection orderId={id} />
         </div>
       </div>
     </div>
+  )
+}
+
+const EMAIL_STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
+  sent: { label: 'Enviado', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Check },
+  delivered: { label: 'Entregado', color: 'bg-green-100 text-green-700 border-green-200', icon: CheckCircle },
+  opened: { label: 'Abierto', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Eye },
+  bounced: { label: 'Rebotado', color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle },
+  failed: { label: 'Fallido', color: 'bg-red-100 text-red-700 border-red-200', icon: AlertCircle },
+}
+
+function EmailHistorySection({ orderId }: { orderId: string }) {
+  const [logs, setLogs] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  const loadLogs = async () => {
+    setIsLoading(true)
+    const supabase = createClient()
+    
+    try {
+      const { data, error } = await supabase
+        .from('email_logs')
+        .select('*')
+        .eq('related_entity_type', 'order')
+        .eq('related_entity_id', orderId)
+        .order('sent_at', { ascending: false })
+
+      if (error) throw error
+      setLogs(data || [])
+    } catch (error) {
+      console.error('Error loading email logs:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadLogs()
+  }, [orderId])
+
+  if (isLoading && logs.length === 0) return null
+  if (!isLoading && logs.length === 0) return null
+
+  return (
+    <Card>
+      <CardHeader className="border-b bg-slate-50/50 flex flex-row items-center justify-between py-4">
+        <CardTitle className="text-sm uppercase tracking-tight flex items-center gap-2">
+          <Receipt className="w-4 h-4 text-calmar-ocean" />
+          Historial de Correos
+        </CardTitle>
+        <Button variant="ghost" size="sm" onClick={loadLogs} className="h-6 w-6 p-0 hover:bg-slate-200 rounded-full">
+          <RefreshCw className="w-3 h-3 text-slate-400" />
+        </Button>
+      </CardHeader>
+      <CardContent className="p-6 space-y-3">
+        {logs.map((log) => {
+          const statusInfo = EMAIL_STATUS_CONFIG[log.status] || EMAIL_STATUS_CONFIG.sent
+          const StatusIcon = statusInfo.icon
+          
+          return (
+            <div key={log.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 truncate">
+                    {log.subject}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      {new Date(log.sent_at).toLocaleString('es-CL')}
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      • {log.to_email}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border flex items-center gap-1 w-fit ${statusInfo.color}`}>
+                    <StatusIcon className="w-3 h-3" />
+                    {statusInfo.label}
+                  </span>
+                  {log.opened_at && (
+                    <span className="text-[9px] text-slate-400 flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      {new Date(log.opened_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </CardContent>
+    </Card>
   )
 }

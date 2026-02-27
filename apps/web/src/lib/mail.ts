@@ -1,5 +1,6 @@
 import sendgrid from '@sendgrid/mail';
 import { render } from '@react-email/render';
+import { createAdminClient } from '@/lib/supabase/admin';
 import NewsletterConfirmationEmail from '@/components/emails/newsletter-confirmation';
 import OrderConfirmationEmail, {
   OrderEmailItem,
@@ -36,16 +37,66 @@ const formatCurrency = (amount: number) => {
 
 const buildFromAddress = () => `${DEFAULT_FROM_NAME} <${DEFAULT_FROM_EMAIL}>`;
 
+async function logEmail(params: {
+  sendgridMessageId?: string;
+  toEmail: string;
+  toName?: string;
+  fromEmail: string;
+  subject: string;
+  emailType: string;
+  emailCategory: string;
+  source: 'admin' | 'web';
+  relatedEntityType?: string;
+  relatedEntityId?: string;
+  metadata?: Record<string, unknown>;
+  hasAttachment?: boolean;
+  status?: 'sent' | 'failed';
+  errorMessage?: string;
+}): Promise<void> {
+  try {
+    const supabase = createAdminClient();
+    
+    await supabase.from('email_logs').insert({
+      sendgrid_message_id: params.sendgridMessageId,
+      to_email: params.toEmail,
+      to_name: params.toName,
+      from_email: params.fromEmail,
+      subject: params.subject,
+      email_type: params.emailType,
+      email_category: params.emailCategory,
+      source: params.source,
+      related_entity_type: params.relatedEntityType,
+      related_entity_id: params.relatedEntityId,
+      metadata: params.metadata || {},
+      has_attachment: params.hasAttachment || false,
+      status: params.status || 'sent',
+      error_message: params.errorMessage,
+    });
+  } catch (error) {
+    console.error('Error logging email:', error);
+    // We don't throw here to avoid failing the email sending process if logging fails
+  }
+}
+
 const sendEmail = async ({
   to,
   subject,
   html,
   replyTo,
+  logParams,
 }: {
   to: string;
   subject: string;
   html: string;
   replyTo?: string;
+  logParams?: {
+    emailType: string;
+    emailCategory: string;
+    relatedEntityType?: string;
+    relatedEntityId?: string;
+    metadata?: Record<string, unknown>;
+    toName?: string;
+  };
 }) => {
   if (!process.env.SENDGRID_API_KEY) {
     console.warn('SendGrid API key is missing. Email skipped.');
@@ -60,8 +111,52 @@ const sendEmail = async ({
     replyTo,
   };
 
-  await sendgrid.send(msg);
-  return { success: true };
+  try {
+    const [response] = await sendgrid.send(msg);
+    const messageId = response?.headers?.['x-message-id'];
+
+    if (logParams) {
+      await logEmail({
+        sendgridMessageId: messageId,
+        toEmail: to,
+        toName: logParams.toName,
+        fromEmail: DEFAULT_FROM_EMAIL,
+        subject,
+        emailType: logParams.emailType,
+        emailCategory: logParams.emailCategory,
+        source: 'web',
+        relatedEntityType: logParams.relatedEntityType,
+        relatedEntityId: logParams.relatedEntityId,
+        metadata: logParams.metadata,
+        hasAttachment: false,
+        status: 'sent',
+      });
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error sending email:', error);
+
+    if (logParams) {
+      await logEmail({
+        toEmail: to,
+        toName: logParams.toName,
+        fromEmail: DEFAULT_FROM_EMAIL,
+        subject,
+        emailType: logParams.emailType,
+        emailCategory: logParams.emailCategory,
+        source: 'web',
+        relatedEntityType: logParams.relatedEntityType,
+        relatedEntityId: logParams.relatedEntityId,
+        metadata: logParams.metadata,
+        hasAttachment: false,
+        status: 'failed',
+        errorMessage: error.message || 'Unknown error',
+      });
+    }
+
+    return { success: false, error: error?.message || error };
+  }
 };
 
 export async function sendNewsletterConfirmation(email: string) {
@@ -72,6 +167,11 @@ export async function sendNewsletterConfirmation(email: string) {
       to: email,
       subject: 'Bienvenido a Calmar! Confirmacion de suscripcion',
       html,
+      logParams: {
+        emailType: 'confirmation',
+        emailCategory: 'newsletter',
+        source: 'web',
+      },
     });
     console.log(`Newsletter confirmation email sent to ${email}`);
     return { success: true };
@@ -97,6 +197,13 @@ export async function sendContactConfirmation(
       to: email,
       subject: 'Hemos recibido tu mensaje - Calmar',
       html,
+      logParams: {
+        emailType: 'confirmation',
+        emailCategory: 'contact',
+        toName: name,
+        source: 'web',
+        metadata: { subject, message },
+      },
     });
     console.log(`Contact confirmation email sent to ${email}`);
     return { success: true };
@@ -143,6 +250,18 @@ export async function sendOrderPaidCustomerEmail(params: {
       to: params.email,
       subject: `Tu compra ${params.orderNumber} esta confirmada`,
       html,
+      logParams: {
+        emailType: 'confirmation',
+        emailCategory: 'order_paid_customer',
+        toName: params.customerName,
+        relatedEntityType: 'order',
+        relatedEntityId: params.orderId,
+        source: 'web',
+        metadata: {
+          orderNumber: params.orderNumber,
+          totalAmount: params.totalAmount,
+        },
+      },
     });
 
     return { success: true };
@@ -177,6 +296,18 @@ export async function sendOrderPaidAdminEmail(params: {
       subject: `Nueva compra ${params.orderNumber}`,
       html,
       replyTo: params.customerEmail,
+      logParams: {
+        emailType: 'notification',
+        emailCategory: 'order_paid_admin',
+        relatedEntityType: 'order',
+        source: 'web',
+        metadata: {
+          orderNumber: params.orderNumber,
+          customerName: params.customerName,
+          customerEmail: params.customerEmail,
+          totalAmount: params.totalAmount,
+        },
+      },
     });
 
     return { success: true };
@@ -209,6 +340,17 @@ export async function sendB2BApplicationAdminNotification(params: {
       subject: 'Nueva postulacion B2B',
       html,
       replyTo: params.contactEmail,
+      logParams: {
+        emailType: 'notification',
+        emailCategory: 'b2b_application_admin',
+        relatedEntityType: 'prospect',
+        source: 'web',
+        metadata: {
+          companyName: params.companyName,
+          contactName: params.contactName,
+          contactEmail: params.contactEmail,
+        },
+      },
     });
 
     return { success: true };
@@ -235,6 +377,16 @@ export async function sendB2BApplicationReceivedEmail(params: {
       to: params.contactEmail,
       subject: 'Tu postulacion B2B fue recibida',
       html,
+      logParams: {
+        emailType: 'confirmation',
+        emailCategory: 'b2b_application_received',
+        toName: params.contactName,
+        relatedEntityType: 'prospect',
+        source: 'web',
+        metadata: {
+          companyName: params.companyName,
+        },
+      },
     });
 
     return { success: true };
@@ -271,6 +423,18 @@ export async function sendProspectAdminNotification(params: {
       subject: 'Nuevo prospecto registrado',
       html,
       replyTo: params.email,
+      logParams: {
+        emailType: 'notification',
+        emailCategory: 'prospect_admin',
+        relatedEntityType: 'prospect',
+        source: 'web',
+        metadata: {
+          type: params.type,
+          companyName: params.companyName,
+          contactName: params.contactName,
+          email: params.email,
+        },
+      },
     });
 
     return { success: true };
@@ -300,6 +464,15 @@ export async function sendLowInventoryAdminAlert(params: {
       to: ADMIN_EMAIL,
       subject: 'Alerta de inventario bajo',
       html,
+      logParams: {
+        emailType: 'alert',
+        emailCategory: 'low_inventory',
+        source: 'web',
+        metadata: {
+          threshold: params.threshold,
+          itemCount: params.items.length,
+        },
+      },
     });
 
     return { success: true };
@@ -327,6 +500,16 @@ export async function sendRefundAdminNotification(params: {
       to: ADMIN_EMAIL,
       subject: 'Devolucion registrada',
       html,
+      logParams: {
+        emailType: 'notification',
+        emailCategory: 'refund_admin',
+        source: 'web',
+        metadata: {
+          referenceId: params.referenceId,
+          amount: params.amount,
+          reason: params.reason,
+        },
+      },
     });
 
     return { success: true };
@@ -375,6 +558,18 @@ export async function sendSponsorshipAdminNotification(params: {
       subject: 'Nueva solicitud de patrocinio',
       html,
       replyTo: params.email,
+      logParams: {
+        emailType: 'notification',
+        emailCategory: 'sponsorship_admin',
+        relatedEntityType: 'sponsorship',
+        source: 'web',
+        metadata: {
+          name: params.name,
+          contactName: params.contactName,
+          email: params.email,
+          sponsorshipType: params.sponsorshipType,
+        },
+      },
     });
 
     return { success: true };
@@ -401,6 +596,16 @@ export async function sendSponsorshipReceivedEmail(params: {
       to: params.contactEmail,
       subject: 'Tu solicitud de patrocinio fue recibida',
       html,
+      logParams: {
+        emailType: 'confirmation',
+        emailCategory: 'sponsorship_received',
+        toName: params.contactName,
+        relatedEntityType: 'sponsorship',
+        source: 'web',
+        metadata: {
+          name: params.name,
+        },
+      },
     });
 
     return { success: true };
