@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Button, Card, CardContent, Input, Badge } from "@calmar/ui"
+import { Button, Card, CardContent, Input } from "@calmar/ui"
 import { 
   Mail, 
   Search, 
