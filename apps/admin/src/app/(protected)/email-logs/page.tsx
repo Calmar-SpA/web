@@ -16,20 +16,27 @@ import {
   Check, 
   AlertTriangle,
   Eye,
-  RefreshCw
+  RefreshCw,
+  X,
+  Paperclip
 } from "lucide-react"
 
 type EmailLog = {
   id: string
   to_email: string
   to_name: string | null
+  from_email: string
   subject: string
   email_type: string
   email_category: string
   status: 'sent' | 'delivered' | 'opened' | 'bounced' | 'failed'
   source: 'admin' | 'web'
   sent_at: string
+  delivered_at: string | null
   opened_at: string | null
+  bounced_at: string | null
+  related_entity_type: string | null
+  related_entity_id: string | null
   metadata: any
   has_attachment: boolean
   error_message: string | null
@@ -80,6 +87,7 @@ export default function EmailLogsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
+  const [selectedLog, setSelectedLog] = useState<EmailLog | null>(null)
   const pageSize = 20
 
   useEffect(() => {
@@ -282,7 +290,12 @@ export default function EmailLogsPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:text-calmar-ocean">
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8 hover:text-calmar-ocean"
+                            onClick={() => setSelectedLog(log)}
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
                         </td>
@@ -322,6 +335,156 @@ export default function EmailLogsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal de Detalle */}
+      {selectedLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/50 backdrop-blur-sm" onClick={() => setSelectedLog(null)}>
+          <div 
+            className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-6 border-b flex items-start justify-between bg-slate-50/50">
+              <div className="space-y-1 pr-8">
+                <h2 className="text-xl font-black text-slate-900 leading-tight">
+                  {selectedLog.subject}
+                </h2>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Enviado el {new Date(selectedLog.sent_at).toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 -mt-2 -mr-2 text-slate-400 hover:text-slate-900"
+                onClick={() => setSelectedLog(null)}
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto space-y-8">
+              {/* Info Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Destinatario */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Destinatario</h3>
+                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <div className="font-bold text-slate-900">{selectedLog.to_name || 'Sin nombre'}</div>
+                    <div className="text-sm text-slate-500 font-mono break-all">{selectedLog.to_email}</div>
+                  </div>
+                </div>
+
+                {/* Remitente */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Remitente</h3>
+                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <div className="font-bold text-slate-900">Sistema Calmar</div>
+                    <div className="text-sm text-slate-500 font-mono break-all">{selectedLog.from_email}</div>
+                  </div>
+                </div>
+
+                {/* Estado */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Estado</h3>
+                  <div className="space-y-2">
+                    {(() => {
+                      const statusInfo = STATUS_CONFIG[selectedLog.status] || STATUS_CONFIG.sent
+                      const StatusIcon = statusInfo.icon
+                      return (
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-bold ${statusInfo.color}`}>
+                          <StatusIcon className="w-4 h-4" />
+                          {statusInfo.label}
+                        </div>
+                      )
+                    })()}
+                    
+                    <div className="text-xs text-slate-500 space-y-1 pl-1">
+                      {selectedLog.delivered_at && (
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-3 h-3 text-green-500" />
+                          <span>Entregado: {new Date(selectedLog.delivered_at).toLocaleString('es-CL')}</span>
+                        </div>
+                      )}
+                      {selectedLog.opened_at && (
+                        <div className="flex items-center gap-2">
+                          <Eye className="w-3 h-3 text-amber-500" />
+                          <span>Abierto: {new Date(selectedLog.opened_at).toLocaleString('es-CL')}</span>
+                        </div>
+                      )}
+                      {selectedLog.bounced_at && (
+                        <div className="flex items-center gap-2">
+                          <XCircle className="w-3 h-3 text-red-500" />
+                          <span>Rebotado: {new Date(selectedLog.bounced_at).toLocaleString('es-CL')}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detalles Técnicos */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Detalles</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between border-b border-slate-100 pb-1">
+                      <span className="text-slate-500">Tipo:</span>
+                      <span className="font-medium text-slate-900 capitalize">{selectedLog.email_type}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-100 pb-1">
+                      <span className="text-slate-500">Categoría:</span>
+                      <span className="font-medium text-slate-900 capitalize">{selectedLog.email_category.replace(/_/g, ' ')}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-100 pb-1">
+                      <span className="text-slate-500">Origen:</span>
+                      <span className="font-medium text-slate-900 uppercase">{selectedLog.source}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-100 pb-1">
+                      <span className="text-slate-500">Adjunto:</span>
+                      <span className="font-medium text-slate-900 flex items-center gap-1">
+                        {selectedLog.has_attachment ? (
+                          <>
+                            <Paperclip className="w-3 h-3" /> Sí
+                          </>
+                        ) : 'No'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {selectedLog.error_message && (
+                <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3 items-start">
+                  <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-red-900 text-sm">Error en el envío</h4>
+                    <p className="text-sm text-red-700">{selectedLog.error_message}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Metadata */}
+              {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Metadata</h3>
+                  <div className="bg-slate-900 rounded-xl p-4 overflow-x-auto">
+                    <pre className="text-xs text-slate-300 font-mono">
+                      {JSON.stringify(selectedLog.metadata, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              )}
+              
+              {/* ID */}
+              <div className="pt-4 border-t text-center">
+                <p className="text-[10px] text-slate-400 font-mono">ID: {selectedLog.id}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
