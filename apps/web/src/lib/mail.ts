@@ -170,7 +170,6 @@ export async function sendNewsletterConfirmation(email: string) {
       logParams: {
         emailType: 'confirmation',
         emailCategory: 'newsletter',
-        source: 'web',
       },
     });
     console.log(`Newsletter confirmation email sent to ${email}`);
@@ -201,7 +200,6 @@ export async function sendContactConfirmation(
         emailType: 'confirmation',
         emailCategory: 'contact',
         toName: name,
-        source: 'web',
         metadata: { subject, message },
       },
     });
@@ -256,7 +254,6 @@ export async function sendOrderPaidCustomerEmail(params: {
         toName: params.customerName,
         relatedEntityType: 'order',
         relatedEntityId: params.orderId,
-        source: 'web',
         metadata: {
           orderNumber: params.orderNumber,
           totalAmount: params.totalAmount,
@@ -300,7 +297,6 @@ export async function sendOrderPaidAdminEmail(params: {
         emailType: 'notification',
         emailCategory: 'order_paid_admin',
         relatedEntityType: 'order',
-        source: 'web',
         metadata: {
           orderNumber: params.orderNumber,
           customerName: params.customerName,
@@ -344,7 +340,6 @@ export async function sendB2BApplicationAdminNotification(params: {
         emailType: 'notification',
         emailCategory: 'b2b_application_admin',
         relatedEntityType: 'prospect',
-        source: 'web',
         metadata: {
           companyName: params.companyName,
           contactName: params.contactName,
@@ -382,7 +377,6 @@ export async function sendB2BApplicationReceivedEmail(params: {
         emailCategory: 'b2b_application_received',
         toName: params.contactName,
         relatedEntityType: 'prospect',
-        source: 'web',
         metadata: {
           companyName: params.companyName,
         },
@@ -427,7 +421,6 @@ export async function sendProspectAdminNotification(params: {
         emailType: 'notification',
         emailCategory: 'prospect_admin',
         relatedEntityType: 'prospect',
-        source: 'web',
         metadata: {
           type: params.type,
           companyName: params.companyName,
@@ -467,7 +460,6 @@ export async function sendLowInventoryAdminAlert(params: {
       logParams: {
         emailType: 'alert',
         emailCategory: 'low_inventory',
-        source: 'web',
         metadata: {
           threshold: params.threshold,
           itemCount: params.items.length,
@@ -503,7 +495,6 @@ export async function sendRefundAdminNotification(params: {
       logParams: {
         emailType: 'notification',
         emailCategory: 'refund_admin',
-        source: 'web',
         metadata: {
           referenceId: params.referenceId,
           amount: params.amount,
@@ -562,7 +553,6 @@ export async function sendSponsorshipAdminNotification(params: {
         emailType: 'notification',
         emailCategory: 'sponsorship_admin',
         relatedEntityType: 'sponsorship',
-        source: 'web',
         metadata: {
           name: params.name,
           contactName: params.contactName,
@@ -601,7 +591,6 @@ export async function sendSponsorshipReceivedEmail(params: {
         emailCategory: 'sponsorship_received',
         toName: params.contactName,
         relatedEntityType: 'sponsorship',
-        source: 'web',
         metadata: {
           name: params.name,
         },

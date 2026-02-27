@@ -18,8 +18,6 @@ import {
   Eye,
   RefreshCw
 } from "lucide-react"
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
 
 type EmailLog = {
   id: string
@@ -244,11 +242,11 @@ export default function EmailLogsPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex flex-col">
                             <span className="font-bold text-slate-900">
-                              {format(new Date(log.sent_at), 'dd MMM yyyy', { locale: es })}
+                              {new Date(log.sent_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}
                             </span>
                             <span className="text-xs text-slate-500 flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              {format(new Date(log.sent_at), 'HH:mm', { locale: es })}
+                              {new Date(log.sent_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                         </td>
@@ -279,7 +277,7 @@ export default function EmailLogsPage() {
                           </span>
                           {log.opened_at && (
                             <div className="text-[10px] text-slate-400 mt-1 pl-1">
-                              Abierto: {format(new Date(log.opened_at), 'dd/MM HH:mm')}
+                              Abierto: {new Date(log.opened_at).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                             </div>
                           )}
                         </td>
