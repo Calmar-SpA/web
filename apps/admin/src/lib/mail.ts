@@ -174,7 +174,10 @@ const buildEmailShell = (title: string, contentHtml: string) => `
       </div>
       <div style="text-align:center;padding:24px 0 0;font-size:12px;opacity:0.7;">
         <div>© 2026 Calmar SpA • Agua de Mar Premium e hidratacion avanzada</div>
-        <div>Chile</div>
+        <div>General Urrutia 436 Oficina A, Pucón, Chile</div>
+        <div style="margin-top:4px;">
+          <a href="https://www.calmar.cl/privacy" style="color:${brand.text};text-decoration:underline;">Política de Privacidad</a>
+        </div>
       </div>
     </div>
   </body>

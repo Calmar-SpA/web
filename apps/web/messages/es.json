@@ -565,5 +565,10 @@
       "description": "Hemos recibido tu solicitud. Nuestro equipo la revisará y te responderá en un plazo de 5 a 7 días hábiles.",
       "button": "Volver a la tienda"
     }
+  },
+  "Unsubscribe": {
+    "title": "Te has dado de baja",
+    "message": "Lamentamos verte partir. Ya no recibirás nuestros correos de novedades.",
+    "button": "Volver al inicio"
   }
 }

@@ -9,13 +9,15 @@ import { EmailShell, baseStyles } from "./email-shell";
 
 interface NewsletterConfirmationEmailProps {
   email: string;
+  unsubscribeUrl?: string;
 }
 
 export const NewsletterConfirmationEmail = ({
   email,
+  unsubscribeUrl,
 }: NewsletterConfirmationEmailProps) => {
   return (
-    <EmailShell preview="Bienvenido a la comunidad Calmar">
+    <EmailShell preview="Bienvenido a la comunidad Calmar" unsubscribeUrl={unsubscribeUrl}>
       <Heading style={baseStyles.heading}>¡Gracias por unirte!</Heading>
       <Text style={baseStyles.paragraph}>Hola,</Text>
       <Text style={baseStyles.paragraph}>

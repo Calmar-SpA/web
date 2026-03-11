@@ -565,5 +565,10 @@
       "description": "We have received your application. Our team will review it and get back to you within 5 to 7 business days.",
       "button": "Back to shop"
     }
+  },
+  "Unsubscribe": {
+    "title": "You have unsubscribed",
+    "message": "We are sorry to see you go. You will no longer receive our newsletter emails.",
+    "button": "Back to home"
   }
 }

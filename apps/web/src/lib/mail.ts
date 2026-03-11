@@ -161,8 +161,20 @@ const sendEmail = async ({
 
 export async function sendNewsletterConfirmation(email: string) {
   try {
+    // Get unsubscribe token
+    const supabase = createAdminClient();
+    const { data: subscriber } = await supabase
+      .from('newsletter_subscribers')
+      .select('unsubscribe_token')
+      .eq('email', email)
+      .single();
+
+    const unsubscribeUrl = subscriber?.unsubscribe_token 
+      ? `${SITE_URL}/api/newsletter/unsubscribe?token=${subscriber.unsubscribe_token}`
+      : undefined;
+
     // Render React Email template to HTML
-    const html = await render(NewsletterConfirmationEmail({ email }));
+    const html = await render(NewsletterConfirmationEmail({ email, unsubscribeUrl }));
     await sendEmail({
       to: email,
       subject: 'Bienvenido a Calmar! Confirmacion de suscripcion',

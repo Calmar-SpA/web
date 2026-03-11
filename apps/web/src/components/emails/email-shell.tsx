@@ -4,6 +4,7 @@ import {
   Head,
   Html,
   Img,
+  Link,
   Preview,
   Section,
   Text,
@@ -13,6 +14,7 @@ import * as React from "react";
 interface EmailShellProps {
   preview: string;
   children: React.ReactNode;
+  unsubscribeUrl?: string;
 }
 
 export const brand = {
@@ -145,7 +147,7 @@ const FONT_IMPORT = `
 const FONT_LINK =
   "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Zalando+Sans+Expanded:wght@300;400;500;600;700;800;900&display=swap";
 
-export const EmailShell = ({ preview, children }: EmailShellProps) => {
+export const EmailShell = ({ preview, children, unsubscribeUrl }: EmailShellProps) => {
   return (
     <Html>
       <Head>
@@ -169,7 +171,22 @@ export const EmailShell = ({ preview, children }: EmailShellProps) => {
             <Text style={baseStyles.footerText}>
               © 2026 Calmar SpA • Agua de Mar Premium e hidratacion avanzada
             </Text>
-            <Text style={baseStyles.footerText}>Chile</Text>
+            <Text style={baseStyles.footerText}>
+              General Urrutia 436 Oficina A, Pucón, Chile
+            </Text>
+            <Text style={baseStyles.footerText}>
+              <Link href="https://www.calmar.cl/privacy" style={{ color: brand.text, textDecoration: "underline" }}>
+                Política de Privacidad
+              </Link>
+              {unsubscribeUrl && (
+                <>
+                  {" | "}
+                  <Link href={unsubscribeUrl} style={{ color: brand.text, textDecoration: "underline" }}>
+                    Darse de baja
+                  </Link>
+                </>
+              )}
+            </Text>
           </Section>
         </Container>
       </Body>
