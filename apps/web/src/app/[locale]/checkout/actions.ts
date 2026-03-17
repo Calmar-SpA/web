@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { flow } from '@/lib/flow'
 import { sendOrderPaidAdminEmail, sendOrderPaidCustomerEmail } from '@/lib/mail'
 import { notifyLowInventoryIfNeeded } from '@/lib/inventory-alerts'
@@ -50,33 +51,25 @@ interface CheckoutData {
 }
 
 export async function checkNewsletterDiscount(email: string) {
-  console.log('[checkNewsletterDiscount] Checking for email:', email)
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('newsletter_subscribers')
     .select('discount_percentage, discount_expires_at')
     .eq('email', email)
     .eq('is_active', true)
-    .single()
-
-  console.log('[checkNewsletterDiscount] Query result:', { data, error })
+    .maybeSingle()
 
   if (error || !data) {
-    console.log('[checkNewsletterDiscount] Returning null due to error or no data')
     return null
   }
 
   const now = new Date()
   const expiresAt = new Date(data.discount_expires_at)
   
-  console.log('[checkNewsletterDiscount] Dates:', { now, expiresAt, isExpired: now > expiresAt })
-  
   if (now > expiresAt) {
-    console.log('[checkNewsletterDiscount] Discount expired')
     return null
   }
   
-  console.log('[checkNewsletterDiscount] Returning discount:', data.discount_percentage)
   return data.discount_percentage
 }
 
@@ -120,6 +113,7 @@ interface PaymentResult {
 
 export async function createOrderAndInitiatePayment(data: CheckoutData): Promise<PaymentResult> {
   const supabase = await createClient()
+  const adminSupabase = createAdminClient()
   
   // 1. Get current user (if logged in)
   const { data: { user } } = await supabase.auth.getUser()
@@ -324,7 +318,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
     }
   }
   
-  const { data: order, error: orderError } = await supabase
+  const { data: order, error: orderError } = await adminSupabase
     .from('orders')
     .insert({
       user_id: user?.id,
@@ -454,7 +448,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
     }
   })
 
-  const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
+  const { error: itemsError } = await adminSupabase.from('order_items').insert(orderItems)
   
   if (itemsError) {
     console.error('Items Error:', itemsError)
@@ -462,7 +456,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
 
   // 7. Handle Payment Redirection
   if (totalWithShipping === 0) {
-    await supabase
+    await adminSupabase
       .from('payments')
       .insert({
         order_id: order.id,
@@ -547,7 +541,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
     console.log('[Checkout Credit] Credit deducted successfully:', creditResult)
 
     // 2. Record payment as pending (credit sale)
-    const { error: paymentInsertError } = await supabase
+    const { error: paymentInsertError } = await adminSupabase
       .from('payments')
       .insert({
         order_id: order.id,
@@ -655,7 +649,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
   })
 
   // 9. Record Flow payment
-  await supabase
+  await adminSupabase
     .from('payments')
     .insert({
       order_id: order.id,
