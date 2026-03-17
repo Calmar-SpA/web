@@ -239,12 +239,12 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
 
       baseTotal = b2bSubtotal
     }
+  }
 
-    // Apply newsletter discount only if NOT B2B pricing
-    if (!isActiveB2B && newsletterDiscountPercent && newsletterDiscountPercent > 0) {
-      newsletterDiscountAmount = Math.floor(baseTotal * (Number(newsletterDiscountPercent) / 100))
-      baseTotal -= newsletterDiscountAmount
-    }
+  // Apply newsletter discount only if NOT B2B pricing
+  if (!isActiveB2B && newsletterDiscountPercent && newsletterDiscountPercent > 0) {
+    newsletterDiscountAmount = Math.floor(baseTotal * (Number(newsletterDiscountPercent) / 100))
+    baseTotal -= newsletterDiscountAmount
   }
 
   if (data.discountCode) {
@@ -272,7 +272,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
       throw new Error(validation.error || 'Código de descuento no válido')
     }
 
-    discountCodeAmount = validation.discountAmount || 0
+    discountCodeAmount = Math.round(validation.discountAmount || 0)
     discountCodeId = validation.discountCode.id
     baseTotal = Math.max(0, baseTotal - discountCodeAmount)
   }
@@ -295,22 +295,22 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
   // order_number is now generated automatically by a database trigger
   
   // Calculate subtotal using final unit prices
-  const subtotal = data.items.reduce((sum, item) => {
+  const subtotal = Math.round(data.items.reduce((sum, item) => {
     const fixedPrice = b2bPriceMap.get(item.product.id)
     const unitPrice = typeof fixedPrice === 'number' && !Number.isNaN(fixedPrice)
       ? fixedPrice
       : item.product.base_price
     return sum + (item.quantity * unitPrice)
-  }, 0)
+  }, 0))
   
   // For now, set tax to 0 (you can calculate IVA if needed: subtotal * 0.19)
   const taxAmount = 0
   
   // Use shipping cost from Chilexpress quote
-  const shippingCost = isShippingExempt ? 0 : (data.shippingCost || 0)
+  const shippingCost = Math.round(isShippingExempt ? 0 : (data.shippingCost || 0))
   
   // Total amount including shipping
-  const totalWithShipping = finalAmount + shippingCost
+  const totalWithShipping = Math.round(finalAmount + shippingCost) // Flow requires integer amounts
 
   // 3.5 Handle Credit Limit Check if payment method is 'credit'
   if (data.paymentMethod === 'credit') {
@@ -328,7 +328,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
       subtotal: subtotal,
       tax_amount: taxAmount,
       shipping_cost: shippingCost,
-      discount_amount: newsletterDiscountAmount + discountCodeAmount,
+      discount_amount: Math.round(newsletterDiscountAmount + discountCodeAmount),
       discount_code_id: discountCodeId,
       total_amount: totalWithShipping,
       status: data.paymentMethod === 'credit' || totalWithShipping === 0 ? 'paid' : 'pending_payment',

@@ -278,7 +278,7 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
         shippingServiceCode: selectedShipping?.code?.toString(),
         shippingServiceName: selectedShipping?.name,
         discountCodeId: appliedDiscount?.id || null,
-        discountAmount: appliedDiscount?.amount || 0,
+        discountAmount: appliedDiscountAmount + appliedNewsletterDiscount,
         discountCode: appliedDiscount?.code || null,
         isBusinessOrder: isBusinessMode,
       })
@@ -378,8 +378,9 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
   const shippingCost = selectedShipping?.price || 0
   const subtotalAfterDiscounts = Math.max(0, resolvedSubtotal - appliedNewsletterDiscount - appliedDiscountAmount)
   const finalTotal = Math.max(0, subtotalAfterDiscounts - (isBusinessMode ? 0 : pointsToRedeem) + shippingCost)
+  const finalTotalRounded = Math.round(finalTotal) // Flow requires integer amounts
   const { net: subtotalNet, iva: subtotalIva } = getPriceBreakdown(resolvedSubtotal)
-  const { net: finalNet, iva: finalIva } = getPriceBreakdown(finalTotal)
+  const { net: finalNet, iva: finalIva } = getPriceBreakdown(finalTotalRounded)
 
   if (items.length === 0) {
     return (
@@ -848,7 +849,7 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
                 <div className="pt-4 border-t border-slate-900 uppercase">
                   <div className="flex justify-between text-2xl">
                     <span className="font-black tracking-tighter">{t("summary.total")}</span>
-                    <span className="font-black text-slate-900">${formatClp(finalTotal)}</span>
+                    <span className="font-black text-slate-900">${formatClp(finalTotalRounded)}</span>
                   </div>
                   <p className="text-[10px] text-slate-400 text-right">IVA incluido</p>
                   <p className="text-[10px] text-slate-400 text-right">
@@ -864,7 +865,7 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
               >
                 {isSubmitting
                   ? t("buttons.processing")
-                  : finalTotal === 0
+                  : finalTotalRounded === 0
                     ? t("buttons.completeOrder")
                     : paymentMethod === 'credit'
                       ? t("buttons.payWithCredit")
