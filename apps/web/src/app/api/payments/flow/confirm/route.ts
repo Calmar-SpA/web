@@ -27,8 +27,21 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now()
   console.log('[Flow Confirm] POST request received at', new Date().toISOString())
   
-  const formData = await request.formData()
-  const token = formData.get('token') as string
+  let token: string | null = null;
+  
+  // Intentar obtener el token del body (URL-encoded)
+  try {
+    const formData = await request.formData()
+    token = formData.get('token') as string
+  } catch (e) {
+    // Si no es un form-data válido, intentar obtenerlo de la URL
+    console.log('[Flow Confirm] Error parsing form data, falling back to URL params')
+  }
+
+  // Si no está en el body, buscar en los parámetros de la URL
+  if (!token) {
+    token = request.nextUrl.searchParams.get('token')
+  }
 
   console.log('[Flow Confirm] Token received:', token ? 'yes' : 'no')
 

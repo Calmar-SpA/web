@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { flow } from '@/lib/flow'
+import { getFlowBaseUrl } from '@/lib/flow-urls'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 // Default locale
@@ -20,11 +21,29 @@ export async function OPTIONS() {
 export async function POST(request: NextRequest) {
   console.log('[Movement Flow Result] POST request received')
   
-  const formData = await request.formData()
-  const token = formData.get('token') as string
+  let token: string | null = null;
+  
+  // Intentar obtener el token del body (URL-encoded)
+  try {
+    const formData = await request.formData()
+    token = formData.get('token') as string
+  } catch (e) {
+    // Si no es un form-data válido, intentar obtenerlo de la URL
+    console.log('[Movement Flow Result] Error parsing form data, falling back to URL params')
+  }
+
+  // Si no está en el body, buscar en los parámetros de la URL
+  if (!token) {
+    token = request.nextUrl.searchParams.get('token')
+  }
   
   // Get base URL for production redirects (ensure HTTPS)
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
+  let baseUrl: string;
+  try {
+    baseUrl = getFlowBaseUrl();
+  } catch (e) {
+    baseUrl = request.nextUrl.origin;
+  }
 
   if (!token) {
     console.error('[Movement Flow Result] No token received')
@@ -103,7 +122,12 @@ export async function POST(request: NextRequest) {
 // Also handle GET requests in case the browser follows the redirect
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
+  let baseUrl: string;
+  try {
+    baseUrl = getFlowBaseUrl();
+  } catch (e) {
+    baseUrl = request.nextUrl.origin;
+  }
   
   if (!token) {
     return NextResponse.redirect(`${baseUrl}/${DEFAULT_LOCALE}/account/orders?payment=error`, 303)

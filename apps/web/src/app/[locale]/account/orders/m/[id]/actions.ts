@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { flow } from '@/lib/flow'
+import { getFlowBaseUrl } from '@/lib/flow-urls'
 import { OrderService } from '@calmar/database'
 import { revalidatePath } from 'next/cache'
 import { sendOrderPaidAdminEmail } from '@/lib/mail'
@@ -183,7 +184,7 @@ export async function initiateMovementPayment(movementId: string): Promise<Actio
     }
 
     // Create Flow payment
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
+    const baseUrl = getFlowBaseUrl()
     
     const flowPayment = await flow.createPayment({
       commerceOrder: `MOV-${movementId}`,

@@ -103,7 +103,29 @@ export class FlowService {
     urlReturn: string;
     paymentMethod?: number;
   }) {
-    return this.request('payment/create', 'POST', params);
+    // Redondear el monto a entero (Flow no acepta decimales para CLP)
+    params.amount = Math.round(params.amount);
+
+    // Validar URLs
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction) {
+      if (params.urlConfirmation.includes('localhost') || params.urlConfirmation.includes('127.0.0.1')) {
+        console.warn('[Flow] ADVERTENCIA: urlConfirmation contiene localhost en producción');
+      }
+      if (params.urlReturn.includes('localhost') || params.urlReturn.includes('127.0.0.1')) {
+        console.warn('[Flow] ADVERTENCIA: urlReturn contiene localhost en producción');
+      }
+    }
+
+    const response = await this.request('payment/create', 'POST', params);
+
+    // Validar respuesta
+    if (!response || !response.url || !response.token) {
+      console.error('[Flow] Respuesta inválida al crear pago:', response);
+      throw new Error('Respuesta inválida de Flow: falta url o token');
+    }
+
+    return response;
   }
 
   /**

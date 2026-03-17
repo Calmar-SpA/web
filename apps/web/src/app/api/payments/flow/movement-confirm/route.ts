@@ -23,8 +23,21 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   console.log('[Movement Flow Confirm] POST request received')
   
-  const formData = await request.formData()
-  const token = formData.get('token') as string
+  let token: string | null = null;
+  
+  // Intentar obtener el token del body (URL-encoded)
+  try {
+    const formData = await request.formData()
+    token = formData.get('token') as string
+  } catch (e) {
+    // Si no es un form-data válido, intentar obtenerlo de la URL
+    console.log('[Movement Flow Confirm] Error parsing form data, falling back to URL params')
+  }
+
+  // Si no está en el body, buscar en los parámetros de la URL
+  if (!token) {
+    token = request.nextUrl.searchParams.get('token')
+  }
 
   if (!token) {
     console.error('[Movement Flow Confirm] No token received')

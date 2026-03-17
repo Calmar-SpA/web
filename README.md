@@ -204,7 +204,7 @@ calmar-ecommerce/
 
 - **Catálogo de productos** con variantes (tamaños, sabores)
 - **Carrito de compras** persistente con Zustand
-- **Checkout** completo con múltiples métodos de pago
+- **Checkout** completo con soporte para usuarios anónimos (guest checkout) y múltiples métodos de pago
 - **Códigos de descuento** con reglas de uso y validación
 - **Integración con Flow** para pagos nacionales chilenos
 - **Cálculo de envío Blue Express**
@@ -412,7 +412,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 # App URL
-NEXT_PUBLIC_APP_URL=https://www.calmar.cl
+NEXT_PUBLIC_APP_URL=https://www.calmar.cl # ¡CRÍTICO! Requerido para callbacks de Flow
 
 # Flow (Pagos)
 FLOW_API_KEY=your-flow-api-key
@@ -433,6 +433,22 @@ SENDGRID_FROM_EMAIL=notificaciones@calmar.cl
 SENDGRID_FROM_NAME=Notificaciones Calmar
 ADMIN_EMAIL=contacto@calmar.cl
 ```
+
+## 💸 Integración con Flow (Pagos)
+
+La plataforma utiliza Flow como pasarela de pagos. El flujo de pago funciona de la siguiente manera:
+
+1. **Creación de orden**: El usuario inicia el pago, el servidor crea una orden en Flow y redirige al usuario a la URL de pago de Flow.
+2. **Confirmación (Server-to-Server)**: Flow hace un POST a `urlConfirmation` (`/api/payments/flow/confirm`) con el token de la transacción. El servidor valida el pago y actualiza la base de datos.
+3. **Retorno (Browser)**: Flow redirige al usuario mediante un POST a `urlReturn` (`/api/payments/flow/result`). El servidor redirige al usuario a la página de éxito o error.
+
+### Troubleshooting de Pagos (Error 403)
+
+Si los usuarios experimentan un error "403 - Forbidden" después de ingresar los datos de su tarjeta en Flow, generalmente se debe a una configuración incorrecta de las URLs de retorno:
+
+1. **Verificar NEXT_PUBLIC_APP_URL**: Asegúrate de que esta variable esté configurada en Vercel con el dominio correcto (ej: `https://www.calmar.cl`). Si está vacía o apunta a localhost, Flow intentará redirigir al usuario a un destino inválido.
+2. **Verificar Dominio**: Asegúrate de que el dominio configurado en `NEXT_PUBLIC_APP_URL` esté correctamente asignado a tu proyecto de Vercel. Si el dominio apunta a otro servidor (como un IIS antiguo), ese servidor rechazará el POST de Flow con un error 403.
+3. **Credenciales**: Verifica que `FLOW_API_KEY`, `FLOW_SECRET_KEY` y `FLOW_BASE_URL` correspondan al ambiente correcto (producción o sandbox).
 
 ---
 
@@ -511,6 +527,7 @@ npm run supabase:migrate # Reset y aplicar migraciones
 - **Políticas granulares** para lectura/escritura según rol
 - **Pedidos y movimientos** visibles solo para su propietario o admins
 - **Trigger automático** para sincronizar auth.users con users públicos
+- **Operaciones Críticas Server-Side**: Uso de cliente administrador (Service Role) en server actions (ej. creación de pedidos en checkout) para garantizar la escritura segura de datos independientemente del estado de sesión del usuario (soporte robusto para guest checkout).
 
 ### Funciones SQL clave
 

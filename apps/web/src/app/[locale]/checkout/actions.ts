@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { flow } from '@/lib/flow'
+import { getFlowBaseUrl } from '@/lib/flow-urls'
 import { sendOrderPaidAdminEmail, sendOrderPaidCustomerEmail } from '@/lib/mail'
 import { notifyLowInventoryIfNeeded } from '@/lib/inventory-alerts'
 import { formatRut, normalizeRut, isValidRut } from '@calmar/utils'
@@ -636,7 +637,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
   }
 
   // 8. Initiate Flow Payment (for non-credit orders)
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
+  const baseUrl = getFlowBaseUrl()
   
   const flowPayment = await flow.createPayment({
     commerceOrder: order.id,
