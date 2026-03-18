@@ -21,6 +21,7 @@ interface ShippingOptionsProps {
   selectedOption: ShippingOption | null
   onSelectOption: (option: ShippingOption) => void
   disabled?: boolean
+  pickupPointPreferred?: boolean
 }
 
 export function ShippingOptions({
@@ -31,6 +32,7 @@ export function ShippingOptions({
   selectedOption,
   onSelectOption,
   disabled = false,
+  pickupPointPreferred = false,
 }: ShippingOptionsProps) {
   const [options, setOptions] = useState<ShippingOption[]>([])
   const [loading, setLoading] = useState(false)
@@ -72,11 +74,11 @@ export function ShippingOptions({
 
         const shippingOption = {
           code: `BLUE_EXPRESS_${data.size}_${data.zone}`,
-          name: 'Blue Express - Envío a domicilio',
+          name: pickupPointPreferred ? 'Blue Express - Retiro en punto BX' : 'Blue Express - Envío a domicilio',
           price: data.price,
           finalWeight: String(weightKg),
           estimatedDays: data.estimatedDays || '3-5 días hábiles',
-          deliveryType: 'DOMICILIO',
+          deliveryType: pickupPointPreferred ? 'AGENCIA' : 'DOMICILIO',
           serviceType: 'BLUE_EXPRESS',
         }
 
@@ -106,7 +108,7 @@ export function ShippingOptions({
     }
 
     fetchQuotes()
-  }, [region, weightKg, dimensions, refreshKey])
+  }, [region, weightKg, dimensions, refreshKey, pickupPointPreferred])
 
   if (!region) {
     return null

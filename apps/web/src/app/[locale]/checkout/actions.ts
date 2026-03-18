@@ -32,6 +32,7 @@ interface CheckoutData {
   customerInfo: {
     name: string;
     email: string;
+    phone?: string;
     rut?: string;
     address: string;
     addressNumber?: string;
@@ -49,6 +50,7 @@ interface CheckoutData {
   discountAmount?: number;
   discountCode?: string | null;
   isBusinessOrder?: boolean;
+  pickupPointPreferred?: boolean;
 }
 
 export async function checkNewsletterDiscount(email: string) {
@@ -335,6 +337,7 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
       is_business_order: data.isBusinessOrder || false,
       shipping_address: {
         name: data.customerInfo.name,
+        phone: data.customerInfo.phone || null,
         rut: prospectRutFormatted,
         address: data.customerInfo.address,
         address_number: data.customerInfo.addressNumber,
@@ -342,9 +345,11 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
         comuna: data.customerInfo.comuna,
         region: data.customerInfo.region,
         rut_updated: didUpdateRut,
+        pickup_point_preferred: data.pickupPointPreferred || false,
       },
       billing_address: {
         name: data.customerInfo.name,
+        phone: data.customerInfo.phone || null,
         rut: prospectRutFormatted,
         address: data.customerInfo.address,
         address_number: data.customerInfo.addressNumber,
@@ -472,7 +477,11 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
       await loyaltyService.awardPoints(user.id, order.id, totalWithShipping)
     }
 
-    const shippingSummary = `${data.customerInfo.address}, ${data.customerInfo.comuna}, ${data.customerInfo.region}`
+    const phoneSuffix0 = data.customerInfo.phone ? ` | Tel: ${data.customerInfo.phone}` : ''
+    const baseShippingSummary = `${data.customerInfo.address}, ${data.customerInfo.comuna}, ${data.customerInfo.region}${phoneSuffix0}`
+    const shippingSummary = data.pickupPointPreferred 
+      ? `${baseShippingSummary} (Retiro en punto BX)`
+      : baseShippingSummary
     const emailItems = orderItems.map(item => ({
       name: item.product_name,
       variantName: item.variant_name,
@@ -592,7 +601,11 @@ export async function createOrderAndInitiatePayment(data: CheckoutData): Promise
       await loyaltyService.awardPoints(user!.id, order.id, totalWithShipping)
     }
 
-    const shippingSummary = `${data.customerInfo.address}, ${data.customerInfo.comuna}, ${data.customerInfo.region}`
+    const phoneSuffixCredit = data.customerInfo.phone ? ` | Tel: ${data.customerInfo.phone}` : ''
+    const baseShippingSummary = `${data.customerInfo.address}, ${data.customerInfo.comuna}, ${data.customerInfo.region}${phoneSuffixCredit}`
+    const shippingSummary = data.pickupPointPreferred 
+      ? `${baseShippingSummary} (Retiro en punto BX)`
+      : baseShippingSummary
     const emailItems = orderItems.map(item => ({
       name: item.product_name,
       variantName: item.variant_name,

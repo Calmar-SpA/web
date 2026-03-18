@@ -6,6 +6,56 @@ import { OrderService } from '@calmar/database'
 import { revalidatePath } from 'next/cache'
 import { sendOrderStatusUpdateEmail } from '@/lib/mail'
 
+export async function updateOrderStatusWithShipping(
+  orderId: string,
+  shippingInfo: {
+    trackingNumber: string
+    courierService: string
+    notes?: string
+  }
+) {
+  const supabase = await createClient()
+  const adminSupabase = createAdminClient()
+  const orderService = new OrderService(supabase)
+
+  const updatedOrder = await orderService.updateOrderStatus(orderId, 'shipped')
+
+  // Save shipment record
+  await adminSupabase.from('shipments').insert({
+    order_id: orderId,
+    courier_service: shippingInfo.courierService,
+    tracking_number: shippingInfo.trackingNumber,
+    status: 'in_transit',
+    shipped_at: new Date().toISOString(),
+    metadata: shippingInfo.notes ? { notes: shippingInfo.notes } : {},
+  })
+
+  // Send email notification with shipping info
+  const orderEmail = updatedOrder.email || updatedOrder.customer_email
+  if (orderEmail) {
+    try {
+      await sendOrderStatusUpdateEmail({
+        email: orderEmail,
+        customerName: updatedOrder.customer_name || updatedOrder.shipping_address?.name || 'Cliente',
+        orderNumber: updatedOrder.order_number,
+        orderId: updatedOrder.id,
+        newStatus: 'shipped',
+        newStatusLabel: 'Enviado',
+        shippingInfo: {
+          courierService: shippingInfo.courierService,
+          trackingNumber: shippingInfo.trackingNumber,
+          notes: shippingInfo.notes,
+        },
+      })
+    } catch (error) {
+      console.error('Error sending shipped email:', error)
+    }
+  }
+
+  revalidatePath(`/orders/${orderId}`)
+  revalidatePath('/orders')
+}
+
 export async function updateOrderStatus(orderId: string, status: string) {
   const supabase = await createClient()
   const orderService = new OrderService(supabase)

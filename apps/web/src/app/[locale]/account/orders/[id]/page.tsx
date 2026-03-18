@@ -189,9 +189,17 @@ export default async function OrderDetailPage({ params }: { params: { id: string
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-2 text-calmar-ocean">
-                  <MapPin className="w-5 h-5" />
-                  <h3 className="font-bold uppercase">Despacho</h3>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-calmar-ocean">
+                    <MapPin className="w-5 h-5" />
+                    <h3 className="font-bold uppercase">Despacho</h3>
+                  </div>
+                  {order.shipping_address?.pickup_point_preferred && (
+                    <div className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md flex items-center gap-1">
+                      <Building2 className="w-3 h-3" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest">Retiro en punto BX</span>
+                    </div>
+                  )}
                 </div>
                 <div className="text-sm space-y-1">
                   <p className="font-bold">{order.customer_name}</p>

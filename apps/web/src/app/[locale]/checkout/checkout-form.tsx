@@ -2,7 +2,7 @@
 
 import { useCart } from "@/hooks/use-cart"
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from "@calmar/ui"
-import { ShoppingBag, ChevronLeft, CreditCard, Truck, Building2, Plus, Minus, Tag, User, LogIn, Eye, EyeOff } from "lucide-react"
+import { ShoppingBag, ChevronLeft, CreditCard, Truck, Building2, Plus, Minus, Tag, User, LogIn, Eye, EyeOff, Check, Phone } from "lucide-react"
 import { Link } from "@/navigation"
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
@@ -70,6 +70,7 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
   const [formData, setFormData] = useState({
     name: userProfile?.full_name || user?.user_metadata?.full_name || "",
     email: user?.email || "",
+    phone: user?.user_metadata?.phone || "",
     rut: userProfile?.rut || "",
     address: userProfile?.address || "",
     addressNumber: userProfile?.address_number || "",
@@ -81,22 +82,22 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
   // Update form data when mode changes
   useEffect(() => {
     if (isBusinessMode && b2bProspect) {
-      // Para modo empresa: cargar datos del prospect B2B
-      // Si faltan datos de dirección en el prospect, usar los del perfil del usuario
       setFormData({
         name: b2bProspect.company_name || b2bProspect.contact_name || userProfile?.full_name || "",
         email: b2bProspect.email || user?.email || "",
+        phone: user?.user_metadata?.phone || "",
         rut: b2bProspect.tax_id || userProfile?.rut || "",
         address: b2bProspect.address || userProfile?.address || "",
-        addressNumber: userProfile?.address_number || "", // Prospects no tiene este campo, usar del perfil
-        addressExtra: userProfile?.address_extra || "", // Prospects no tiene este campo, usar del perfil
+        addressNumber: userProfile?.address_number || "",
+        addressExtra: userProfile?.address_extra || "",
         comuna: b2bProspect.comuna || userProfile?.comuna || "",
-        region: b2bProspect.city || userProfile?.region || "", // 'city' en prospects = región
+        region: b2bProspect.city || userProfile?.region || "",
       })
     } else {
       setFormData({
         name: userProfile?.full_name || user?.user_metadata?.full_name || "",
         email: user?.email || "",
+        phone: user?.user_metadata?.phone || "",
         rut: userProfile?.rut || "",
         address: userProfile?.address || "",
         addressNumber: userProfile?.address_number || "",
@@ -122,6 +123,7 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
   const [showPassword, setShowPassword] = useState(false)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
   const [loginError, setLoginError] = useState("")
+  const [pickupPointPreferred, setPickupPointPreferred] = useState(false)
 
   const getUnitPrice = (item: any) => {
     if (isB2BActive) {
@@ -281,6 +283,7 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
         discountAmount: appliedDiscountAmount + appliedNewsletterDiscount,
         discountCode: appliedDiscount?.code || null,
         isBusinessOrder: isBusinessMode,
+        pickupPointPreferred,
       })
 
       if (result.success && result.redirectUrl) {
@@ -505,6 +508,22 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{t("shipping.email")}</label>
                 <Input name="email" type="email" value={formData.email} onChange={handleInputChange} required />
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
+                  <Phone className="w-3 h-3" />
+                  Teléfono
+                </label>
+                <Input
+                  name="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  placeholder="+56 9 1234 5678"
+                  required
+                  inputMode="tel"
+                  autoComplete="tel"
+                />
+              </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{t("shipping.rut")}</label>
                 <Input
@@ -613,7 +632,31 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
             </div>
 
             {/* Shipping Options - shows when region is available */}
-            <div className="mt-6">
+            <div className="mt-6 space-y-4">
+              {!isShippingExempt && formData.region && (
+                <label className={`relative flex items-center p-4 border rounded-xl cursor-pointer transition-all ${pickupPointPreferred ? 'border-calmar-ocean bg-calmar-ocean/5 ring-1 ring-calmar-ocean' : 'border-slate-200 hover:border-slate-300'}`}>
+                  <input 
+                    type="checkbox" 
+                    checked={pickupPointPreferred} 
+                    onChange={(e) => setPickupPointPreferred(e.target.checked)} 
+                    className="hidden" 
+                    disabled={isSubmitting}
+                  />
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${pickupPointPreferred ? 'bg-calmar-ocean text-white' : 'bg-slate-100 text-slate-500'}`}>
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">Prefiero recibir mi pedido en el punto Blue Express más cercano</p>
+                      <p className="text-xs text-slate-500">Buscaremos la sucursal más cercana a tu dirección.</p>
+                    </div>
+                  </div>
+                  <div className={`ml-3 w-5 h-5 rounded border flex items-center justify-center ${pickupPointPreferred ? 'bg-calmar-ocean border-calmar-ocean' : 'border-slate-300'}`}>
+                    {pickupPointPreferred && <Check className="w-3.5 h-3.5 text-white" />}
+                  </div>
+                </label>
+              )}
+
               {isShippingExempt ? (
                 <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm">
                   Este usuario tiene envío exento. No se cobrará despacho.
@@ -627,6 +670,7 @@ export function CheckoutForm({ user, userProfile, b2bProspect, b2bPriceMap, init
                   selectedOption={selectedShipping}
                   onSelectOption={setSelectedShipping}
                   disabled={isSubmitting}
+                  pickupPointPreferred={pickupPointPreferred}
                 />
               )}
             </div>

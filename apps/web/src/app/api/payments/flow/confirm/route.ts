@@ -114,9 +114,13 @@ export async function POST(request: NextRequest) {
       }
 
       const customerName = order.shipping_address?.name || 'Cliente'
-      const shippingSummary = order.shipping_address
-        ? `${order.shipping_address.address}, ${order.shipping_address.comuna}, ${order.shipping_address.region}`
-        : 'Sin direccion registrada'
+      let shippingSummary = 'Sin direccion registrada'
+      if (order.shipping_address) {
+        shippingSummary = `${order.shipping_address.address}, ${order.shipping_address.comuna}, ${order.shipping_address.region}`
+        if (order.shipping_address.pickup_point_preferred) {
+          shippingSummary += ' (Retiro en punto BX)'
+        }
+      }
 
       // Send customer email
       console.log(`[Flow Confirm] Preparing to send customer email to: ${order.email}`)

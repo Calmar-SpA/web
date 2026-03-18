@@ -638,6 +638,11 @@ export async function sendOrderStatusUpdateEmail(params: {
   orderId: string;
   newStatus: 'processing' | 'shipped' | 'delivered' | 'cancelled';
   newStatusLabel: string;
+  shippingInfo?: {
+    courierService: string;
+    trackingNumber: string;
+    notes?: string;
+  };
 }) {
   const statusMessages: Record<string, string> = {
     processing: 'Estamos preparando tu pedido con mucho cuidado.',
@@ -650,6 +655,15 @@ export async function sendOrderStatusUpdateEmail(params: {
   const title = `Actualización de tu pedido ${params.orderNumber}`;
   const orderUrl = `https://www.calmar.cl/es/account/orders/${params.orderId}`;
 
+  const shippingBlock = params.shippingInfo ? `
+    <div style="background:${brand.muted};padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid ${brand.primary};">
+      <div style="font-weight:700;margin-bottom:8px;">Datos de envío</div>
+      <div><strong>Empresa:</strong> ${params.shippingInfo.courierService}</div>
+      <div><strong>N° de seguimiento:</strong> <span style="font-family:monospace;">${params.shippingInfo.trackingNumber}</span></div>
+      ${params.shippingInfo.notes ? `<div style="margin-top:8px;font-size:13px;color:#666;">${params.shippingInfo.notes}</div>` : ''}
+    </div>
+  ` : '';
+
   const content = `
     <p style="margin:12px 0;line-height:1.6;">Hola ${params.customerName},</p>
     <p style="margin:12px 0;line-height:1.6;">
@@ -659,6 +673,7 @@ export async function sendOrderStatusUpdateEmail(params: {
       <div><strong>Número de pedido:</strong> ${params.orderNumber}</div>
       <div><strong>Estado:</strong> ${params.newStatusLabel}</div>
     </div>
+    ${shippingBlock}
     <div style="text-align:center;margin:24px 0;">
       <a href="${orderUrl}" style="background:${brand.primaryDark};color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">
         Ver mi pedido
@@ -686,6 +701,10 @@ export async function sendOrderStatusUpdateEmail(params: {
         orderNumber: params.orderNumber,
         newStatus: params.newStatus,
         newStatusLabel: params.newStatusLabel,
+        ...(params.shippingInfo && {
+          courierService: params.shippingInfo.courierService,
+          trackingNumber: params.shippingInfo.trackingNumber,
+        }),
       },
     },
   });

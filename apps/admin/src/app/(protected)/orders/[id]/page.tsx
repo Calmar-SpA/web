@@ -7,6 +7,7 @@ import { Button, Card, CardHeader, CardTitle, CardContent } from "@calmar/ui"
 import { Package, ChevronLeft, MapPin, CreditCard, Receipt, Truck, Trash2, Gift, Store, User, Building2, Check, CheckCircle, Eye, XCircle, AlertCircle, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { updateOrderStatus, deleteOrder } from "../actions"
+import { ShippingInfoModal } from "./shipping-info-modal"
 import { toast } from "sonner"
 import { formatClp, getPriceBreakdown } from "@calmar/utils"
 import { useRouter } from "next/navigation"
@@ -19,6 +20,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   const [updating, setUpdating] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [emailRefreshKey, setEmailRefreshKey] = useState(0)
+  const [showShippingModal, setShowShippingModal] = useState(false)
 
   const supabase = createClient()
   const orderService = new OrderService(supabase)
@@ -38,13 +40,17 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   }, [id])
 
   const handleStatusUpdate = async (newStatus: string) => {
+    if (newStatus === 'shipped') {
+      setShowShippingModal(true)
+      return
+    }
+
     setUpdating(true)
     try {
       await updateOrderStatus(id, newStatus)
       setOrder({ ...order, status: newStatus })
       toast.success(`Pedido actualizado a ${newStatus}`)
       
-      // Refresh email history after a short delay to allow email to be sent and logged
       setTimeout(() => {
         setEmailRefreshKey(prev => prev + 1)
       }, 1500)
@@ -53,6 +59,13 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     } finally {
       setUpdating(false)
     }
+  }
+
+  const handleShippingSuccess = () => {
+    setOrder({ ...order, status: 'shipped' })
+    setTimeout(() => {
+      setEmailRefreshKey(prev => prev + 1)
+    }, 1500)
   }
 
   const handleDelete = async () => {
@@ -349,15 +362,27 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
           <Card>
             <CardHeader className="border-b bg-slate-50/50">
-              <CardTitle className="text-sm uppercase tracking-tight flex items-center gap-2">
-                <Truck className="w-4 h-4 text-calmar-ocean" />
-                Información de Entrega
+              <CardTitle className="text-sm uppercase tracking-tight flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-calmar-ocean" />
+                  Información de Entrega
+                </div>
+                {order.shipping_address?.pickup_point_preferred && (
+                  <div className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full flex items-center gap-1">
+                    <Building2 className="w-3 h-3" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Retiro en punto BX</span>
+                  </div>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <div className="space-y-1">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nombre</p>
                 <p className="text-sm font-medium">{order.shipping_address?.name || "-"}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Teléfono</p>
+                <p className="text-sm font-medium">{order.shipping_address?.phone || "-"}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">RUT</p>
@@ -412,6 +437,14 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
           <EmailHistorySection orderId={id} refreshKey={emailRefreshKey} />
         </div>
       </div>
+
+      <ShippingInfoModal
+        orderId={id}
+        orderNumber={order.order_number}
+        isOpen={showShippingModal}
+        onClose={() => setShowShippingModal(false)}
+        onSuccess={handleShippingSuccess}
+      />
     </div>
   )
 }
