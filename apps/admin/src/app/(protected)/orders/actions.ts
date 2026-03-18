@@ -13,8 +13,9 @@ export async function updateOrderStatus(orderId: string, status: string) {
   const updatedOrder = await orderService.updateOrderStatus(orderId, status)
   
   // Send email notification for specific statuses
+  const orderEmail = updatedOrder.email || updatedOrder.customer_email
   const notifyStatuses = ['processing', 'shipped', 'delivered', 'cancelled']
-  if (notifyStatuses.includes(status) && updatedOrder.customer_email) {
+  if (notifyStatuses.includes(status) && orderEmail) {
     const statusLabels: Record<string, string> = {
       processing: 'Procesando',
       shipped: 'Enviado',
@@ -24,8 +25,8 @@ export async function updateOrderStatus(orderId: string, status: string) {
     
     try {
       await sendOrderStatusUpdateEmail({
-        email: updatedOrder.customer_email,
-        customerName: updatedOrder.customer_name || 'Cliente',
+        email: orderEmail,
+        customerName: updatedOrder.customer_name || updatedOrder.shipping_address?.name || 'Cliente',
         orderNumber: updatedOrder.order_number,
         orderId: updatedOrder.id,
         newStatus: status as 'processing' | 'shipped' | 'delivered' | 'cancelled',
