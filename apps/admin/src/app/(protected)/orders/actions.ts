@@ -4,12 +4,38 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { OrderService } from '@calmar/database'
 import { revalidatePath } from 'next/cache'
+import { sendOrderStatusUpdateEmail } from '@/lib/mail'
 
 export async function updateOrderStatus(orderId: string, status: string) {
   const supabase = await createClient()
   const orderService = new OrderService(supabase)
   
-  await orderService.updateOrderStatus(orderId, status)
+  const updatedOrder = await orderService.updateOrderStatus(orderId, status)
+  
+  // Send email notification for specific statuses
+  const notifyStatuses = ['processing', 'shipped', 'delivered', 'cancelled']
+  if (notifyStatuses.includes(status) && updatedOrder.customer_email) {
+    const statusLabels: Record<string, string> = {
+      processing: 'Procesando',
+      shipped: 'Enviado',
+      delivered: 'Entregado',
+      cancelled: 'Cancelado',
+    }
+    
+    try {
+      await sendOrderStatusUpdateEmail({
+        email: updatedOrder.customer_email,
+        customerName: updatedOrder.customer_name || 'Cliente',
+        orderNumber: updatedOrder.order_number,
+        orderId: updatedOrder.id,
+        newStatus: status as 'processing' | 'shipped' | 'delivered' | 'cancelled',
+        newStatusLabel: statusLabels[status] || status,
+      })
+    } catch (error) {
+      console.error('Error sending order status update email:', error)
+      // We don't throw here so the status update still succeeds
+    }
+  }
   
   revalidatePath(`/orders/${orderId}`)
   revalidatePath('/orders')

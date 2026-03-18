@@ -630,3 +630,63 @@ export async function sendDocumentUploadedEmail(params: {
     },
   });
 }
+
+export async function sendOrderStatusUpdateEmail(params: {
+  email: string;
+  customerName: string;
+  orderNumber: string;
+  orderId: string;
+  newStatus: 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  newStatusLabel: string;
+}) {
+  const statusMessages: Record<string, string> = {
+    processing: 'Estamos preparando tu pedido con mucho cuidado.',
+    shipped: 'Tu pedido ya va en camino.',
+    delivered: 'Tu pedido ha sido entregado.',
+    cancelled: 'Tu pedido ha sido cancelado. Si tienes dudas, responde a este correo.',
+  };
+
+  const message = statusMessages[params.newStatus] || `El estado de tu pedido ha cambiado a ${params.newStatusLabel}.`;
+  const title = `Actualización de tu pedido ${params.orderNumber}`;
+  const orderUrl = `https://www.calmar.cl/es/account/orders/${params.orderId}`;
+
+  const content = `
+    <p style="margin:12px 0;line-height:1.6;">Hola ${params.customerName},</p>
+    <p style="margin:12px 0;line-height:1.6;">
+      ${message}
+    </p>
+    <div style="background:${brand.muted};padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid ${brand.primary};">
+      <div><strong>Número de pedido:</strong> ${params.orderNumber}</div>
+      <div><strong>Estado:</strong> ${params.newStatusLabel}</div>
+    </div>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${orderUrl}" style="background:${brand.primaryDark};color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">
+        Ver mi pedido
+      </a>
+    </div>
+    <p style="margin:12px 0;line-height:1.6;">
+      Si tienes alguna duda, responde a este correo.
+    </p>
+  `;
+
+  const html = buildEmailShell(title, content);
+
+  return sendEmail({
+    to: params.email,
+    subject: title,
+    html,
+    replyTo: ADMIN_EMAIL,
+    logParams: {
+      emailType: 'notification',
+      emailCategory: 'order_status_update',
+      toName: params.customerName,
+      relatedEntityType: 'order',
+      relatedEntityId: params.orderId,
+      metadata: {
+        orderNumber: params.orderNumber,
+        newStatus: params.newStatus,
+        newStatusLabel: params.newStatusLabel,
+      },
+    },
+  });
+}

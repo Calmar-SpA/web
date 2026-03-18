@@ -18,6 +18,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [emailRefreshKey, setEmailRefreshKey] = useState(0)
 
   const supabase = createClient()
   const orderService = new OrderService(supabase)
@@ -42,6 +43,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       await updateOrderStatus(id, newStatus)
       setOrder({ ...order, status: newStatus })
       toast.success(`Pedido actualizado a ${newStatus}`)
+      
+      // Refresh email history after a short delay to allow email to be sent and logged
+      setTimeout(() => {
+        setEmailRefreshKey(prev => prev + 1)
+      }, 1500)
     } catch (error) {
       toast.error("Error al actualizar estado")
     } finally {
@@ -403,7 +409,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
             </CardContent>
           </Card>
 
-          <EmailHistorySection orderId={id} />
+          <EmailHistorySection orderId={id} refreshKey={emailRefreshKey} />
         </div>
       </div>
     </div>
@@ -418,7 +424,7 @@ const EMAIL_STATUS_CONFIG: Record<string, { label: string; color: string; icon: 
   failed: { label: 'Fallido', color: 'bg-red-100 text-red-700 border-red-200', icon: AlertCircle },
 }
 
-function EmailHistorySection({ orderId }: { orderId: string }) {
+function EmailHistorySection({ orderId, refreshKey = 0 }: { orderId: string, refreshKey?: number }) {
   const [logs, setLogs] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -445,7 +451,7 @@ function EmailHistorySection({ orderId }: { orderId: string }) {
 
   useEffect(() => {
     loadLogs()
-  }, [orderId])
+  }, [orderId, refreshKey])
 
   if (isLoading && logs.length === 0) return null
   if (!isLoading && logs.length === 0) return null
